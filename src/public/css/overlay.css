@@ -217,46 +217,5 @@ html, body {
   animation: fbspin 14s linear infinite;
 }
 
-/* Hover & Interactive Popup Panel from Skorboard.dc.html */
-.dc-interactive-panel {
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  transform: translate(-50%, .5em);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .18s;
-  background: rgba(8, 12, 24, .94);
-  border: 1px solid rgba(255, 255, 255, .14);
-  border-radius: .22em;
-  padding: .34em .4em;
-  display: flex;
-  flex-direction: column;
-  gap: .28em;
-  font-size: .44em;
-  z-index: 5;
-  box-shadow: 0 .1em .4em rgba(0, 0, 0, .5);
-}
 
-.dc-interactive-panel.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
 
-.dc-ctrl-btn {
-  width: 2em;
-  height: 1.8em;
-  border: 0;
-  border-radius: .16em;
-  color: #fff;
-  font: 800 1em 'Barlow Condensed', sans-serif;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dc-btn-blue { background: #2c4173; }
-.dc-btn-red { background: #a80d23; }
-.dc-btn-yellow { background: #ffed00; color: #16255c; }
-.dc-btn-gray { background: rgba(255, 255, 255, .14); color: #fff; font: 700 .95em 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .04em; height: 1.9em; padding: 0 .7em; border: 0; border-radius: .16em; cursor: pointer; }
