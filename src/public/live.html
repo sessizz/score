@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canlı Voleybol Skorboard (Salon & Seyirci Ekranı)</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/live.css">
+  <link rel="icon" href="/assets/volleyball.svg">
+</head>
+<body>
+
+  <div class="live-container">
+    <!-- Top Header -->
+    <header class="live-top-bar">
+      <div class="live-match-title" id="live-title">FENERBAHÇE KÜÇÜK ERKEK VOLEYBOL LİGİ</div>
+      <div class="live-set-indicator" id="live-set">1. SET</div>
+    </header>
+
+    <!-- Main Scoreboard Court Display -->
+    <main class="live-main-court">
+      <!-- Team Left -->
+      <div class="live-team-panel" id="team-left-panel">
+        <img src="/assets/fenerbahce.svg" alt="Logo" class="live-team-logo" id="team-left-logo">
+        <div class="live-team-name" id="team-left-name">FENERBAHÇE</div>
+        <div class="live-sets-box" id="team-left-sets">0 SET</div>
+        <div class="live-points-display" id="team-left-points">0</div>
+      </div>
+
+      <!-- Center Divider -->
+      <div class="live-middle-divider">
+        <img src="/assets/volleyball.svg" style="width: 54px; height: 54px;" alt="Ball">
+        <div class="live-vs-text">VS</div>
+      </div>
+
+      <!-- Team Right -->
+      <div class="live-team-panel" id="team-right-panel">
+        <img src="/assets/opponent.svg" alt="Logo" class="live-team-logo" id="team-right-logo">
+        <div class="live-team-name" id="team-right-name">RAKİP TAKIM</div>
+        <div class="live-sets-box" id="team-right-sets">0 SET</div>
+        <div class="live-points-display" id="team-right-points">0</div>
+      </div>
+    </main>
+
+    <!-- Set History Footer -->
+    <footer class="live-footer-history" id="live-history">
+      <!-- History badges rendered dynamically -->
+    </footer>
+  </div>
+
+  <script src="/js/live.js"></script>
+</body>
+</html>

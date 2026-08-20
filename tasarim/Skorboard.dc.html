@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:transparent}
+@keyframes fbspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+a{color:#ffed00;text-decoration:none}a:hover{color:#fff}
+</style>
+</helmet>
+<div style="container-type:inline-size;width:100%">
+ <div style="font-family:'Barlow Condensed',Arial Narrow,sans-serif;font-size:2.6cqw;padding:.22em 0">
+  <div style="position:relative;line-height:1;color:#fff;user-select:none;display:grid;grid-template-columns:2.35em minmax(0,1fr) auto minmax(0,1fr) 2.55em;align-items:center;gap:.3em;filter:drop-shadow(0 .05em .14em rgba(0,0,0,.5))" onMouseEnter="{{ enter }}" onMouseLeave="{{ leave }}">
+
+    <div style="grid-column:2;display:flex;flex-direction:column;min-width:0">
+      <div style="height:2em;background:linear-gradient(180deg,#2c4173 0%,#22345c 55%,#1a2846 100%);display:flex;align-items:center;justify-content:center;padding:0 .55em;overflow:hidden;box-shadow:inset 0 .04em 0 rgba(255,255,255,.22)">
+        <span style="font-weight:800;font-style:italic;font-size:1.14em;text-transform:uppercase;letter-spacing:.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .04em .06em rgba(0,0,0,.45)">{{ nameA }}</span>
+      </div>
+      <div style="height:.2em;background:{{ colorA }}"></div>
+    </div>
+
+    <div style="grid-column:3;display:flex;align-items:stretch;gap:.16em;height:2.2em">
+      <sc-if value="{{ showSets }}" hint-placeholder-val="{{ true }}">
+        <div style="width:1.55em;border-radius:.1em;background:linear-gradient(180deg,#d61c35,#a80d23);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 .04em 0 rgba(255,255,255,.25)">
+          <span style="font-weight:800;font-size:1.4em;font-variant-numeric:tabular-nums;text-shadow:0 .04em .06em rgba(0,0,0,.4)">{{ setsA }}</span>
+        </div>
+      </sc-if>
+      <div style="min-width:1.75em;padding:0 .1em;border-radius:.1em;background:linear-gradient(180deg,#f6f6f3,#dcdcd6);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 .04em 0 rgba(255,255,255,.7)">
+        <span style="font-weight:800;font-size:1.62em;color:#17244a;font-variant-numeric:tabular-nums">{{ pointsA }}</span>
+      </div>
+      <div style="width:2.4em;height:2.42em;align-self:center;border-radius:.11em;background:linear-gradient(180deg,#d61c35,#a80d23);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:inset 0 .04em 0 rgba(255,255,255,.25),0 .03em .1em rgba(0,0,0,.3)">
+        <sc-if value="{{ hasLogo }}" hint-placeholder-val="{{ false }}">
+          <div style="width:88%;height:82%;background-image:{{ logoBg }};background-size:contain;background-position:center;background-repeat:no-repeat"></div>
+        </sc-if>
+        <sc-if value="{{ noLogo }}" hint-placeholder-val="{{ true }}">
+          <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,rgba(255,255,255,.14) 0 .18em,rgba(255,255,255,.05) .18em .36em)">
+            <span style="font-family:ui-monospace,Menlo,monospace;font-size:.3em;letter-spacing:.06em;color:rgba(255,255,255,.7)">LOGO</span>
+          </div>
+        </sc-if>
+      </div>
+      <div style="min-width:1.75em;padding:0 .1em;border-radius:.1em;background:linear-gradient(180deg,#f6f6f3,#dcdcd6);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 .04em 0 rgba(255,255,255,.7)">
+        <span style="font-weight:800;font-size:1.62em;color:#17244a;font-variant-numeric:tabular-nums">{{ pointsB }}</span>
+      </div>
+      <sc-if value="{{ showSets }}" hint-placeholder-val="{{ true }}">
+        <div style="width:1.55em;border-radius:.1em;background:linear-gradient(180deg,#d61c35,#a80d23);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 .04em 0 rgba(255,255,255,.25)">
+          <span style="font-weight:800;font-size:1.4em;font-variant-numeric:tabular-nums;text-shadow:0 .04em .06em rgba(0,0,0,.4)">{{ setsB }}</span>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="grid-column:4;display:flex;flex-direction:column;min-width:0">
+      <div style="height:2em;background:linear-gradient(180deg,#2c4173 0%,#22345c 55%,#1a2846 100%);display:flex;align-items:center;justify-content:center;padding:0 .55em;overflow:hidden;box-shadow:inset 0 .04em 0 rgba(255,255,255,.22)">
+        <span style="font-weight:800;font-style:italic;font-size:1.14em;text-transform:uppercase;letter-spacing:.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .04em .06em rgba(0,0,0,.45)">{{ nameB }}</span>
+      </div>
+      <div style="height:.2em;background:{{ colorB }}"></div>
+    </div>
+
+
+    <div style="position:absolute;left:{{ ballLeft }};top:50%;width:2.2em;height:2.2em;transform:translateY(-50%);transition:left .7s cubic-bezier(.65,0,.35,1);z-index:2;filter:drop-shadow(0 .05em .1em rgba(0,0,0,.45))">
+      <sc-if value="{{ iconSwirl }}" hint-placeholder-val="{{ true }}">
+        <img src="assets/serve-ball-v9.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;animation:fbspin 14s linear infinite" />
+      </sc-if>
+      <sc-if value="{{ iconBallOnly }}" hint-placeholder-val="{{ false }}">
+        <img src="assets/serve-ball-only.png" alt="" style="position:absolute;inset:8%;width:84%;height:84%;animation:fbspin 14s linear infinite" />
+      </sc-if>
+    </div>
+
+    <div style="position:absolute;left:50%;top:100%;transform:translate(-50%,.5em);opacity:{{ panelOpacity }};pointer-events:{{ panelPointer }};transition:opacity .18s;background:rgba(8,12,24,.94);border:1px solid rgba(255,255,255,.14);border-radius:.22em;padding:.34em .4em;display:flex;flex-direction:column;gap:.28em;font-size:.44em;z-index:5;box-shadow:0 .1em .4em rgba(0,0,0,.5)">
+      <div style="display:flex;align-items:center;gap:.5em">
+        <div style="display:flex;align-items:center;gap:.24em">
+          <button type="button" onClick="{{ pAdown }}" style="width:2em;height:1.8em;border:0;border-radius:.16em;background:#2c4173;color:#fff;font:800 1em 'Barlow Condensed',sans-serif;cursor:pointer">−</button>
+          <span style="min-width:5.6em;text-align:center;font-weight:700;letter-spacing:.04em;text-transform:uppercase">A sayı</span>
+          <button type="button" onClick="{{ pAup }}" style="width:2em;height:1.8em;border:0;border-radius:.16em;background:#2c4173;color:#fff;font:800 1em 'Barlow Condensed',sans-serif;cursor:pointer">+</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:.24em">
+          <button type="button" onClick="{{ sAdown }}" style="width:2em;height:1.8em;border:0;border-radius:.16em;background:#a80d23;color:#fff;font:800 1em 'Barlow Condensed',sans-serif;cursor:pointer">−</button>
+          <span style="min-width:4.2em;text-align:center;font-weight:700;letter-spacing:.04em;text-transform:uppercase">A set</span>
+          <button type="button" onClick="{{ sAup }}" style="width:2em;height:1.8em;border:0;border-radius:.16em;background:#a80d23;color:#fff;font:800 1em 'Barlow Condensed',sans-serif;cursor:pointer">+</button>
+        </div>
+        <button type="button" onClick="{{ toggleServe }}" style="height:1.8em;padding:0 .7em;border:0;border-radius:.16em;background:#ffed00;color:#16255c;font:800 1em 'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;cursor:pointer">Servis: {{ serveLabel }}</button>
+        <div style="display:flex;align-items:center;gap:.24em">
+          <button type="button" onClick="{{ sBdown }}" style="width:2em;height:1.8em;border:0;border-radius:.16em;background:#a80d23;color:#fff;font:800 1em 'Barlow Condensed',sans-serif;cursor:pointer">−</button>
+          <span style="min-width:4.2em;text-align:center;font-weight:700;letter-spacing:.04em;text-transform:uppercase">B set</span>
+          <button type="button" onClick="{{ sBup }}" style="width:2em;height:1.8em;border:0;border-radius:.16em;background:#a80d23;color:#fff;font:800 1em 'Barlow Condensed',sans-serif;cursor:pointer">+</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:.24em">
+          <button type="button" onClick="{{ pBdown }}" style="width:2em;height:1.8em;border:0;border-radius:.16em;background:#2c4173;color:#fff;font:800 1em 'Barlow Condensed',sans-serif;cursor:pointer">−</button>
+          <span style="min-width:5.6em;text-align:center;font-weight:700;letter-spacing:.04em;text-transform:uppercase">B sayı</span>
+          <button type="button" onClick="{{ pBup }}" style="width:2em;height:1.8em;border:0;border-radius:.16em;background:#2c4173;color:#fff;font:800 1em 'Barlow Condensed',sans-serif;cursor:pointer">+</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.34em">
+        <input type="text" value="{{ nameA }}" onChange="{{ setNameA }}" placeholder="A takımı" style="width:12em;height:1.9em;border:1px solid rgba(255,255,255,.18);border-radius:.16em;background:rgba(255,255,255,.06);color:#fff;font:700 .95em 'Barlow Condensed',sans-serif;padding:0 .4em" />
+        <input type="color" value="{{ colorA }}" onChange="{{ setColorA }}" style="width:2.2em;height:1.9em;border:1px solid rgba(255,255,255,.18);border-radius:.16em;background:transparent;padding:.1em;cursor:pointer" />
+        <button type="button" onClick="{{ newSet }}" style="height:1.9em;padding:0 .7em;border:0;border-radius:.16em;background:rgba(255,255,255,.14);color:#fff;font:700 .95em 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em;cursor:pointer">Yeni set</button>
+        <button type="button" onClick="{{ resetAll }}" style="height:1.9em;padding:0 .7em;border:0;border-radius:.16em;background:rgba(255,255,255,.14);color:#fff;font:700 .95em 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em;cursor:pointer">Sıfırla</button>
+        <button type="button" onClick="{{ swapSides }}" style="height:1.9em;padding:0 .7em;border:0;border-radius:.16em;background:rgba(255,255,255,.14);color:#fff;font:700 .95em 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em;cursor:pointer">Saha değiş</button>
+        <input type="color" value="{{ colorB }}" onChange="{{ setColorB }}" style="width:2.2em;height:1.9em;border:1px solid rgba(255,255,255,.18);border-radius:.16em;background:transparent;padding:.1em;cursor:pointer" />
+        <input type="text" value="{{ nameB }}" onChange="{{ setNameB }}" placeholder="B takımı" style="width:12em;height:1.9em;border:1px solid rgba(255,255,255,.18);border-radius:.16em;background:rgba(255,255,255,.06);color:#fff;font:700 .95em 'Barlow Condensed',sans-serif;padding:0 .4em" />
+      </div>
+      <div style="font:600 .8em 'Barlow Condensed',sans-serif;color:rgba(255,255,255,.55);letter-spacing:.03em;text-align:center">Q/A · P/L sayı · W/S · O/K set · BOŞLUK servis · ←/→ servis · R yeni set · C paneli sabitle</div>
+    </div>
+  </div>
+ </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1600,&quot;height&quot;:260},
+&quot;teamAName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;FENERBAHÇE&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Takımlar&quot;},
+&quot;teamAColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#ffed00&quot;,&quot;options&quot;:[&quot;#ffed00&quot;,&quot;#d61c35&quot;,&quot;#0b5aa6&quot;,&quot;#12a05c&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Takımlar&quot;},
+&quot;teamBName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;RAKİP TAKIM&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Takımlar&quot;},
+&quot;teamBColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#d61c35&quot;,&quot;options&quot;:[&quot;#d61c35&quot;,&quot;#ffed00&quot;,&quot;#0b5aa6&quot;,&quot;#e56a00&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Takımlar&quot;},
+&quot;serveIcon&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Swirl amblem&quot;,&quot;Sadece top&quot;],&quot;default&quot;:&quot;Swirl amblem&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Görünüm&quot;},
+&quot;logoUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Görünüm&quot;},
+&quot;showSets&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Görünüm&quot;},
+&quot;autoServe&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Davranış&quot;}}">
+class Component extends DCLogic {
+  state = { pA: 0, pB: 0, sA: 0, sB: 0, serve: "A", hover: false, pinned: false, nameA: null, nameB: null, colorA: null, colorB: null };
+
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem("fb-vb-scoreboard");
+      if (raw) {
+        const s = JSON.parse(raw);
+        this.setState({
+          pA: s.pA | 0, pB: s.pB | 0, sA: s.sA | 0, sB: s.sB | 0,
+          serve: s.serve === "B" ? "B" : "A",
+          nameA: s.nameA ?? null, nameB: s.nameB ?? null,
+          colorA: s.colorA ?? null, colorB: s.colorB ?? null
+        });
+      }
+    } catch (e) {}
+    this._key = (e) => {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      const k = e.key;
+      const map = { q: ["pA", 1], a: ["pA", -1], p: ["pB", 1], l: ["pB", -1], w: ["sA", 1], s: ["sA", -1], o: ["sB", 1], k: ["sB", -1] };
+      const lower = k.length === 1 ? k.toLowerCase() : k;
+      if (map[lower] && !e.shiftKey) { e.preventDefault(); this.bump(map[lower][0], map[lower][1]); return; }
+      if (k === " ") { e.preventDefault(); this.persist({ serve: this.state.serve === "A" ? "B" : "A" }); return; }
+      if (k === "ArrowLeft") { e.preventDefault(); this.persist({ serve: "A" }); return; }
+      if (k === "ArrowRight") { e.preventDefault(); this.persist({ serve: "B" }); return; }
+      if (lower === "r") { e.preventDefault(); e.shiftKey ? this.resetAll() : this.newSet(); return; }
+      if (lower === "c") { e.preventDefault(); this.setState(s => ({ pinned: !s.pinned })); }
+    };
+    window.addEventListener("keydown", this._key);
+  }
+
+  componentWillUnmount() { window.removeEventListener("keydown", this._key); }
+
+  persist(patch) {
+    this.setState(patch, () => {
+      const s = this.state;
+      try {
+        localStorage.setItem("fb-vb-scoreboard", JSON.stringify({
+          pA: s.pA, pB: s.pB, sA: s.sA, sB: s.sB, serve: s.serve,
+          nameA: s.nameA, nameB: s.nameB, colorA: s.colorA, colorB: s.colorB
+        }));
+      } catch (e) {}
+    });
+  }
+
+  bump(field, delta) {
+    const next = Math.max(0, this.state[field] + delta);
+    const patch = {};
+    patch[field] = next;
+    const auto = this.props.autoServe ?? true;
+    if (auto && delta > 0 && (field === "pA" || field === "pB")) patch.serve = field === "pA" ? "A" : "B";
+    this.persist(patch);
+  }
+
+  newSet() { this.persist({ pA: 0, pB: 0 }); }
+  resetAll() { this.persist({ pA: 0, pB: 0, sA: 0, sB: 0, serve: "A" }); }
+
+  swapSides() {
+    const s = this.state;
+    this.persist({
+      pA: s.pB, pB: s.pA, sA: s.sB, sB: s.sA,
+      serve: s.serve === "A" ? "B" : "A",
+      nameA: this.nameOf("B"), nameB: this.nameOf("A"),
+      colorA: this.colorOf("B"), colorB: this.colorOf("A")
+    });
+  }
+
+  nameOf(side) {
+    if (side === "A") return this.state.nameA ?? this.props.teamAName ?? "FENERBAHÇE";
+    return this.state.nameB ?? this.props.teamBName ?? "RAKİP TAKIM";
+  }
+  colorOf(side) {
+    if (side === "A") return this.state.colorA ?? this.props.teamAColor ?? "#ffed00";
+    return this.state.colorB ?? this.props.teamBColor ?? "#d61c35";
+  }
+
+  renderVals() {
+    const logo = (this.props.logoUrl ?? "").trim();
+    const panelOn = this.state.hover || this.state.pinned;
+    return {
+      nameA: this.nameOf("A"),
+      nameB: this.nameOf("B"),
+      colorA: this.colorOf("A"),
+      colorB: this.colorOf("B"),
+      pointsA: this.state.pA,
+      pointsB: this.state.pB,
+      setsA: this.state.sA,
+      setsB: this.state.sB,
+      showSets: this.props.showSets ?? true,
+      hasLogo: !!logo,
+      noLogo: !logo,
+      logoBg: logo ? 'url("' + logo.replace(/"/g, "%22") + '")' : "none",
+      serveLabel: this.state.serve === "A" ? "A" : "B",
+      iconSwirl: (this.props.serveIcon ?? "Swirl amblem") !== "Sadece top",
+      iconBallOnly: (this.props.serveIcon ?? "Swirl amblem") === "Sadece top",
+      ballLeft: this.state.serve === "A" ? "0px" : "calc(100% - 2.2em)",
+      panelOpacity: panelOn ? 1 : 0,
+      panelPointer: panelOn ? "auto" : "none",
+      enter: () => this.setState({ hover: true }),
+      leave: () => this.setState({ hover: false }),
+      pAup: () => this.bump("pA", 1),
+      pAdown: () => this.bump("pA", -1),
+      pBup: () => this.bump("pB", 1),
+      pBdown: () => this.bump("pB", -1),
+      sAup: () => this.bump("sA", 1),
+      sAdown: () => this.bump("sA", -1),
+      sBup: () => this.bump("sB", 1),
+      sBdown: () => this.bump("sB", -1),
+      toggleServe: () => this.persist({ serve: this.state.serve === "A" ? "B" : "A" }),
+      newSet: () => this.newSet(),
+      resetAll: () => this.resetAll(),
+      swapSides: () => this.swapSides(),
+      setNameA: (e) => this.persist({ nameA: e.target.value }),
+      setNameB: (e) => this.persist({ nameB: e.target.value }),
+      setColorA: (e) => this.persist({ colorA: e.target.value }),
+      setColorB: (e) => this.persist({ colorB: e.target.value })
+    };
+  }
+}
+</script>
+</body>
+</html>

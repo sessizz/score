@@ -1,0 +1,21 @@
+{
+  "name": "volleyball-scoreboard",
+  "version": "1.0.0",
+  "description": "OBS canlı yayınları ve Coolify için hafif, stabil ve gerçek zamanlı Voleybol Skorboard Sistemi",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [
+    "volleyball",
+    "scoreboard",
+    "obs",
+    "streaming",
+    "sse",
+    "coolify",
+    "fenerbahce"
+  ],
+  "author": "Alper",
+  "license": "MIT"
+}

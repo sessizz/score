@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Voleybol Skor Kumanda Paneli</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/control.css">
+  <link rel="icon" href="/assets/volleyball.svg">
+</head>
+<body>
+
+<div class="control-container">
+  <!-- Header -->
+  <header class="control-header">
+    <div>
+      <div class="match-info-title" id="match-title">Fenerbahçe Küçük Erkek Voleybol Ligi</div>
+      <div class="match-info-sub" id="match-sub">Canlı Yayın Skor Yönetimi</div>
+    </div>
+    <div class="flex-center" style="gap: 10px;">
+      <div class="conn-indicator">
+        <div class="conn-dot" id="conn-dot"></div>
+        <span id="conn-text">Bağlanıyor...</span>
+      </div>
+      <button class="btn-action-main" id="btn-open-obs" style="padding: 6px 10px; font-size: 0.75rem;">
+        📺 OBS Link
+      </button>
+      <button class="btn-action-main" id="btn-open-settings" style="padding: 6px 10px; font-size: 0.75rem;">
+        ⚙️ Ayarlar
+      </button>
+    </div>
+  </header>
+
+  <!-- Status Ribbon & Set History -->
+  <div class="status-ribbon">
+    <div class="flex-center" style="gap: 10px;">
+      <span class="set-pill" id="set-pill">1. SET</span>
+    </div>
+    <div class="set-history-pills" id="history-list">
+      <!-- Past set scores will appear here -->
+    </div>
+  </div>
+
+  <!-- Timeout Active Banner -->
+  <div class="timeout-banner" id="timeout-banner">
+    <div>
+      <span style="font-size: 0.85rem; opacity: 0.9;">⏳ MOLA DEVAM EDİYOR</span>
+      <div id="timeout-team-name" style="font-size: 1.1rem; font-weight: 800;">FENERBAHÇE Molası</div>
+    </div>
+    <div class="flex-center" style="gap: 12px;">
+      <div class="timeout-timer-val" id="timeout-timer">30s</div>
+      <button id="btn-end-timeout" style="background: rgba(0,0,0,0.4); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 4px; font-weight: 700; cursor: pointer;">
+        Molayı Bitir
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Teams Scoreboard Cards Grid -->
+  <div class="teams-grid">
+    <!-- Left Team Card -->
+    <div class="team-card" id="left-team-card">
+      <div class="team-card-header">
+        <div class="team-logo-title">
+          <img src="/assets/fenerbahce.svg" alt="Logo" class="team-logo-img" id="left-team-logo">
+          <div>
+            <div class="team-name-text" id="left-team-name">FENERBAHÇE</div>
+            <div class="team-short-code" id="left-team-short">FB</div>
+          </div>
+        </div>
+        <div class="sets-badge" id="left-sets-badge">0 Set</div>
+      </div>
+
+      <div class="sub-indicators">
+        <button class="serve-btn is-serving" id="left-serve-btn">
+          <img src="/assets/volleyball.svg" class="volleyball-icon-mini" alt="Serve">
+          <span>SERVİS</span>
+        </button>
+        <div class="timeouts-tracker">
+          <span>Mola:</span>
+          <div class="to-dot" id="left-to-dot-1"></div>
+          <div class="to-dot" id="left-to-dot-2"></div>
+        </div>
+      </div>
+
+      <div class="point-tap-area" id="left-point-area">
+        <div class="point-display" id="left-point-val">0</div>
+        <div class="point-tap-label">+1 SAYI</div>
+      </div>
+
+      <div class="team-action-row">
+        <button class="btn-sub-point" id="left-sub-point">-1 Sayı</button>
+        <button class="btn-timeout-call" id="left-timeout-btn">⏱️ Mola Al</button>
+      </div>
+    </div>
+
+    <!-- Right Team Card -->
+    <div class="team-card" id="right-team-card">
+      <div class="team-card-header">
+        <div class="team-logo-title">
+          <img src="/assets/opponent.svg" alt="Logo" class="team-logo-img" id="right-team-logo">
+          <div>
+            <div class="team-name-text" id="right-team-name">RAKİP TAKIM</div>
+            <div class="team-short-code" id="right-team-short">RAK</div>
+          </div>
+        </div>
+        <div class="sets-badge" id="right-sets-badge">0 Set</div>
+      </div>
+
+      <div class="sub-indicators">
+        <button class="serve-btn" id="right-serve-btn">
+          <img src="/assets/volleyball.svg" class="volleyball-icon-mini" alt="Serve">
+          <span>SERVİS</span>
+        </button>
+        <div class="timeouts-tracker">
+          <span>Mola:</span>
+          <div class="to-dot" id="right-to-dot-1"></div>
+          <div class="to-dot" id="right-to-dot-2"></div>
+        </div>
+      </div>
+
+      <div class="point-tap-area" id="right-point-area">
+        <div class="point-display" id="right-point-val">0</div>
+        <div class="point-tap-label">+1 SAYI</div>
+      </div>
+
+      <div class="team-action-row">
+        <button class="btn-sub-point" id="right-sub-point">-1 Sayı</button>
+        <button class="btn-timeout-call" id="right-timeout-btn">⏱️ Mola Al</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Global Actions Bar -->
+  <div class="bottom-controls">
+    <button class="btn-action-main btn-undo" id="btn-undo">
+      <span style="font-size: 1.2rem;">↩</span>
+      <span>Geri Al (Undo)</span>
+    </button>
+
+    <button class="btn-action-main btn-swap" id="btn-swap">
+      <span style="font-size: 1.2rem;">🔄</span>
+      <span>Saha Değiş</span>
+    </button>
+
+    <button class="btn-action-main btn-end-set" id="btn-end-set">
+      <span style="font-size: 1.2rem;">🏁</span>
+      <span>Seti Bitir</span>
+    </button>
+
+    <button class="btn-action-main btn-settings" id="btn-reset-match">
+      <span style="font-size: 1.2rem;">🗑️</span>
+      <span>Maçı Sıfırla</span>
+    </button>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-backdrop" id="modal-settings">
+  <div class="modal-box">
+    <div class="flex-between" style="margin-bottom: 16px;">
+      <h3 style="font-weight: 800; font-size: 1.2rem;">⚙️ Maç & Takım Ayarları</h3>
+      <button class="btn-modal-close" id="btn-close-settings">&times;</button>
+    </div>
+
+    <form id="form-settings">
+      <div class="form-group">
+        <label class="form-label">Lig / Turnuva Başlığı</label>
+        <input type="text" class="form-input" id="setting-title" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Alt Başlık / Aşama</label>
+        <input type="text" class="form-input" id="setting-subtitle">
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 16px 0;">
+
+      <!-- Team A -->
+      <div style="font-weight: 800; color: var(--fb-yellow); margin-bottom: 8px; font-size: 0.9rem;">1. TAKIM (EV SAHİBİ)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Takım Adı</label>
+          <input type="text" class="form-input" id="setting-name-a" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kısa Kod (Kısaltma)</label>
+          <input type="text" class="form-input" id="setting-short-a" maxlength="4" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tema Rengi</label>
+          <input type="color" class="form-input" id="setting-color-a" style="height: 42px; padding: 2px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Logo URL / SVG</label>
+          <input type="text" class="form-input" id="setting-logo-a" placeholder="/assets/fenerbahce.svg">
+        </div>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 16px 0;">
+
+      <!-- Team B -->
+      <div style="font-weight: 800; color: var(--accent-red); margin-bottom: 8px; font-size: 0.9rem;">2. TAKIM (DEPLASMAN)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Takım Adı</label>
+          <input type="text" class="form-input" id="setting-name-b" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kısa Kod (Kısaltma)</label>
+          <input type="text" class="form-input" id="setting-short-b" maxlength="4" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tema Rengi</label>
+          <input type="color" class="form-input" id="setting-color-b" style="height: 42px; padding: 2px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Logo URL / SVG</label>
+          <input type="text" class="form-input" id="setting-logo-b" placeholder="/assets/opponent.svg">
+        </div>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 16px 0;">
+
+      <!-- Rules -->
+      <div style="font-weight: 800; margin-bottom: 8px; font-size: 0.9rem;">VOLEYBOL KURALLARI</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Maksimum Set (Maç Türü)</label>
+          <select class="form-select" id="setting-max-sets">
+            <option value="5">5 Set (3 Set Alan Kazanır)</option>
+            <option value="3">3 Set (2 Set Alan Kazanır)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Normal Set Sayısı</label>
+          <input type="number" class="form-input" id="setting-set-points" value="25">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Karar (Netice) Seti Sayısı</label>
+          <input type="number" class="form-input" id="setting-final-points" value="15">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Yönetici PIN Kodu</label>
+          <input type="password" class="form-input" id="setting-pin" placeholder="1907">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-modal-save">Değişiklikleri Kaydet</button>
+    </form>
+  </div>
+</div>
+
+<!-- OBS Links Modal -->
+<div class="modal-backdrop" id="modal-obs">
+  <div class="modal-box">
+    <div class="flex-between" style="margin-bottom: 16px;">
+      <h3 style="font-weight: 800; font-size: 1.2rem;">📺 OBS Canlı Yayın Katman Linkleri</h3>
+      <button class="btn-modal-close" id="btn-close-obs">&times;</button>
+    </div>
+
+    <div class="obs-link-box">
+      <div class="obs-link-title">1. Üst Skor Çubuğu (Top Bar - TV Stili) [ÖNERİLEN]</div>
+      <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px;">Voleybol canlı yayınlarında saha görüntüsünü kapatmayan en ideal şeffaf üst bant.</p>
+      <div class="obs-link-input-group">
+        <input type="text" class="form-input" id="obs-topbar-url" readonly>
+        <button class="btn-copy-link" data-target="obs-topbar-url">Kopyala</button>
+      </div>
+    </div>
+
+    <div class="obs-link-box">
+      <div class="obs-link-title">2. Geniş Alt Şerit (Lower-Third)</div>
+      <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px;">Set aralarında ve maç içinde detaylı set skorları geçmişini içeren alt şerit.</p>
+      <div class="obs-link-input-group">
+        <input type="text" class="form-input" id="obs-lowerthird-url" readonly>
+        <button class="btn-copy-link" data-target="obs-lowerthird-url">Kopyala</button>
+      </div>
+    </div>
+
+    <div class="obs-link-box">
+      <div class="obs-link-title">3. Kompakt Köşe Skor (Mini Bug)</div>
+      <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px;">Ekranın sol veya sağ üst köşesi için ultra küçük skor göstergesi.</p>
+      <div class="obs-link-input-group">
+        <input type="text" class="form-input" id="obs-bug-url" readonly>
+        <button class="btn-copy-link" data-target="obs-bug-url">Kopyala</button>
+      </div>
+    </div>
+
+    <div class="obs-link-box">
+      <div class="obs-link-title">4. Tam Ekran Salon Skorboard / Seyirci Ekranı</div>
+      <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px;">Salondaki televizyon veya projektör için tam ekran skorbord.</p>
+      <div class="obs-link-input-group">
+        <input type="text" class="form-input" id="obs-live-url" readonly>
+        <button class="btn-copy-link" data-target="obs-live-url">Kopyala</button>
+      </div>
+    </div>
+
+    <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 10px; border-radius: 6px; font-size: 0.8rem; color: #93c5fd; margin-top: 10px;">
+      💡 <b>OBS Kurulum İpucu:</b> OBS Studio'da Kaynaklar > Ekle (+) > <b>Tarayıcı (Browser)</b> seçin. Genişlik: <code>1920</code>, Yükseklik: <code>1080</code> yazıp yukarıdaki linki yapıştırın. Arka plan kendiliğinden şeffaf olacaktır!
+    </div>
+  </div>
+</div>
+
+<!-- Toast notifications -->
+<div id="toast-container"></div>
+
+<script src="/js/control.js"></script>
+</body>
+</html>
