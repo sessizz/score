@@ -49,8 +49,8 @@
     const isLeftServing = Boolean(leftData.isServing);
     const ballLeft = isLeftServing ? '0px' : 'calc(100% - 2.2em)';
 
-    // Center Logo
-    const logoUrl = leftData.logo || '/assets/fenerbahce.svg';
+    // Center Logo (TVF)
+    const logoUrl = '/assets/tvf-logo-beyaz.svg';
 
     root.innerHTML = `
       <div class="dc-board-container">
