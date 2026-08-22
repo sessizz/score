@@ -97,12 +97,25 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 .55em;
+  gap: .4em;
+  padding: 0 .4em;
   overflow: hidden;
   box-shadow: inset 0 .04em 0 rgba(255, 255, 255, .22);
 }
 
+/* Team logo, sits at the outer edge of its own name panel */
+.dc-team-name-logo {
+  flex: none;
+  width: 1.7em;
+  height: 1.7em;
+  object-fit: contain;
+  display: block;
+}
+
 .dc-team-name-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
   font-weight: 800;
   font-style: italic;
   font-size: 1.14em;
@@ -129,7 +142,9 @@ html, body {
 }
 
 .dc-sets-box {
-  width: 1.55em;
+  width: 1.3em;
+  height: 1.85em;
+  align-self: center;
   border-radius: .1em;
   background: linear-gradient(180deg, #d61c35, #a80d23);
   display: flex;
@@ -140,7 +155,7 @@ html, body {
 
 .dc-sets-num {
   font-weight: 800;
-  font-size: 1.4em;
+  font-size: 1.2em;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 .04em .06em rgba(0, 0, 0, .4);
 }
@@ -207,6 +222,15 @@ html, body {
   transition: left .7s cubic-bezier(.65, 0, .35, 1);
   z-index: 2;
   filter: drop-shadow(0 .05em .1em rgba(0, 0, 0, .45));
+}
+
+/* Ball sits at the outer end of the serving team's side */
+.dc-ball-anchor.is-left {
+  left: 0;
+}
+
+.dc-ball-anchor.is-right {
+  left: calc(100% - 2.2em);
 }
 
 .dc-ball-img {

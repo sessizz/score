@@ -45,12 +45,16 @@
     const colorA = leftData.accentColor || leftData.color || '#ffed00';
     const colorB = rightData.accentColor || rightData.color || '#d61c35';
 
-    // Ball position: exactly 0px or calc(100% - 2.2em)
+    // Ball side: sits at the outer end of the serving team's side (positions in CSS)
     const isLeftServing = Boolean(leftData.isServing);
-    const ballLeft = isLeftServing ? '0px' : 'calc(100% - 2.2em)';
+    const ballSide = isLeftServing ? 'is-left' : 'is-right';
 
     // Center Logo (TVF)
     const logoUrl = '/assets/tvf-logo-beyaz.svg';
+
+    // Team logos, shown inside each team's name panel
+    const logoA = leftData.logo || '/assets/fenerbahce.svg';
+    const logoB = rightData.logo || '/assets/opponent.svg';
 
     root.innerHTML = `
       <div class="dc-board-container">
@@ -60,6 +64,7 @@
             <!-- Team A Column (Left) -->
             <div class="dc-team-col-a">
               <div class="dc-team-name-box">
+                <img src="${escapeHtml(logoA)}" class="dc-team-name-logo" alt="" />
                 <span class="dc-team-name-text">${escapeHtml(nameA)}</span>
               </div>
               <div class="dc-team-stripe-a" style="background: ${colorA};"></div>
@@ -97,12 +102,13 @@
             <div class="dc-team-col-b">
               <div class="dc-team-name-box">
                 <span class="dc-team-name-text">${escapeHtml(nameB)}</span>
+                <img src="${escapeHtml(logoB)}" class="dc-team-name-logo" alt="" />
               </div>
               <div class="dc-team-stripe-b" style="background: ${colorB};"></div>
             </div>
 
             <!-- Kayan ve Dönen Servis Topu -->
-            <div class="dc-ball-anchor" style="left: ${ballLeft};">
+            <div class="dc-ball-anchor ${ballSide}">
               <img src="/assets/serve-ball-v9.png" class="dc-ball-img" alt="" />
             </div>
 
