@@ -4,6 +4,7 @@
   let boardId = 'fenerbahce';
   let eventSource = null;
   let timeoutInterval = null;
+  let whistleBlownAt = null;
 
   // Extract boardId from URL path (/control/:id) or query param (?id=...)
   const pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -198,23 +199,40 @@
       elTimeoutTeamName.textContent = `${team ? team.name : ''} Molası`;
       startLocalTimeoutTimer(board.timeoutState.endsAt);
     } else {
-      elTimeoutBanner.classList.remove('active');
-      if (timeoutInterval) clearInterval(timeoutInterval);
+      hideTimeoutBanner();
+      whistleBlownAt = null;
+    }
+  }
+
+  function hideTimeoutBanner() {
+    elTimeoutBanner.classList.remove('active');
+    if (timeoutInterval) {
+      clearInterval(timeoutInterval);
+      timeoutInterval = null;
     }
   }
 
   function startLocalTimeoutTimer(endsAt) {
     if (timeoutInterval) clearInterval(timeoutInterval);
+    timeoutInterval = null;
+
     function update() {
       const remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
       elTimeoutTimer.textContent = `${remaining}s`;
-      if (remaining <= 0) {
-        clearInterval(timeoutInterval);
+      if (remaining > 0) return;
+      // Mola bitti: banner'ı kaldır, düdüğü bu mola için bir kez çal
+      hideTimeoutBanner();
+      if (whistleBlownAt !== endsAt) {
+        whistleBlownAt = endsAt;
         playWhistle();
       }
     }
+
     update();
-    timeoutInterval = setInterval(update, 500);
+    // Süre çoktan dolmuşsa update() banner'ı kapattı, sayacı başlatma
+    if (elTimeoutBanner.classList.contains('active')) {
+      timeoutInterval = setInterval(update, 500);
+    }
   }
 
   // Click Listeners

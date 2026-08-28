@@ -321,16 +321,7 @@ function executeAction(boardId, action, payload = {}) {
       break;
     }
     case 'end_timeout': {
-      board.timeoutState = {
-        active: false,
-        team: null,
-        duration: 30,
-        startedAt: null,
-        endsAt: null
-      };
-      if (board.status === 'timeout') {
-        board.status = 'live';
-      }
+      clearTimeoutState(board);
       break;
     }
     case 'swap_sides': {
@@ -460,6 +451,19 @@ function executeAction(boardId, action, payload = {}) {
   return { success: true, board: boards.get(boardId) };
 }
 
+function clearTimeoutState(board) {
+  board.timeoutState = {
+    active: false,
+    team: null,
+    duration: 30,
+    startedAt: null,
+    endsAt: null
+  };
+  if (board.status === 'timeout') {
+    board.status = 'live';
+  }
+}
+
 function startTimeout(board, team, duration = 30) {
   const now = Date.now();
   board.status = 'timeout';
@@ -514,6 +518,22 @@ function broadcastBoard(boardId) {
     }
   }
 }
+
+// Expire finished timeouts so every client drops the timeout banner on its own
+setInterval(() => {
+  const now = Date.now();
+  let expired = false;
+  for (const [boardId, board] of boards.entries()) {
+    const state = board.timeoutState;
+    if (!state || !state.active) continue;
+    if (state.endsAt && state.endsAt > now) continue;
+    clearTimeoutState(board);
+    board.updatedAt = now;
+    expired = true;
+    broadcastBoard(boardId);
+  }
+  if (expired) saveBoardsToDisk();
+}, 1000);
 
 // Heartbeat every 15s to keep SSE alive
 setInterval(() => {
