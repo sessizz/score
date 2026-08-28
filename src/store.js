@@ -272,6 +272,7 @@ function executeAction(boardId, action, payload = {}) {
 
   switch (action) {
     case 'point_a': {
+      maybeAutoStartClock(board);
       board.teamA.points += (payload.amount || 1);
       // In volleyball, the team winning the rally serves
       board.teamA.isServing = true;
@@ -279,6 +280,7 @@ function executeAction(boardId, action, payload = {}) {
       break;
     }
     case 'point_b': {
+      maybeAutoStartClock(board);
       board.teamB.points += (payload.amount || 1);
       board.teamB.isServing = true;
       board.teamA.isServing = false;
@@ -502,6 +504,15 @@ function getClockElapsed(clock) {
   const base = clock.elapsedMs || 0;
   if (!clock.running || !clock.startedAt) return base;
   return base + Math.max(0, Date.now() - clock.startedAt);
+}
+
+// Setin ilk sayısı girilince sayaç kendiliğinden başlar.
+// Elle duraklatılmış bir sayaç kendi başına devam etmez.
+function maybeAutoStartClock(board) {
+  const clock = ensureSetClock(board);
+  if (clock.running || clock.startedAt || (clock.elapsedMs || 0) > 0) return;
+  clock.running = true;
+  clock.startedAt = Date.now();
 }
 
 function resetSetClock(board) {
