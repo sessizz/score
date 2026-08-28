@@ -5,6 +5,8 @@
   let eventSource = null;
   let timeoutInterval = null;
   let whistleBlownAt = null;
+  let clockInterval = null;
+  let clockState = { running: false, startedAt: null, elapsedMs: 0 };
 
   // Extract boardId from URL path (/control/:id) or query param (?id=...)
   const pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -22,6 +24,9 @@
   const elMatchSub = document.getElementById('match-sub');
   const elSetPill = document.getElementById('set-pill');
   const elHistoryList = document.getElementById('history-list');
+  const elClockVal = document.getElementById('set-clock-val');
+  const elClockPlay = document.getElementById('btn-clock-play');
+  const elClockToggle = document.getElementById('btn-clock-toggle');
   const elTimeoutBanner = document.getElementById('timeout-banner');
   const elTimeoutTimer = document.getElementById('timeout-timer');
   const elTimeoutTeamName = document.getElementById('timeout-team-name');
@@ -192,6 +197,9 @@
     rightToDot1.className = `to-dot ${rightData.timeouts >= 1 ? 'used' : ''}`;
     rightToDot2.className = `to-dot ${rightData.timeouts >= 2 ? 'used' : ''}`;
 
+    // Set Clock
+    renderSetClock(board.setClock);
+
     // Handle Timeout Banner
     if (board.timeoutState && board.timeoutState.active) {
       elTimeoutBanner.classList.add('active');
@@ -202,6 +210,47 @@
       hideTimeoutBanner();
       whistleBlownAt = null;
     }
+  }
+
+  function renderSetClock(state) {
+    clockState = state || { running: false, startedAt: null, elapsedMs: 0 };
+    if (clockInterval) {
+      clearInterval(clockInterval);
+      clockInterval = null;
+    }
+    updateClockDisplay();
+    updateClockButtons();
+    if (clockState.running) {
+      clockInterval = setInterval(updateClockDisplay, 250);
+    }
+  }
+
+  function clockElapsedMs() {
+    const base = clockState.elapsedMs || 0;
+    if (!clockState.running || !clockState.startedAt) return base;
+    return base + Math.max(0, Date.now() - clockState.startedAt);
+  }
+
+  function updateClockDisplay() {
+    const total = Math.floor(clockElapsedMs() / 1000);
+    const mm = String(Math.floor(total / 60)).padStart(2, '0');
+    const ss = String(total % 60).padStart(2, '0');
+    elClockVal.textContent = `${mm}:${ss}`;
+  }
+
+  function updateClockButtons() {
+    const running = Boolean(clockState.running);
+    const paused = !running && clockElapsedMs() > 0;
+
+    elClockPlay.disabled = running;
+    elClockPlay.title = paused ? 'Devam Et' : 'Başlat';
+
+    // Sayaç duraklatılınca pause ikonu stop'a döner, ikinci basış sayacı sıfırlar
+    elClockToggle.disabled = !running && !paused;
+    elClockToggle.classList.toggle('is-stop', paused);
+    elClockToggle.title = running ? 'Duraklat' : 'Durdur';
+
+    elClockVal.classList.toggle('is-running', running);
   }
 
   function hideTimeoutBanner() {
@@ -282,6 +331,16 @@
     playWhistle();
     const isSwapped = currentBoard && currentBoard.courtSwapped;
     sendAction(isSwapped ? 'timeout_a' : 'timeout_b', { duration: 30 });
+  });
+
+  elClockPlay.addEventListener('click', () => {
+    playBeep(660, 'triangle', 0.08);
+    sendAction('clock_start');
+  });
+
+  elClockToggle.addEventListener('click', () => {
+    playBeep(440, 'triangle', 0.08);
+    sendAction(clockState.running ? 'clock_pause' : 'clock_reset');
   });
 
   document.getElementById('btn-end-timeout').addEventListener('click', () => {

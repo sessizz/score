@@ -64,6 +64,11 @@ const PRESETS = {
       startedAt: null,
       endsAt: null
     },
+    setClock: {
+      running: false,
+      startedAt: null,
+      elapsedMs: 0
+    },
     adminPin: '1907',
     bannerText: '',
     showBanner: false
@@ -114,6 +119,11 @@ const PRESETS = {
       duration: 30,
       startedAt: null,
       endsAt: null
+    },
+    setClock: {
+      running: false,
+      startedAt: null,
+      elapsedMs: 0
     },
     adminPin: '1234',
     bannerText: '',
@@ -193,6 +203,7 @@ function getBoard(boardId) {
     undoStacks.set(boardId, []);
     saveBoardsToDisk();
   }
+  ensureSetClock(boards.get(boardId));
   return boards.get(boardId);
 }
 
@@ -244,13 +255,16 @@ function checkSetStatus(board) {
   };
 }
 
+// Clock actions are not part of the match history
+const NO_UNDO_ACTIONS = ['undo', 'clock_start', 'clock_pause', 'clock_reset'];
+
 // Execute an action on a board
 function executeAction(boardId, action, payload = {}) {
   const board = getBoard(boardId);
   if (!board) return { success: false, error: 'Board not found' };
 
   // For state-modifying actions, save to undo stack first
-  if (action !== 'undo') {
+  if (!NO_UNDO_ACTIONS.includes(action)) {
     pushUndo(boardId);
   }
 
@@ -324,6 +338,27 @@ function executeAction(boardId, action, payload = {}) {
       clearTimeoutState(board);
       break;
     }
+    case 'clock_start': {
+      const clock = ensureSetClock(board);
+      if (!clock.running) {
+        clock.running = true;
+        clock.startedAt = Date.now();
+      }
+      break;
+    }
+    case 'clock_pause': {
+      const clock = ensureSetClock(board);
+      if (clock.running) {
+        clock.elapsedMs = getClockElapsed(clock);
+        clock.running = false;
+        clock.startedAt = null;
+      }
+      break;
+    }
+    case 'clock_reset': {
+      resetSetClock(board);
+      break;
+    }
     case 'swap_sides': {
       board.courtSwapped = !board.courtSwapped;
       break;
@@ -362,6 +397,7 @@ function executeAction(boardId, action, payload = {}) {
         board.teamB.substitutions = 0;
         // Usually teams swap courts between sets
         board.courtSwapped = !board.courtSwapped;
+        resetSetClock(board);
       }
       break;
     }
@@ -377,6 +413,7 @@ function executeAction(boardId, action, payload = {}) {
       board.teamA.substitutions = 0;
       board.teamB.substitutions = 0;
       board.status = 'live';
+      resetSetClock(board);
       break;
     }
     case 'reset_match': {
@@ -392,6 +429,7 @@ function executeAction(boardId, action, payload = {}) {
       board.teamB.substitutions = 0;
       board.status = 'live';
       board.courtSwapped = false;
+      resetSetClock(board);
       board.timeoutState = {
         active: false,
         team: null,
@@ -429,6 +467,8 @@ function executeAction(boardId, action, payload = {}) {
       const stack = undoStacks.get(boardId);
       if (stack && stack.length > 0) {
         const previousState = stack.pop();
+        // Sayaç maç geçmişinin parçası değil, geri almadan etkilenmesin
+        previousState.setClock = board.setClock;
         boards.set(boardId, previousState);
         modified = true;
       } else {
@@ -449,6 +489,23 @@ function executeAction(boardId, action, payload = {}) {
   }
 
   return { success: true, board: boards.get(boardId) };
+}
+
+function ensureSetClock(board) {
+  if (!board.setClock) {
+    board.setClock = { running: false, startedAt: null, elapsedMs: 0 };
+  }
+  return board.setClock;
+}
+
+function getClockElapsed(clock) {
+  const base = clock.elapsedMs || 0;
+  if (!clock.running || !clock.startedAt) return base;
+  return base + Math.max(0, Date.now() - clock.startedAt);
+}
+
+function resetSetClock(board) {
+  board.setClock = { running: false, startedAt: null, elapsedMs: 0 };
 }
 
 function clearTimeoutState(board) {

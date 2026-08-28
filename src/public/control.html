@@ -33,8 +33,20 @@
 
   <!-- Status Ribbon & Set History -->
   <div class="status-ribbon">
-    <div class="flex-center" style="gap: 10px;">
+    <div class="flex-center" style="gap: 12px;">
       <span class="set-pill" id="set-pill">1. SET</span>
+
+      <!-- Set Clock -->
+      <div class="set-clock">
+        <span class="set-clock-val" id="set-clock-val">00:00</span>
+        <button class="clock-btn" id="btn-clock-play" title="Başlat" aria-label="Set sayacını başlat">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+        </button>
+        <button class="clock-btn" id="btn-clock-toggle" title="Duraklat" aria-label="Set sayacını duraklat">
+          <svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1"/><rect x="13.4" y="5" width="3.6" height="14" rx="1"/></svg>
+          <svg class="ic-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/></svg>
+        </button>
+      </div>
     </div>
     <div class="set-history-pills" id="history-list">
       <!-- Past set scores will appear here -->

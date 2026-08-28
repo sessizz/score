@@ -71,6 +71,90 @@
   letter-spacing: 0.5px;
 }
 
+/* Set Clock (Play / Pause / Stop) */
+.set-clock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 3px 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+.set-clock-val {
+  font-family: var(--font-score);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.5px;
+  font-variant-numeric: tabular-nums;
+  min-width: 3.4em;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.set-clock-val.is-running {
+  color: var(--text-main);
+}
+
+.clock-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card-alt);
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.clock-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.clock-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.clock-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.clock-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+#btn-clock-play {
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+#btn-clock-toggle {
+  color: #fde047;
+  border-color: rgba(250, 204, 21, 0.4);
+}
+
+/* Duraklatıldığında pause ikonu stop'a döner */
+#btn-clock-toggle.is-stop {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.clock-btn .ic-stop,
+.clock-btn.is-stop .ic-pause {
+  display: none;
+}
+
+.clock-btn.is-stop .ic-stop {
+  display: block;
+}
+
 .set-history-pills {
   display: flex;
   gap: 6px;
