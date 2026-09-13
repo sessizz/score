@@ -134,3 +134,47 @@
   border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* Salon Canlı Saat & Mola Stilleri */
+.live-clock-indicator {
+  font-family: var(--font-score);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 6px 20px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  letter-spacing: 1px;
+}
+
+.live-clock-indicator.is-timeout {
+  background: linear-gradient(180deg, #d61c35, #a80d23);
+  color: #ffed00;
+  border-color: #ffed00;
+  animation: pulse-live 1s infinite ease-in-out;
+}
+
+.live-timeout-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: -6px;
+  margin-bottom: 2px;
+}
+
+.live-to-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.5);
+  transition: all 0.25s ease;
+}
+
+.live-to-dot.is-used {
+  background: var(--fb-yellow);
+  border-color: var(--fb-yellow);
+  box-shadow: 0 0 10px rgba(255, 237, 0, 0.8);
+}
+

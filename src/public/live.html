@@ -14,7 +14,10 @@
     <!-- Top Header -->
     <header class="live-top-bar">
       <div class="live-match-title" id="live-title">FENERBAHÇE KÜÇÜK ERKEK VOLEYBOL LİGİ</div>
-      <div class="live-set-indicator" id="live-set">1. SET</div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="live-clock-indicator" id="live-clock">00:00</div>
+        <div class="live-set-indicator" id="live-set">1. SET</div>
+      </div>
     </header>
 
     <!-- Main Scoreboard Court Display -->
@@ -23,6 +26,10 @@
       <div class="live-team-panel" id="team-left-panel">
         <img src="/assets/fenerbahce.svg" alt="Logo" class="live-team-logo" id="team-left-logo">
         <div class="live-team-name" id="team-left-name">FENERBAHÇE</div>
+        <div class="live-timeout-dots" id="team-left-timeouts" title="Mola: 0/2">
+          <span class="live-to-dot" id="live-left-to-1"></span>
+          <span class="live-to-dot" id="live-left-to-2"></span>
+        </div>
         <div class="live-sets-box" id="team-left-sets">0 SET</div>
         <div class="live-points-display" id="team-left-points">0</div>
       </div>
@@ -37,6 +44,10 @@
       <div class="live-team-panel" id="team-right-panel">
         <img src="/assets/opponent.svg" alt="Logo" class="live-team-logo" id="team-right-logo">
         <div class="live-team-name" id="team-right-name">RAKİP TAKIM</div>
+        <div class="live-timeout-dots" id="team-right-timeouts" title="Mola: 0/2">
+          <span class="live-to-dot" id="live-right-to-1"></span>
+          <span class="live-to-dot" id="live-right-to-2"></span>
+        </div>
         <div class="live-sets-box" id="team-right-sets">0 SET</div>
         <div class="live-points-display" id="team-right-points">0</div>
       </div>

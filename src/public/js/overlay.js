@@ -2,6 +2,8 @@
 (function () {
   let boardId = 'fenerbahce';
   let eventSource = null;
+  let latestBoard = null;
+  let clockTicker = null;
 
   // Query Params
   const urlParams = new URLSearchParams(window.location.search);
@@ -15,6 +17,36 @@
   const theme = urlParams.get('theme') || 'topbar'; // 'topbar', 'lowerthird', 'bottom'
   const root = document.getElementById('overlay-root');
   root.className = `theme-${theme}`;
+
+  function formatClockMs(ms) {
+    const total = Math.floor(Math.max(0, ms) / 1000);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  function updateClockDisplay() {
+    const clockEl = document.getElementById('dc-overlay-clock');
+    const capsuleEl = document.getElementById('dc-top-capsule');
+    if (!clockEl || !latestBoard) return;
+
+    // Timeout countdown check
+    if (latestBoard.status === 'timeout' && latestBoard.timeoutState && latestBoard.timeoutState.endsAt) {
+      const remainSec = Math.max(0, Math.ceil((latestBoard.timeoutState.endsAt - Date.now()) / 1000));
+      clockEl.textContent = `MOLA ${remainSec}s`;
+      if (capsuleEl) capsuleEl.classList.add('is-timeout');
+      return;
+    }
+
+    if (capsuleEl) capsuleEl.classList.remove('is-timeout');
+
+    const clock = latestBoard.setClock || { running: false, startedAt: null, elapsedMs: 0 };
+    let ms = clock.elapsedMs || 0;
+    if (clock.running && clock.startedAt) {
+      ms += Math.max(0, Date.now() - clock.startedAt);
+    }
+    clockEl.textContent = formatClockMs(ms);
+  }
 
   // Connect SSE
   function connectSSE() {
@@ -33,9 +65,14 @@
     eventSource.onerror = () => {
       // EventSource auto reconnects
     };
+
+    if (!clockTicker) {
+      clockTicker = setInterval(updateClockDisplay, 250);
+    }
   }
 
   function renderOverlay(board) {
+    latestBoard = board;
     const isSwapped = Boolean(board.courtSwapped);
     const leftData = isSwapped ? board.teamB : board.teamA;
     const rightData = isSwapped ? board.teamA : board.teamB;
@@ -46,6 +83,9 @@
     const colorA2 = leftData.color2 || leftData.secondaryColor || '#002d72';
     const colorB = rightData.color || rightData.accentColor || '#d61c35';
     const colorB2 = rightData.color2 || rightData.secondaryColor || '#ffed00';
+
+    const leftTimeouts = Number(leftData.timeouts) || 0;
+    const rightTimeouts = Number(rightData.timeouts) || 0;
 
     // Ball side: sits at the outer end of the serving team's side (positions in CSS)
     const isLeftServing = Boolean(leftData.isServing);
@@ -61,6 +101,16 @@
     root.innerHTML = `
       <div class="dc-board-container">
         <div class="dc-board-scale-wrapper">
+
+          <!-- Zaman ve Set Kapsülü (Scoreboard'un Üstünde) -->
+          <div class="dc-top-capsule-row">
+            <div class="dc-top-capsule" id="dc-top-capsule">
+              <span class="dc-capsule-set">${board.currentSet || 1}. SET</span>
+              <span class="dc-capsule-sep">•</span>
+              <span class="dc-capsule-time" id="dc-overlay-clock">00:00</span>
+            </div>
+          </div>
+
           <div class="dc-grid" id="dc-grid-main">
 
             <!-- Team A Column (Left) -->
@@ -68,6 +118,10 @@
               <div class="dc-team-name-box">
                 <img src="${escapeHtml(logoA)}" class="dc-team-name-logo" alt="" />
                 <span class="dc-team-name-text">${escapeHtml(nameA)}</span>
+                <div class="dc-timeout-dots" title="Mola: ${leftTimeouts}/2">
+                  <span class="dc-to-dot ${leftTimeouts >= 1 ? 'is-used' : ''}"></span>
+                  <span class="dc-to-dot ${leftTimeouts >= 2 ? 'is-used' : ''}"></span>
+                </div>
               </div>
               <div class="dc-team-stripe-a">
                 <span style="background: ${colorA};"></span>
@@ -106,6 +160,10 @@
             <!-- Team B Column (Right) -->
             <div class="dc-team-col-b">
               <div class="dc-team-name-box">
+                <div class="dc-timeout-dots" title="Mola: ${rightTimeouts}/2">
+                  <span class="dc-to-dot ${rightTimeouts >= 1 ? 'is-used' : ''}"></span>
+                  <span class="dc-to-dot ${rightTimeouts >= 2 ? 'is-used' : ''}"></span>
+                </div>
                 <span class="dc-team-name-text">${escapeHtml(nameB)}</span>
                 <img src="${escapeHtml(logoB)}" class="dc-team-name-logo" alt="" />
               </div>
@@ -124,6 +182,8 @@
         </div>
       </div>
     `;
+
+    updateClockDisplay();
   }
 
   function escapeHtml(str) {

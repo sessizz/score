@@ -257,5 +257,88 @@ html, body {
   animation: fbspin 14s linear infinite;
 }
 
+/* Zaman ve Set Kapsülü (Scoreboard'un Üstünde) */
+.dc-top-capsule-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: .22em;
+}
+
+.dc-top-capsule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5em;
+  background: linear-gradient(180deg, #1c2a4a 0%, #121c33 100%);
+  border: .05em solid rgba(255, 255, 255, .22);
+  border-radius: .22em;
+  padding: .14em .85em;
+  font-weight: 800;
+  font-size: .65em;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  box-shadow: 0 .08em .2em rgba(0, 0, 0, .5);
+  box-sizing: border-box;
+  color: #fff;
+  transition: all .2s ease;
+}
+
+.dc-capsule-set {
+  color: #ffed00;
+  font-weight: 800;
+  font-style: italic;
+}
+
+.dc-capsule-sep {
+  color: rgba(255, 255, 255, .35);
+  font-size: .8em;
+}
+
+.dc-capsule-time {
+  color: #ffffff;
+  font-family: 'Barlow Condensed', Arial Narrow, sans-serif;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .06em;
+}
+
+.dc-top-capsule.is-timeout {
+  background: linear-gradient(180deg, #d61c35 0%, #a80d23 100%);
+  border-color: #ffed00;
+  box-shadow: 0 0 .4em rgba(214, 28, 53, .8);
+  animation: pulse-live 1s infinite ease-in-out;
+}
+
+.dc-top-capsule.is-timeout .dc-capsule-time {
+  color: #ffed00;
+}
+
+/* Takım Mola Sayacı (2 Nokta) */
+.dc-timeout-dots {
+  display: flex;
+  align-items: center;
+  gap: .22em;
+  padding: 0 .28em;
+  flex-shrink: 0;
+}
+
+.dc-to-dot {
+  width: .42em;
+  height: .42em;
+  border-radius: 50%;
+  border: .08em solid rgba(255, 255, 255, .4);
+  background: rgba(0, 0, 0, .45);
+  box-sizing: border-box;
+  transition: all .25s ease;
+}
+
+.dc-to-dot.is-used {
+  background: #ffed00;
+  border-color: #ffed00;
+  box-shadow: 0 0 .25em rgba(255, 237, 0, .9);
+}
+
+
 
 
