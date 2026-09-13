@@ -42,8 +42,10 @@
 
     const nameA = leftData.name || 'FENERBAHÇE';
     const nameB = rightData.name || 'RAKİP TAKIM';
-    const colorA = leftData.accentColor || leftData.color || '#ffed00';
-    const colorB = rightData.accentColor || rightData.color || '#d61c35';
+    const colorA = leftData.color || leftData.accentColor || '#ffed00';
+    const colorA2 = leftData.color2 || leftData.secondaryColor || '#002d72';
+    const colorB = rightData.color || rightData.accentColor || '#d61c35';
+    const colorB2 = rightData.color2 || rightData.secondaryColor || '#ffed00';
 
     // Ball side: sits at the outer end of the serving team's side (positions in CSS)
     const isLeftServing = Boolean(leftData.isServing);
@@ -67,7 +69,10 @@
                 <img src="${escapeHtml(logoA)}" class="dc-team-name-logo" alt="" />
                 <span class="dc-team-name-text">${escapeHtml(nameA)}</span>
               </div>
-              <div class="dc-team-stripe-a" style="background: ${colorA};"></div>
+              <div class="dc-team-stripe-a">
+                <span style="background: ${colorA};"></span>
+                <span style="background: ${colorA2};"></span>
+              </div>
             </div>
 
             <!-- Center Cluster (Sets A | Points A | Logo | Points B | Sets B) -->
@@ -104,7 +109,10 @@
                 <span class="dc-team-name-text">${escapeHtml(nameB)}</span>
                 <img src="${escapeHtml(logoB)}" class="dc-team-name-logo" alt="" />
               </div>
-              <div class="dc-team-stripe-b" style="background: ${colorB};"></div>
+              <div class="dc-team-stripe-b">
+                <span style="background: ${colorB};"></span>
+                <span style="background: ${colorB2};"></span>
+              </div>
             </div>
 
             <!-- Kayan ve Dönen Servis Topu -->

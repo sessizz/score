@@ -246,7 +246,10 @@
               <div style="font-size: 0.8rem; font-weight: 800; color: var(--fb-yellow); margin-bottom: 6px;">1. TAKIM (EV SAHİBİ)</div>
               <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                 <input type="text" class="form-input" id="new-name-a" value="FENERBAHÇE" placeholder="Takım Adı" style="flex: 2; padding: 6px 10px; font-size: 0.85rem;" required>
-                <input type="color" class="form-input" id="new-color-a" value="#ffed00" style="width: 44px; height: 34px; padding: 2px; cursor: pointer;" title="Takım Rengi">
+                <div style="display: flex; gap: 4px; align-items: center;" title="Takım Renkleri (1. Renk / 2. Renk)">
+                  <input type="color" class="form-input" id="new-color-a" value="#ffed00" style="width: 36px; height: 34px; padding: 2px; cursor: pointer;" title="1. Renk (Ana Renk)">
+                  <input type="color" class="form-input" id="new-color-a2" value="#002d72" style="width: 36px; height: 34px; padding: 2px; cursor: pointer;" title="2. Renk (İkincil Renk)">
+                </div>
               </div>
               <div style="display: flex; gap: 6px; align-items: center;">
                 <div class="mini-logo-preview" id="preview-box-a">
@@ -267,7 +270,10 @@
               <div style="font-size: 0.8rem; font-weight: 800; color: #f87171; margin-bottom: 6px;">2. TAKIM (DEPLASMAN)</div>
               <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                 <input type="text" class="form-input" id="new-name-b" value="RAKİP TAKIM" placeholder="Takım Adı" style="flex: 2; padding: 6px 10px; font-size: 0.85rem;" required>
-                <input type="color" class="form-input" id="new-color-b" value="#d61c35" style="width: 44px; height: 34px; padding: 2px; cursor: pointer;" title="Takım Rengi">
+                <div style="display: flex; gap: 4px; align-items: center;" title="Takım Renkleri (1. Renk / 2. Renk)">
+                  <input type="color" class="form-input" id="new-color-b" value="#d61c35" style="width: 36px; height: 34px; padding: 2px; cursor: pointer;" title="1. Renk (Ana Renk)">
+                  <input type="color" class="form-input" id="new-color-b2" value="#ffed00" style="width: 36px; height: 34px; padding: 2px; cursor: pointer;" title="2. Renk (İkincil Renk)">
+                </div>
               </div>
               <div style="display: flex; gap: 6px; align-items: center;">
                 <div class="mini-logo-preview" id="preview-box-b">
@@ -522,7 +528,9 @@
       const nameA = document.getElementById('new-name-a').value.trim() || 'EV SAHİBİ';
       const nameB = document.getElementById('new-name-b').value.trim() || 'DEPLASMAN';
       const colorA = document.getElementById('new-color-a').value;
+      const colorA2 = document.getElementById('new-color-a2') ? document.getElementById('new-color-a2').value : '#002d72';
       const colorB = document.getElementById('new-color-b').value;
+      const colorB2 = document.getElementById('new-color-b2') ? document.getElementById('new-color-b2').value : '#ffe500';
       const logoA = inputLogoValA.value || selectA.value;
       const logoB = inputLogoValB.value || selectB.value;
       const matchTitle = document.getElementById('new-match-title').value.trim() || `${nameA} - ${nameB}`;
@@ -550,6 +558,7 @@
               name: nameA,
               shortName: nameA.substring(0, 3).toUpperCase(),
               color: colorA,
+              color2: colorA2,
               accentColor: colorA,
               logo: logoA
             },
@@ -557,6 +566,7 @@
               name: nameB,
               shortName: nameB.substring(0, 3).toUpperCase(),
               color: colorB,
+              color2: colorB2,
               accentColor: colorB,
               logo: logoB
             }

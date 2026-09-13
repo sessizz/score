@@ -527,7 +527,10 @@
     document.getElementById('setting-subtitle').value = currentBoard.subtitle || '';
     document.getElementById('setting-name-a').value = currentBoard.teamA.name || '';
     document.getElementById('setting-short-a').value = currentBoard.teamA.shortName || '';
-    document.getElementById('setting-color-a').value = currentBoard.teamA.accentColor || currentBoard.teamA.color || '#ffed00';
+    document.getElementById('setting-color-a').value = currentBoard.teamA.color || currentBoard.teamA.accentColor || '#ffed00';
+    if (document.getElementById('setting-color-a2')) {
+      document.getElementById('setting-color-a2').value = currentBoard.teamA.color2 || currentBoard.teamA.secondaryColor || '#002d72';
+    }
     
     const logoA = currentBoard.teamA.logo || '/assets/fenerbahce.svg';
     document.getElementById('setting-logo-a').value = logoA;
@@ -542,7 +545,10 @@
 
     document.getElementById('setting-name-b').value = currentBoard.teamB.name || '';
     document.getElementById('setting-short-b').value = currentBoard.teamB.shortName || '';
-    document.getElementById('setting-color-b').value = currentBoard.teamB.accentColor || currentBoard.teamB.color || '#d61c35';
+    document.getElementById('setting-color-b').value = currentBoard.teamB.color || currentBoard.teamB.accentColor || '#d61c35';
+    if (document.getElementById('setting-color-b2')) {
+      document.getElementById('setting-color-b2').value = currentBoard.teamB.color2 || currentBoard.teamB.secondaryColor || '#ffed00';
+    }
     
     if (selectLogoB) selectLogoB.value = logoB;
     if (previewImgB) previewImgB.src = logoB;
@@ -571,6 +577,7 @@
         shortName: document.getElementById('setting-short-a').value.trim(),
         accentColor: document.getElementById('setting-color-a').value,
         color: document.getElementById('setting-color-a').value,
+        color2: document.getElementById('setting-color-a2') ? document.getElementById('setting-color-a2').value : '#002d72',
         logo: document.getElementById('setting-logo-a').value.trim()
       },
       teamB: {
@@ -578,6 +585,7 @@
         shortName: document.getElementById('setting-short-b').value.trim(),
         accentColor: document.getElementById('setting-color-b').value,
         color: document.getElementById('setting-color-b').value,
+        color2: document.getElementById('setting-color-b2') ? document.getElementById('setting-color-b2').value : '#ffed00',
         logo: document.getElementById('setting-logo-b').value.trim()
       }
     });

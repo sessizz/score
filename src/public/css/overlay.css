@@ -128,8 +128,16 @@ html, body {
 }
 
 .dc-team-stripe-a {
-  height: .2em;
-  background: var(--color-a, #ffed00);
+  height: .24em;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
+
+.dc-team-stripe-a > span {
+  flex: 1;
+  height: 100%;
+  display: block;
 }
 
 /* Center Cluster (Sets A | Points A | Logo | Points B | Sets B) */
@@ -208,8 +216,16 @@ html, body {
 }
 
 .dc-team-stripe-b {
-  height: .2em;
-  background: var(--color-b, #d61c35);
+  height: .24em;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
+
+.dc-team-stripe-b > span {
+  flex: 1;
+  height: 100%;
+  display: block;
 }
 
 /* Kayan ve Dönen Servis Topu */
