@@ -204,7 +204,12 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Takım Renkleri (1. ve 2. Renk)</label>
+          <div class="flex-between">
+            <label class="form-label">Takım Renkleri (1. ve 2. Renk)</label>
+            <button type="button" class="btn-eyedropper btn-control-eyedropper" data-team="a" title="Logodan Renk Seç (Damlalık)">
+              💧 Logodan Seç
+            </button>
+          </div>
           <div style="display: flex; gap: 8px; align-items: center;">
             <input type="color" class="form-input" id="setting-color-a" style="height: 42px; padding: 2px; flex: 1; cursor: pointer;" title="1. Renk (Ana Renk)">
             <input type="color" class="form-input" id="setting-color-a2" style="height: 42px; padding: 2px; flex: 1; cursor: pointer;" title="2. Renk (İkincil Renk)">
@@ -246,7 +251,12 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Takım Renkleri (1. ve 2. Renk)</label>
+          <div class="flex-between">
+            <label class="form-label">Takım Renkleri (1. ve 2. Renk)</label>
+            <button type="button" class="btn-eyedropper btn-control-eyedropper" data-team="b" title="Logodan Renk Seç (Damlalık)">
+              💧 Logodan Seç
+            </button>
+          </div>
           <div style="display: flex; gap: 8px; align-items: center;">
             <input type="color" class="form-input" id="setting-color-b" style="height: 42px; padding: 2px; flex: 1; cursor: pointer;" title="1. Renk (Ana Renk)">
             <input type="color" class="form-input" id="setting-color-b2" style="height: 42px; padding: 2px; flex: 1; cursor: pointer;" title="2. Renk (İkincil Renk)">
@@ -386,6 +396,7 @@
 <!-- Toast notifications -->
 <div id="toast-container"></div>
 
+<script src="/js/eyedropper.js"></script>
 <script src="/js/control.js"></script>
 </body>
 </html>

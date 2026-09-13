@@ -519,6 +519,40 @@
     btnCancelControlPicker.addEventListener('click', () => modalControlPicker.classList.remove('active'));
   }
 
+  // Eyedropper / Damlalık buttons
+  document.querySelectorAll('.btn-control-eyedropper').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const team = btn.dataset.team; // 'a' or 'b'
+      const color1Input = document.getElementById(`setting-color-${team}`);
+      const color2Input = document.getElementById(`setting-color-${team}2`);
+      const logoInput = document.getElementById(`setting-logo-${team}`);
+      const nameInput = document.getElementById(`setting-name-${team}`);
+      const logoImg = document.getElementById(`control-preview-img-${team}`);
+
+      const logoUrl = (logoImg && logoImg.src) ? logoImg.src : (logoInput ? logoInput.value : '');
+      const teamTitle = nameInput && nameInput.value.trim() ? nameInput.value.trim() : (team === 'a' ? '1. Takım' : '2. Takım');
+
+      if (typeof window.openLogoEyedropper === 'function') {
+        window.openLogoEyedropper({
+          logoUrl,
+          teamTitle,
+          initialColor1: color1Input ? color1Input.value : '#ffed00',
+          initialColor2: color2Input ? color2Input.value : '#002d72',
+          onApply: (c1, c2) => {
+            if (color1Input) {
+              color1Input.value = c1;
+              color1Input.dispatchEvent(new Event('change'));
+            }
+            if (color2Input) {
+              color2Input.value = c2;
+              color2Input.dispatchEvent(new Event('change'));
+            }
+          }
+        });
+      }
+    });
+  });
+
   document.getElementById('btn-open-settings').addEventListener('click', async () => {
     if (!currentBoard) return;
     await loadControlLogos();

@@ -249,6 +249,7 @@
                 <div style="display: flex; gap: 4px; align-items: center;" title="Takım Renkleri (1. Renk / 2. Renk)">
                   <input type="color" class="form-input" id="new-color-a" value="#ffed00" style="width: 36px; height: 34px; padding: 2px; cursor: pointer;" title="1. Renk (Ana Renk)">
                   <input type="color" class="form-input" id="new-color-a2" value="#002d72" style="width: 36px; height: 34px; padding: 2px; cursor: pointer;" title="2. Renk (İkincil Renk)">
+                  <button type="button" class="btn-eyedropper-mini btn-home-eyedropper" data-team="a" title="Logodan Renk Seç (Damlalık)">💧</button>
                 </div>
               </div>
               <div style="display: flex; gap: 6px; align-items: center;">
@@ -273,6 +274,7 @@
                 <div style="display: flex; gap: 4px; align-items: center;" title="Takım Renkleri (1. Renk / 2. Renk)">
                   <input type="color" class="form-input" id="new-color-b" value="#d61c35" style="width: 36px; height: 34px; padding: 2px; cursor: pointer;" title="1. Renk (Ana Renk)">
                   <input type="color" class="form-input" id="new-color-b2" value="#ffed00" style="width: 36px; height: 34px; padding: 2px; cursor: pointer;" title="2. Renk (İkincil Renk)">
+                  <button type="button" class="btn-eyedropper-mini btn-home-eyedropper" data-team="b" title="Logodan Renk Seç (Damlalık)">💧</button>
                 </div>
               </div>
               <div style="display: flex; gap: 6px; align-items: center;">
@@ -388,6 +390,7 @@
     </div>
   </div>
 
+  <script src="/js/eyedropper.js"></script>
   <script>
     let globalLogos = [];
     let currentPickerTarget = null; // 'a' or 'b'
@@ -520,6 +523,34 @@
     });
     document.getElementById('btn-cancel-picker').addEventListener('click', () => {
       modalPicker.classList.remove('active');
+    });
+
+    // Eyedropper / Damlalık buttons
+    document.querySelectorAll('.btn-home-eyedropper').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const team = btn.dataset.team; // 'a' or 'b'
+        const color1Input = document.getElementById(`new-color-${team}`);
+        const color2Input = document.getElementById(`new-color-${team}2`);
+        const logoInput = document.getElementById(`input-logo-val-${team}`);
+        const nameInput = document.getElementById(`new-name-${team}`);
+        const logoImg = document.getElementById(`preview-img-${team}`);
+
+        const logoUrl = (logoImg && logoImg.src) ? logoImg.src : (logoInput ? logoInput.value : '');
+        const teamTitle = nameInput && nameInput.value.trim() ? nameInput.value.trim() : (team === 'a' ? '1. Takım' : '2. Takım');
+
+        if (typeof window.openLogoEyedropper === 'function') {
+          window.openLogoEyedropper({
+            logoUrl,
+            teamTitle,
+            initialColor1: color1Input ? color1Input.value : '#ffed00',
+            initialColor2: color2Input ? color2Input.value : '#002d72',
+            onApply: (c1, c2) => {
+              if (color1Input) color1Input.value = c1;
+              if (color2Input) color2Input.value = c2;
+            }
+          });
+        }
+      });
     });
 
     // Form Submit: Create Match Board

@@ -210,3 +210,214 @@ body {
   text-overflow: ellipsis;
   max-width: 110px;
 }
+
+/* Eyedropper (Damlalık) Buttons & Modal */
+.btn-eyedropper {
+  background: rgba(255, 237, 0, 0.12);
+  border: 1px solid rgba(255, 237, 0, 0.35);
+  color: var(--fb-yellow);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.btn-eyedropper:hover {
+  background: rgba(255, 237, 0, 0.25);
+  border-color: var(--fb-yellow);
+  transform: translateY(-1px);
+}
+
+.btn-eyedropper-mini {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.btn-eyedropper-mini:hover {
+  background: rgba(255, 237, 0, 0.2);
+  border-color: var(--fb-yellow);
+  transform: translateY(-1px);
+}
+
+.modal-eyedropper-backdrop {
+  z-index: 1200;
+}
+
+.eyedropper-slot-container {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.eyedropper-slot-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.eyedropper-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.eyedropper-slot-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.eyedropper-slot-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.eyedropper-slot-btn.active {
+  border-color: var(--fb-yellow);
+  background: rgba(255, 237, 0, 0.12);
+  box-shadow: 0 0 0 1px var(--fb-yellow);
+}
+
+.eyedropper-color-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.eyedropper-slot-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.eyedropper-slot-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.eyedropper-slot-hex {
+  font-size: 0.72rem;
+  font-family: monospace;
+  color: var(--text-muted);
+}
+
+.eyedropper-slot-btn.active .eyedropper-slot-hex {
+  color: var(--fb-yellow);
+  font-weight: 700;
+}
+
+.eyedropper-stripe-preview-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.eyedropper-stripe-preview {
+  display: flex;
+  width: 140px;
+  height: 16px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.eyedropper-stripe-part-1,
+.eyedropper-stripe-part-2 {
+  flex: 1;
+  height: 100%;
+  transition: background-color 0.1s ease;
+}
+
+.eyedropper-canvas-card {
+  background: repeating-conic-gradient(#1a243b 0% 25%, #131c30 0% 50%) 50% / 12px 12px;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 190px;
+  overflow: hidden;
+  position: relative;
+}
+
+.eyedropper-canvas-wrapper {
+  cursor: crosshair;
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+#eyedropper-canvas {
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  display: block;
+  border-radius: 4px;
+}
+
+.eyedropper-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.palette-swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.palette-swatch:hover {
+  transform: scale(1.15);
+  border-color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
