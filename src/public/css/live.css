@@ -150,8 +150,9 @@
 
 .live-clock-indicator.is-timeout {
   background: linear-gradient(180deg, #d61c35, #a80d23);
-  color: #ffed00;
-  border-color: #ffed00;
+  color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 0 15px rgba(214, 28, 53, 0.8), 0 0 8px rgba(255, 255, 255, 0.6);
   animation: pulse-live 1s infinite ease-in-out;
 }
 
@@ -167,14 +168,14 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.45);
   background: rgba(0, 0, 0, 0.5);
   transition: all 0.25s ease;
 }
 
 .live-to-dot.is-used {
-  background: var(--fb-yellow);
-  border-color: var(--fb-yellow);
-  box-shadow: 0 0 10px rgba(255, 237, 0, 0.8);
+  background: #d61c35;
+  border-color: #ffffff;
+  box-shadow: 0 0 10px rgba(214, 28, 53, 0.9);
 }
 

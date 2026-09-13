@@ -330,8 +330,9 @@
 }
 
 .to-dot.used {
-  background: var(--accent-gold);
-  border-color: var(--accent-gold);
+  background: var(--crimson-light);
+  border-color: #ffffff;
+  box-shadow: 0 0 6px rgba(214, 28, 53, 0.8);
 }
 
 /* Giant Point Area */
