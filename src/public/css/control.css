@@ -499,6 +499,12 @@
   border-color: var(--fb-yellow);
 }
 
+.form-select option {
+  background-color: #121a2f;
+  color: #ffffff;
+  padding: 8px 12px;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

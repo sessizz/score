@@ -83,6 +83,15 @@
     setTimeout(() => playBeep(1400, 'square', 0.25), 80);
   }
 
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   // Toast Notification
   function showToast(message, isError = false) {
     const container = document.getElementById('toast-container');
@@ -403,9 +412,34 @@
 
   function populateControlLogoSelects() {
     if (!selectLogoA || !selectLogoB) return;
-    const optionsHtml = controlLogos.map(l => `<option value="${l.url}">${escapeHtml(l.name)}</option>`).join('');
-    selectLogoA.innerHTML = optionsHtml;
-    selectLogoB.innerHTML = optionsHtml;
+    const currentA = (document.getElementById('setting-logo-a') && document.getElementById('setting-logo-a').value)
+      || (currentBoard && currentBoard.teamA && currentBoard.teamA.logo)
+      || '';
+    const currentB = (document.getElementById('setting-logo-b') && document.getElementById('setting-logo-b').value)
+      || (currentBoard && currentBoard.teamB && currentBoard.teamB.logo)
+      || '';
+
+    let optionsA = controlLogos.map(l => `<option value="${l.url}" ${l.url === currentA ? 'selected' : ''}>${escapeHtml(l.name)}</option>`);
+    let optionsB = controlLogos.map(l => `<option value="${l.url}" ${l.url === currentB ? 'selected' : ''}>${escapeHtml(l.name)}</option>`);
+
+    if (currentA && !controlLogos.some(l => l.url === currentA)) {
+      optionsA.unshift(`<option value="${currentA}" selected>Mevcut Logo (${currentA})</option>`);
+    }
+    if (currentB && !controlLogos.some(l => l.url === currentB)) {
+      optionsB.unshift(`<option value="${currentB}" selected>Mevcut Logo (${currentB})</option>`);
+    }
+
+    selectLogoA.innerHTML = optionsA.join('');
+    selectLogoB.innerHTML = optionsB.join('');
+
+    if (currentA) {
+      selectLogoA.value = currentA;
+      if (previewImgA) previewImgA.src = currentA;
+    }
+    if (currentB) {
+      selectLogoB.value = currentB;
+      if (previewImgB) previewImgB.src = currentB;
+    }
   }
 
   if (selectLogoA) {
@@ -497,6 +531,12 @@
     
     const logoA = currentBoard.teamA.logo || '/assets/fenerbahce.svg';
     document.getElementById('setting-logo-a').value = logoA;
+
+    const logoB = currentBoard.teamB.logo || '/assets/opponent.svg';
+    document.getElementById('setting-logo-b').value = logoB;
+
+    populateControlLogoSelects();
+
     if (selectLogoA) selectLogoA.value = logoA;
     if (previewImgA) previewImgA.src = logoA;
 
@@ -504,8 +544,6 @@
     document.getElementById('setting-short-b').value = currentBoard.teamB.shortName || '';
     document.getElementById('setting-color-b').value = currentBoard.teamB.accentColor || currentBoard.teamB.color || '#d61c35';
     
-    const logoB = currentBoard.teamB.logo || '/assets/opponent.svg';
-    document.getElementById('setting-logo-b').value = logoB;
     if (selectLogoB) selectLogoB.value = logoB;
     if (previewImgB) previewImgB.src = logoB;
 
