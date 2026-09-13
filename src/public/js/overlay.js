@@ -26,7 +26,6 @@
   }
 
   function updateClockDisplay() {
-    const clockEl = document.getElementById('dc-overlay-clock');
     if (!latestBoard) return;
 
     // Set match timer
@@ -35,6 +34,7 @@
     if (clock.running && clock.startedAt) {
       ms += Math.max(0, Date.now() - clock.startedAt);
     }
+    const clockEl = document.getElementById('dc-overlay-clock');
     if (clockEl) {
       clockEl.textContent = formatClockMs(ms);
     }
@@ -43,51 +43,68 @@
     const isSwapped = Boolean(latestBoard.courtSwapped);
     let remainSec = 0;
     let isTimeoutActive = false;
-    let timeoutTeam = null;
+    let rawTeam = '';
 
-    if (latestBoard.status === 'timeout' && latestBoard.timeoutState && latestBoard.timeoutState.endsAt) {
-      remainSec = Math.max(0, Math.ceil((latestBoard.timeoutState.endsAt - Date.now()) / 1000));
-      isTimeoutActive = remainSec > 0;
-      timeoutTeam = latestBoard.timeoutState.team; // 'a' or 'b'
+    if (latestBoard.status === 'timeout' || (latestBoard.timeoutState && latestBoard.timeoutState.active)) {
+      if (latestBoard.timeoutState && latestBoard.timeoutState.endsAt) {
+        remainSec = Math.max(0, Math.ceil((latestBoard.timeoutState.endsAt - Date.now()) / 1000));
+        isTimeoutActive = remainSec > 0;
+        rawTeam = String(latestBoard.timeoutState.team || '').toLowerCase();
+      }
     }
 
-    const leftHasTimeout = isTimeoutActive && (isSwapped ? timeoutTeam === 'b' : timeoutTeam === 'a');
-    const rightHasTimeout = isTimeoutActive && (isSwapped ? timeoutTeam === 'a' : timeoutTeam === 'b');
+    // Matches 'teamA' / 'a' or 'teamB' / 'b'
+    const isTeamA = rawTeam === 'teama' || rawTeam === 'a' || rawTeam === '1';
+    const isTeamB = rawTeam === 'teamb' || rawTeam === 'b' || rawTeam === '2';
+
+    // If court swapped: Left is Team B, Right is Team A
+    // If not swapped: Left is Team A, Right is Team B
+    let leftHasTimeout = isTimeoutActive && (isSwapped ? isTeamB : isTeamA);
+    let rightHasTimeout = isTimeoutActive && (isSwapped ? isTeamA : isTeamB);
+
+    // Fallback if timeout is active but team was somehow not identified
+    const centerCapsule = document.getElementById('dc-top-capsule');
+    if (isTimeoutActive && !leftHasTimeout && !rightHasTimeout) {
+      if (centerCapsule && clockEl) {
+        clockEl.textContent = `MOLA ${remainSec}s`;
+        centerCapsule.classList.add('is-timeout');
+      }
+    } else {
+      if (centerCapsule) {
+        centerCapsule.classList.remove('is-timeout');
+      }
+    }
 
     const badgeLeft = document.getElementById('dc-timeout-badge-left');
     const badgeRight = document.getElementById('dc-timeout-badge-right');
     const secLeft = document.getElementById('dc-timeout-sec-left');
     const secRight = document.getElementById('dc-timeout-sec-right');
+    const inlineLeft = document.getElementById('dc-to-inline-left');
+    const inlineRight = document.getElementById('dc-to-inline-right');
     const boxLeft = document.getElementById('dc-team-box-left');
     const boxRight = document.getElementById('dc-team-box-right');
 
     if (badgeLeft) {
-      if (leftHasTimeout) {
-        badgeLeft.style.visibility = 'visible';
-        badgeLeft.style.opacity = '1';
-        if (secLeft) secLeft.textContent = `${remainSec}s`;
-      } else {
-        badgeLeft.style.visibility = 'hidden';
-        badgeLeft.style.opacity = '0';
-      }
+      badgeLeft.style.display = leftHasTimeout ? 'inline-flex' : 'none';
+      if (secLeft) secLeft.textContent = `${remainSec}s`;
     }
-
-    if (badgeRight) {
-      if (rightHasTimeout) {
-        badgeRight.style.visibility = 'visible';
-        badgeRight.style.opacity = '1';
-        if (secRight) secRight.textContent = `${remainSec}s`;
-      } else {
-        badgeRight.style.visibility = 'hidden';
-        badgeRight.style.opacity = '0';
-      }
+    if (inlineLeft) {
+      inlineLeft.style.display = leftHasTimeout ? 'inline-block' : 'none';
+      inlineLeft.textContent = `${remainSec}s`;
     }
-
     if (boxLeft) {
       if (leftHasTimeout) boxLeft.classList.add('is-timeout-team');
       else boxLeft.classList.remove('is-timeout-team');
     }
 
+    if (badgeRight) {
+      badgeRight.style.display = rightHasTimeout ? 'inline-flex' : 'none';
+      if (secRight) secRight.textContent = `${remainSec}s`;
+    }
+    if (inlineRight) {
+      inlineRight.style.display = rightHasTimeout ? 'inline-block' : 'none';
+      inlineRight.textContent = `${remainSec}s`;
+    }
     if (boxRight) {
       if (rightHasTimeout) boxRight.classList.add('is-timeout-team');
       else boxRight.classList.remove('is-timeout-team');
@@ -151,7 +168,7 @@
           <!-- Üst Satır: Sol Takım Molası | Merkez Set & Zaman Kapsülü | Sağ Takım Molası -->
           <div class="dc-top-row-grid">
             <div class="dc-top-timeout-col-left">
-              <div class="dc-top-timeout-badge" id="dc-timeout-badge-left" style="visibility: hidden; opacity: 0;">
+              <div class="dc-top-timeout-badge" id="dc-timeout-badge-left" style="display: none;">
                 <span class="dc-timeout-pulse-dot"></span>
                 <span>MOLA</span>
                 <span class="dc-timeout-sec" id="dc-timeout-sec-left">30s</span>
@@ -167,7 +184,7 @@
             </div>
 
             <div class="dc-top-timeout-col-right">
-              <div class="dc-top-timeout-badge" id="dc-timeout-badge-right" style="visibility: hidden; opacity: 0;">
+              <div class="dc-top-timeout-badge" id="dc-timeout-badge-right" style="display: none;">
                 <span class="dc-timeout-pulse-dot"></span>
                 <span>MOLA</span>
                 <span class="dc-timeout-sec" id="dc-timeout-sec-right">30s</span>
@@ -185,6 +202,7 @@
                 <div class="dc-timeout-dots" title="Mola: ${leftTimeouts}/2">
                   <span class="dc-to-dot ${leftTimeouts >= 1 ? 'is-used' : ''}"></span>
                   <span class="dc-to-dot ${leftTimeouts >= 2 ? 'is-used' : ''}"></span>
+                  <span class="dc-to-inline-timer" id="dc-to-inline-left" style="display: none;">30s</span>
                 </div>
               </div>
               <div class="dc-team-stripe-a">
@@ -225,6 +243,7 @@
             <div class="dc-team-col-b">
               <div class="dc-team-name-box" id="dc-team-box-right">
                 <div class="dc-timeout-dots" title="Mola: ${rightTimeouts}/2">
+                  <span class="dc-to-inline-timer" id="dc-to-inline-right" style="display: none;">30s</span>
                   <span class="dc-to-dot ${rightTimeouts >= 1 ? 'is-used' : ''}"></span>
                   <span class="dc-to-dot ${rightTimeouts >= 2 ? 'is-used' : ''}"></span>
                 </div>

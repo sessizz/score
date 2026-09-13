@@ -390,6 +390,33 @@ html, body {
   box-shadow: 0 0 .28em rgba(214, 28, 53, .95);
 }
 
+.dc-to-inline-timer {
+  background: #d61c35;
+  color: #ffffff;
+  border: .07em solid #ffffff;
+  border-radius: .22em;
+  padding: .08em .35em;
+  font-family: 'Barlow Condensed', Arial Narrow, sans-serif;
+  font-size: .62em;
+  font-weight: 800;
+  letter-spacing: .04em;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 .25em rgba(214, 28, 53, .9);
+  animation: pulse-live 1s infinite ease-in-out;
+  line-height: 1;
+}
+
+.dc-top-capsule.is-timeout {
+  background: linear-gradient(180deg, #d61c35 0%, #a80d23 100%);
+  border-color: #ffffff;
+  box-shadow: 0 0 .35em rgba(255, 255, 255, .6), 0 0 .7em rgba(214, 28, 53, .8);
+  animation: pulse-live 1s infinite ease-in-out;
+}
+
+.dc-top-capsule.is-timeout .dc-capsule-time {
+  color: #ffffff;
+}
+
 
 
 
