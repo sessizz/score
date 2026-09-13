@@ -8,16 +8,40 @@
   <link rel="icon" href="/assets/volleyball.svg">
   <style>
     .home-container {
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 40px 20px 80px;
+      padding: 30px 20px 80px;
+    }
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     .hero {
       text-align: center;
       margin-bottom: 40px;
     }
     .hero-title {
-      font-size: 2.4rem;
+      font-size: 2.5rem;
       font-weight: 900;
       letter-spacing: -0.5px;
       background: linear-gradient(135deg, #ffffff 0%, var(--fb-yellow) 100%);
@@ -28,13 +52,13 @@
     .hero-sub {
       color: var(--text-muted);
       font-size: 1.1rem;
-      max-width: 600px;
+      max-width: 650px;
       margin: 0 auto;
     }
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
       margin-bottom: 40px;
     }
     .card {
@@ -118,44 +142,77 @@
       font-size: 0.85rem;
       flex-shrink: 0;
     }
+
+    /* Logo picker preview inside cards */
+    .mini-logo-preview {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: repeating-conic-gradient(#1c2742 0% 25%, #151f36 0% 50%) 50% / 8px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .mini-logo-preview img {
+      max-width: 32px;
+      max-height: 32px;
+      object-fit: contain;
+    }
   </style>
 </head>
 <body>
 
   <div class="home-container">
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+      <a href="/" class="nav-brand">
+        <img src="/assets/volleyball.svg" style="width: 30px; height: 30px;" alt="Logo">
+        <span>Voleybol Skorboard</span>
+      </a>
+      <div class="nav-actions">
+        <a href="/logos" class="btn-link btn-secondary" style="padding: 8px 16px;">
+          🖼️ Logo Kütüphanesi & Yönetimi
+        </a>
+        <a href="/control/fenerbahce" class="btn-link btn-primary" style="padding: 8px 16px;">
+          🎛️ Hakem Paneli
+        </a>
+      </div>
+    </nav>
+
+    <!-- Hero -->
     <div class="hero">
       <div style="font-size: 3rem; margin-bottom: 8px;">🏐</div>
       <h1 class="hero-title">Voleybol Canlı Skorboard Sistemi</h1>
-      <p class="hero-sub">Fenerbahçe Altyapı Küçük Erkek Voleybol Ligi canlı yayınları ve tüm voleybol maçları için ultra hafif, sıfır gecikmeli (SSE) ve OBS uyumlu skor yönetim platformu.</p>
+      <p class="hero-sub">Fenerbahçe Altyapı maçları ve tüm voleybol turnuvaları için logo yönetimli, sıfır gecikmeli (SSE) ve OBS uyumlu profesyonel skor platformu.</p>
     </div>
 
     <!-- Active Match Boards -->
     <div class="cards-grid">
-      <!-- Main Fenerbahçe Match Card -->
+      <!-- Card 1: Main Fenerbahçe Match Card -->
       <div class="card" style="border-color: var(--fb-yellow);">
         <div>
           <div class="flex-between">
             <span class="badge badge-live">● CANLI HAZIR</span>
-            <span style="font-size: 0.75rem; color: #94a3b8;">Varsayılan Tahta</span>
+            <span style="font-size: 0.75rem; color: #94a3b8;">Fenerbahçe Şablonu</span>
           </div>
           <div class="card-title" style="margin-top: 12px;">
             <img src="/assets/fenerbahce.svg" style="width: 28px; height: 28px;" alt="FB">
             <span>Fenerbahçe Altyapı Maçı</span>
           </div>
           <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px;">
-            Sarı-Lacivert takım renkleri, resmi logolar, mola sayaçları ve voleybol kuralları ile hazır şablon.
+            Sarı-Lacivert takım renkleri, resmi Fenerbahçe amblemi ve hazır voleybol kuralları ile standart maç tahtası.
           </p>
         </div>
 
         <div class="btn-group">
           <a href="/control/fenerbahce" class="btn-link btn-primary">
-            🎛️ Hakem Kumanda Panelini Aç (Mobil / Tablet)
+            🎛️ Hakem Kumanda Panelini Aç
           </a>
           <a href="/overlay/fenerbahce?theme=topbar" target="_blank" class="btn-link btn-secondary">
-            📺 OBS Üst Bant Katmanı (Top Bar)
-          </a>
-          <a href="/overlay/fenerbahce?theme=lowerthird" target="_blank" class="btn-link btn-secondary">
-            📺 OBS Geniş Alt Şerit (Lower-Third)
+            📺 OBS Canlı Yayın Üst Bant Katmanı
           </a>
           <a href="/live/fenerbahce" target="_blank" class="btn-link btn-secondary">
             🏟️ Canlı Salon / Seyirci Ekranı (Tam Ekran)
@@ -163,29 +220,108 @@
         </div>
       </div>
 
-      <!-- Create New Custom Match Card -->
-      <div class="card">
+      <!-- Card 2: Create New Custom Match Card with Logo Selection -->
+      <div class="card" style="border-color: rgba(59, 130, 246, 0.5);">
         <div>
           <div class="flex-between">
-            <span class="badge badge-set">+ YENİ TAHTA</span>
+            <span class="badge badge-set">+ ÖZEL MAÇ</span>
+            <span style="font-size: 0.75rem; color: #94a3b8;">Logo Seçimli</span>
           </div>
           <div class="card-title" style="margin-top: 12px;">
             <span>Yeni Bir Maç Başlat</span>
           </div>
           <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px;">
-            Farklı bir lig, yaş grubu veya özel turnuva için bağımsız bir maç tahtası oluşturun.
+            Takımların logolarını kütüphaneden seçerek özel bir maç tahtası oluşturun.
           </p>
 
-          <div style="margin-top: 16px;">
-            <label class="form-label">Maç URL Kodu (Slug)</label>
-            <input type="text" class="form-input" id="new-board-slug" placeholder="ornek: kucuk-erkekler-final">
+          <form id="form-create-match" style="margin-top: 16px;">
+            <!-- Match Title & Slug -->
+            <div style="margin-bottom: 12px;">
+              <label class="form-label" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;">Maç Başlığı</label>
+              <input type="text" class="form-input" id="new-match-title" placeholder="Örn: Fenerbahçe - Galatasaray Final Maçı" style="padding: 8px 10px; font-size: 0.88rem;">
+            </div>
+
+            <!-- Team A -->
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+              <div style="font-size: 0.8rem; font-weight: 800; color: var(--fb-yellow); margin-bottom: 6px;">1. TAKIM (EV SAHİBİ)</div>
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="text" class="form-input" id="new-name-a" value="FENERBAHÇE" placeholder="Takım Adı" style="flex: 2; padding: 6px 10px; font-size: 0.85rem;" required>
+                <input type="color" class="form-input" id="new-color-a" value="#ffed00" style="width: 44px; height: 34px; padding: 2px; cursor: pointer;" title="Takım Rengi">
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <div class="mini-logo-preview" id="preview-box-a">
+                  <img id="preview-img-a" src="/assets/fenerbahce.svg" alt="A">
+                </div>
+                <select class="form-select" id="select-logo-a" style="flex: 1; padding: 6px 8px; font-size: 0.82rem;">
+                  <!-- Populated from /api/logos -->
+                </select>
+                <button type="button" class="btn-link btn-secondary btn-open-picker" data-target="a" style="padding: 6px 10px; font-size: 0.78rem; white-space: nowrap;">
+                  🖼️ Seç
+                </button>
+              </div>
+              <input type="hidden" id="input-logo-val-a" value="/assets/fenerbahce.svg">
+            </div>
+
+            <!-- Team B -->
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 12px;">
+              <div style="font-size: 0.8rem; font-weight: 800; color: #f87171; margin-bottom: 6px;">2. TAKIM (DEPLASMAN)</div>
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="text" class="form-input" id="new-name-b" value="RAKİP TAKIM" placeholder="Takım Adı" style="flex: 2; padding: 6px 10px; font-size: 0.85rem;" required>
+                <input type="color" class="form-input" id="new-color-b" value="#d61c35" style="width: 44px; height: 34px; padding: 2px; cursor: pointer;" title="Takım Rengi">
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <div class="mini-logo-preview" id="preview-box-b">
+                  <img id="preview-img-b" src="/assets/opponent.svg" alt="B">
+                </div>
+                <select class="form-select" id="select-logo-b" style="flex: 1; padding: 6px 8px; font-size: 0.82rem;">
+                  <!-- Populated from /api/logos -->
+                </select>
+                <button type="button" class="btn-link btn-secondary btn-open-picker" data-target="b" style="padding: 6px 10px; font-size: 0.78rem; white-space: nowrap;">
+                  🖼️ Seç
+                </button>
+              </div>
+              <input type="hidden" id="input-logo-val-b" value="/assets/opponent.svg">
+            </div>
+
+            <!-- Match Slug -->
+            <div style="margin-bottom: 14px;">
+              <label class="form-label" style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 3px;">Özel URL Kodu (Opsiyonel)</label>
+              <input type="text" class="form-input" id="new-board-slug" placeholder="ornek: final-maci" style="padding: 6px 10px; font-size: 0.82rem;">
+            </div>
+
+            <button type="submit" class="btn-link btn-primary" id="btn-create-board" style="border: none; cursor: pointer; width: 100%;">
+              🚀 Maç Skorboardunu Başlat
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Card 3: Logo Management Center Promotion -->
+      <div class="card" style="border-color: rgba(234, 179, 8, 0.4);">
+        <div>
+          <div class="flex-between">
+            <span class="badge badge-set">🖼️ KÜTÜPHANE</span>
+            <span id="home-logo-counter" style="font-size: 0.75rem; color: #94a3b8;">Yükleniyor...</span>
+          </div>
+          <div class="card-title" style="margin-top: 12px;">
+            <span>Takım Logoları Yönetimi</span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px;">
+            Kulüp, okul veya rakip takım logolarını yükleyin, isimlerini düzenleyin ve maç scoreboardlarında dilediğiniz gibi kullanın.
+          </p>
+
+          <div id="home-logos-mini-grid" style="display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap;">
+            <!-- Mini preview icons populated via JS -->
           </div>
         </div>
 
-        <div class="btn-group" style="margin-top: 16px;">
-          <button class="btn-link btn-primary" id="btn-create-board" style="border: none; cursor: pointer; width: 100%;">
-            Maç Tahtasını Oluştur & Aç
-          </button>
+        <div class="btn-group" style="margin-top: 24px;">
+          <a href="/logos" class="btn-link btn-secondary" style="border-color: var(--fb-yellow); color: var(--fb-yellow);">
+            📂 Logo Kütüphanesini Aç & Yönet
+          </a>
+          <a href="/logos#form-upload-logo" class="btn-link btn-secondary">
+            ➕ Yeni Bir Logo Yükle
+          </a>
         </div>
       </div>
     </div>
@@ -206,33 +342,253 @@
         <div class="step-num">2</div>
         <div>
           <b>URL ve Çözünürlüğü Ayarlayın:</b>
-          <p style="font-size: 0.85rem; color: var(--text-muted);">URL alanına yukarıdaki <code>/overlay/fenerbahce?theme=topbar</code> linkini yapıştırın. Genişlik: <code>1920</code>, Yükseklik: <code>1080</code> yapın. Arka plan otomatik şeffaftır.</p>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">URL alanına maçınızın <code>/overlay/{mac-kodu}?theme=topbar</code> linkini yapıştırın. Genişlik: <code>1920</code>, Yükseklik: <code>1080</code> yapın. Arka plan otomatik şeffaftır.</p>
         </div>
       </div>
       <div class="guide-step">
         <div class="step-num">3</div>
         <div>
           <b>Telefondan Skoru Yönetin:</b>
-          <p style="font-size: 0.85rem; color: var(--text-muted);">Masa başındaki hakem veya veli/operatör telefonundan <code>/control/fenerbahce</code> adresine girip sayılara bastıkça OBS canlı yayınınızda anında 0 gecikmeyle güncellenir!</p>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">Hakem veya veli/operatör telefonundan <code>/control/{mac-kodu}</code> adresine girip sayılara bastıkça OBS canlı yayınınızda anında 0 gecikmeyle güncellenir!</p>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Visual Logo Picker Modal -->
+  <div class="modal-backdrop" id="modal-logo-picker">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="flex-between" style="margin-bottom: 12px;">
+        <h3 style="font-weight: 800; font-size: 1.15rem;">🖼️ Logo Seç</h3>
+        <button class="btn-modal-close" id="btn-close-logo-picker">&times;</button>
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <input type="text" class="form-input" id="picker-search" placeholder="Logo ara..." style="padding: 8px 12px;">
+      </div>
+
+      <div class="logo-picker-grid" id="picker-grid">
+        <!-- Logo items injected dynamically -->
+      </div>
+
+      <div class="flex-between" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+        <a href="/logos" target="_blank" style="font-size: 0.85rem; color: var(--fb-yellow); font-weight: 700; text-decoration: none;">
+          ➕ Yeni Logo Yükle veya Düzenle
+        </a>
+        <button type="button" class="btn-link btn-secondary" id="btn-cancel-picker" style="padding: 6px 14px; font-size: 0.85rem; cursor: pointer;">
+          Kapat
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    document.getElementById('btn-create-board').addEventListener('click', async () => {
-      const slug = document.getElementById('new-board-slug').value.trim() || `match-${Date.now().toString(36)}`;
-      const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
-      const res = await fetch('/api/boards', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: cleanSlug })
+    let globalLogos = [];
+    let currentPickerTarget = null; // 'a' or 'b'
+
+    const selectA = document.getElementById('select-logo-a');
+    const selectB = document.getElementById('select-logo-b');
+    const previewImgA = document.getElementById('preview-img-a');
+    const previewImgB = document.getElementById('preview-img-b');
+    const inputLogoValA = document.getElementById('input-logo-val-a');
+    const inputLogoValB = document.getElementById('input-logo-val-b');
+
+    const modalPicker = document.getElementById('modal-logo-picker');
+    const pickerGrid = document.getElementById('picker-grid');
+    const pickerSearch = document.getElementById('picker-search');
+
+    async function loadLogos() {
+      try {
+        const res = await fetch('/api/logos');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.logos)) {
+          globalLogos = data.logos;
+          populateLogoSelects();
+          renderHomeMiniLogos();
+        }
+      } catch (err) {
+        console.error('Failed to load logos', err);
+      }
+    }
+
+    function populateLogoSelects() {
+      const optionsHtml = globalLogos.map(l => `<option value="${l.url}">${escapeHtml(l.name)}</option>`).join('');
+
+      selectA.innerHTML = optionsHtml;
+      selectB.innerHTML = optionsHtml;
+
+      // Select defaults if present
+      const fbLogo = globalLogos.find(l => l.url.includes('fenerbahce'));
+      if (fbLogo) {
+        selectA.value = fbLogo.url;
+        inputLogoValA.value = fbLogo.url;
+        previewImgA.src = fbLogo.url;
+      }
+
+      const oppLogo = globalLogos.find(l => l.url.includes('opponent'));
+      if (oppLogo) {
+        selectB.value = oppLogo.url;
+        inputLogoValB.value = oppLogo.url;
+        previewImgB.src = oppLogo.url;
+      } else if (globalLogos.length > 1) {
+        selectB.value = globalLogos[1].url;
+        inputLogoValB.value = globalLogos[1].url;
+        previewImgB.src = globalLogos[1].url;
+      }
+    }
+
+    function renderHomeMiniLogos() {
+      const counter = document.getElementById('home-logo-counter');
+      if (counter) counter.textContent = `${globalLogos.length} Kayıtlı Logo`;
+
+      const miniGrid = document.getElementById('home-logos-mini-grid');
+      if (miniGrid) {
+        miniGrid.innerHTML = globalLogos.slice(0, 6).map(l => `
+          <div class="mini-logo-preview" title="${escapeHtml(l.name)}">
+            <img src="${l.url}" alt="" onerror="this.src='/assets/volleyball.svg'">
+          </div>
+        `).join('');
+      }
+    }
+
+    selectA.addEventListener('change', (e) => {
+      inputLogoValA.value = e.target.value;
+      previewImgA.src = e.target.value;
+    });
+
+    selectB.addEventListener('change', (e) => {
+      inputLogoValB.value = e.target.value;
+      previewImgB.src = e.target.value;
+    });
+
+    // Open Picker Modal
+    document.querySelectorAll('.btn-open-picker').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPickerTarget = btn.dataset.target; // 'a' or 'b'
+        renderPickerGrid();
+        modalPicker.classList.add('active');
+        pickerSearch.value = '';
+        pickerSearch.focus();
       });
-      const data = await res.json();
-      if (data.success) {
-        window.location.href = `/control/${cleanSlug}`;
+    });
+
+    function renderPickerGrid() {
+      const q = (pickerSearch.value || '').trim().toLowerCase();
+      const currentSelectedUrl = currentPickerTarget === 'a' ? inputLogoValA.value : inputLogoValB.value;
+
+      const filtered = globalLogos.filter(l => !q || (l.name || '').toLowerCase().includes(q));
+
+      pickerGrid.innerHTML = filtered.map(l => {
+        const isSelected = l.url === currentSelectedUrl;
+        return `
+          <div class="logo-picker-item ${isSelected ? 'selected' : ''}" data-url="${l.url}">
+            <div class="logo-picker-thumb">
+              <img src="${l.url}" alt="" onerror="this.src='/assets/volleyball.svg'">
+            </div>
+            <div class="logo-picker-title">${escapeHtml(l.name)}</div>
+          </div>
+        `;
+      }).join('');
+
+      pickerGrid.querySelectorAll('.logo-picker-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const url = item.dataset.url;
+          if (currentPickerTarget === 'a') {
+            inputLogoValA.value = url;
+            selectA.value = url;
+            previewImgA.src = url;
+          } else {
+            inputLogoValB.value = url;
+            selectB.value = url;
+            previewImgB.src = url;
+          }
+          modalPicker.classList.remove('active');
+        });
+      });
+    }
+
+    pickerSearch.addEventListener('input', renderPickerGrid);
+
+    document.getElementById('btn-close-logo-picker').addEventListener('click', () => {
+      modalPicker.classList.remove('active');
+    });
+    document.getElementById('btn-cancel-picker').addEventListener('click', () => {
+      modalPicker.classList.remove('active');
+    });
+
+    // Form Submit: Create Match Board
+    document.getElementById('form-create-match').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nameA = document.getElementById('new-name-a').value.trim() || 'EV SAHİBİ';
+      const nameB = document.getElementById('new-name-b').value.trim() || 'DEPLASMAN';
+      const colorA = document.getElementById('new-color-a').value;
+      const colorB = document.getElementById('new-color-b').value;
+      const logoA = inputLogoValA.value || selectA.value;
+      const logoB = inputLogoValB.value || selectB.value;
+      const matchTitle = document.getElementById('new-match-title').value.trim() || `${nameA} - ${nameB}`;
+
+      let slug = document.getElementById('new-board-slug').value.trim();
+      if (!slug) {
+        slug = `${nameA}-vs-${nameB}-${Date.now().toString(36)}`;
+      }
+      const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9_-]/g, '-').substring(0, 40);
+
+      const btn = document.getElementById('btn-create-board');
+      btn.disabled = true;
+      btn.textContent = 'Oluşturuluyor...';
+
+      try {
+        const res = await fetch('/api/boards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: cleanSlug,
+            title: matchTitle,
+            subtitle: 'Canlı Voleybol Karşılaşması',
+            preset: 'generic',
+            teamA: {
+              name: nameA,
+              shortName: nameA.substring(0, 3).toUpperCase(),
+              color: colorA,
+              accentColor: colorA,
+              logo: logoA
+            },
+            teamB: {
+              name: nameB,
+              shortName: nameB.substring(0, 3).toUpperCase(),
+              color: colorB,
+              accentColor: colorB,
+              logo: logoB
+            }
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = `/control/${cleanSlug}`;
+        } else {
+          alert(data.error || 'Scoreboard oluşturulamadı.');
+          btn.disabled = false;
+          btn.textContent = '🚀 Maç Skorboardunu Başlat';
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Sunucuya bağlanılamadı.');
+        btn.disabled = false;
+        btn.textContent = '🚀 Maç Skorboardunu Başlat';
       }
     });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Initialize
+    loadLogos();
   </script>
 </body>
 </html>

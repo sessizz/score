@@ -374,20 +374,140 @@
   // Settings Modal & OBS Links Modal
   const modalSettings = document.getElementById('modal-settings');
   const modalObs = document.getElementById('modal-obs');
+  const modalControlPicker = document.getElementById('modal-control-logo-picker');
+  const controlPickerGrid = document.getElementById('control-picker-grid');
+  const controlPickerSearch = document.getElementById('control-picker-search');
+  const btnCloseControlPicker = document.getElementById('btn-close-control-picker');
+  const btnCancelControlPicker = document.getElementById('btn-cancel-control-picker');
 
-  document.getElementById('btn-open-settings').addEventListener('click', () => {
+  let controlLogos = [];
+  let controlPickerTarget = null; // 'a' or 'b'
+
+  const selectLogoA = document.getElementById('control-select-logo-a');
+  const selectLogoB = document.getElementById('control-select-logo-b');
+  const previewImgA = document.getElementById('control-preview-img-a');
+  const previewImgB = document.getElementById('control-preview-img-b');
+
+  async function loadControlLogos() {
+    try {
+      const res = await fetch('/api/logos');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.logos)) {
+        controlLogos = data.logos;
+        populateControlLogoSelects();
+      }
+    } catch (err) {
+      console.error('Failed to load logos in control', err);
+    }
+  }
+
+  function populateControlLogoSelects() {
+    if (!selectLogoA || !selectLogoB) return;
+    const optionsHtml = controlLogos.map(l => `<option value="${l.url}">${escapeHtml(l.name)}</option>`).join('');
+    selectLogoA.innerHTML = optionsHtml;
+    selectLogoB.innerHTML = optionsHtml;
+  }
+
+  if (selectLogoA) {
+    selectLogoA.addEventListener('change', (e) => {
+      document.getElementById('setting-logo-a').value = e.target.value;
+      if (previewImgA) previewImgA.src = e.target.value;
+    });
+  }
+
+  if (selectLogoB) {
+    selectLogoB.addEventListener('change', (e) => {
+      document.getElementById('setting-logo-b').value = e.target.value;
+      if (previewImgB) previewImgB.src = e.target.value;
+    });
+  }
+
+  // Open Visual Picker Modal in Control Panel
+  document.querySelectorAll('.btn-control-open-picker').forEach(btn => {
+    btn.addEventListener('click', () => {
+      controlPickerTarget = btn.dataset.target; // 'a' or 'b'
+      renderControlPickerGrid();
+      if (modalControlPicker) {
+        modalControlPicker.classList.add('active');
+        if (controlPickerSearch) {
+          controlPickerSearch.value = '';
+          controlPickerSearch.focus();
+        }
+      }
+    });
+  });
+
+  function renderControlPickerGrid() {
+    if (!controlPickerGrid) return;
+    const q = (controlPickerSearch ? controlPickerSearch.value : '').trim().toLowerCase();
+    const currentVal = controlPickerTarget === 'a' 
+      ? document.getElementById('setting-logo-a').value 
+      : document.getElementById('setting-logo-b').value;
+
+    const filtered = controlLogos.filter(l => !q || (l.name || '').toLowerCase().includes(q));
+
+    controlPickerGrid.innerHTML = filtered.map(l => {
+      const isSelected = l.url === currentVal;
+      return `
+        <div class="logo-picker-item ${isSelected ? 'selected' : ''}" data-url="${l.url}">
+          <div class="logo-picker-thumb">
+            <img src="${l.url}" alt="" onerror="this.src='/assets/volleyball.svg'">
+          </div>
+          <div class="logo-picker-title">${escapeHtml(l.name)}</div>
+        </div>
+      `;
+    }).join('');
+
+    controlPickerGrid.querySelectorAll('.logo-picker-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const url = item.dataset.url;
+        if (controlPickerTarget === 'a') {
+          document.getElementById('setting-logo-a').value = url;
+          if (selectLogoA) selectLogoA.value = url;
+          if (previewImgA) previewImgA.src = url;
+        } else {
+          document.getElementById('setting-logo-b').value = url;
+          if (selectLogoB) selectLogoB.value = url;
+          if (previewImgB) previewImgB.src = url;
+        }
+        if (modalControlPicker) modalControlPicker.classList.remove('active');
+      });
+    });
+  }
+
+  if (controlPickerSearch) {
+    controlPickerSearch.addEventListener('input', renderControlPickerGrid);
+  }
+  if (btnCloseControlPicker) {
+    btnCloseControlPicker.addEventListener('click', () => modalControlPicker.classList.remove('active'));
+  }
+  if (btnCancelControlPicker) {
+    btnCancelControlPicker.addEventListener('click', () => modalControlPicker.classList.remove('active'));
+  }
+
+  document.getElementById('btn-open-settings').addEventListener('click', async () => {
     if (!currentBoard) return;
+    await loadControlLogos();
+
     document.getElementById('setting-title').value = currentBoard.title || '';
     document.getElementById('setting-subtitle').value = currentBoard.subtitle || '';
     document.getElementById('setting-name-a').value = currentBoard.teamA.name || '';
     document.getElementById('setting-short-a').value = currentBoard.teamA.shortName || '';
     document.getElementById('setting-color-a').value = currentBoard.teamA.accentColor || currentBoard.teamA.color || '#ffed00';
-    document.getElementById('setting-logo-a').value = currentBoard.teamA.logo || '';
+    
+    const logoA = currentBoard.teamA.logo || '/assets/fenerbahce.svg';
+    document.getElementById('setting-logo-a').value = logoA;
+    if (selectLogoA) selectLogoA.value = logoA;
+    if (previewImgA) previewImgA.src = logoA;
 
     document.getElementById('setting-name-b').value = currentBoard.teamB.name || '';
     document.getElementById('setting-short-b').value = currentBoard.teamB.shortName || '';
     document.getElementById('setting-color-b').value = currentBoard.teamB.accentColor || currentBoard.teamB.color || '#d61c35';
-    document.getElementById('setting-logo-b').value = currentBoard.teamB.logo || '';
+    
+    const logoB = currentBoard.teamB.logo || '/assets/opponent.svg';
+    document.getElementById('setting-logo-b').value = logoB;
+    if (selectLogoB) selectLogoB.value = logoB;
+    if (previewImgB) previewImgB.src = logoB;
 
     document.getElementById('setting-max-sets').value = currentBoard.rules.maxSets || 5;
     document.getElementById('setting-set-points').value = currentBoard.rules.setPoints || 25;
@@ -535,5 +655,6 @@
   });
 
   // Initialize
+  loadControlLogos();
   connectSSE();
 })();

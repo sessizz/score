@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logo Kütüphanesi & Yönetimi | Voleybol Skorboard</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/logos.css">
+  <link rel="icon" href="/assets/volleyball.svg">
+</head>
+<body>
+
+  <div class="logos-container">
+    <!-- Top Navigation -->
+    <div class="logos-nav-bar">
+      <a href="/" class="logos-nav-brand">
+        <img src="/assets/volleyball.svg" style="width: 28px; height: 28px;" alt="Logo">
+        <span>Voleybol Skorboard</span>
+      </a>
+      <div class="logos-nav-links">
+        <a href="/" class="nav-btn">🏠 Ana Sayfa</a>
+        <a href="/control/fenerbahce" class="nav-btn">🎛️ Hakem Paneli</a>
+        <a href="/overlay/fenerbahce?theme=topbar" target="_blank" class="nav-btn">📺 OBS Overlay</a>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="logos-header">
+      <h1 class="logos-title">🖼️ Takım Logoları Yönetim Merkezi</h1>
+      <p class="logos-subtitle">
+        Voleybol kulüpleri ve okullar için logolar yükleyin, isimlendirin veya düzenleyin. Yüklediğiniz logolar, yeni maç scoreboard'u oluştururken ve hakem kumanda panelinde anında seçilebilir olacaktır.
+      </p>
+    </div>
+
+    <!-- Layout: Upload Form (Left) & Library Grid (Right) -->
+    <div class="logos-layout">
+      <!-- Left Column: Upload New Logo -->
+      <div>
+        <div class="upload-card">
+          <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>➕ Yeni Logo Yükle</span>
+          </h2>
+
+          <form id="form-upload-logo">
+            <!-- Dropzone -->
+            <div class="upload-dropzone" id="upload-dropzone">
+              <input type="file" id="file-logo-input" accept="image/png, image/jpeg, image/svg+xml, image/webp">
+              <div class="dropzone-icon">📁</div>
+              <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;">Görsel Seç veya Buraya Sürükle</div>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">PNG, SVG, JPG veya WebP (Maks 8MB)</div>
+            </div>
+
+            <!-- Preview Container -->
+            <div class="preview-box" id="upload-preview-box" style="display: none;">
+              <img id="upload-preview-img" src="" alt="Önizleme">
+              <button type="button" class="btn-remove-preview" id="btn-clear-preview" title="Kaldır">✕</button>
+            </div>
+
+            <!-- Logo Name -->
+            <div style="margin-top: 18px;">
+              <label class="form-label" style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 6px;">
+                Logo / Takım İsmi <span style="color: var(--crimson-light);">*</span>
+              </label>
+              <input type="text" class="form-input" id="input-logo-name" placeholder="Örn: Galatasaray Daikin" required>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                Takım listelerinde ve aramalarda bu isim görünecektir.
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-link btn-primary" id="btn-save-logo" style="width: 100%; border: none; cursor: pointer; margin-top: 20px;">
+              💾 Logoyu Kütüphaneye Kaydet
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: Logo Library -->
+      <div class="library-section">
+        <div class="library-toolbar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="input-search-logos" placeholder="Logolar arasında ara...">
+          </div>
+          <div class="badge badge-set" id="badge-logo-count" style="font-size: 0.85rem; padding: 8px 14px;">
+            Yükleniyor...
+          </div>
+        </div>
+
+        <!-- Grid Container -->
+        <div class="logos-grid" id="logos-grid">
+          <!-- Logo cards rendered dynamically via JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state" style="display: none;">
+          <div style="font-size: 3rem; margin-bottom: 12px;">🖼️</div>
+          <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">Aramanıza Uygun Logo Bulunamadı</h3>
+          <p style="font-size: 0.9rem;">Farklı bir arama terimi deneyebilir veya soldaki formdan yeni bir logo yükleyebilirsiniz.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-backdrop" id="modal-edit-logo">
+    <div class="modal-box">
+      <div class="flex-between" style="margin-bottom: 16px;">
+        <h3 style="font-weight: 800; font-size: 1.2rem;">✏️ Logoyu Düzenle</h3>
+        <button class="btn-modal-close" id="btn-close-edit-modal">&times;</button>
+      </div>
+
+      <form id="form-edit-logo">
+        <input type="hidden" id="edit-logo-id">
+
+        <!-- Current Preview -->
+        <div style="text-align: center; margin-bottom: 16px;">
+          <div class="preview-box" style="margin-top: 0; min-height: 100px;">
+            <img id="edit-preview-img" src="" alt="Logo">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label class="form-label" style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 6px;">
+            Logo / Takım İsmi
+          </label>
+          <input type="text" class="form-input" id="edit-logo-name" required>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label class="form-label" style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 6px;">
+            Görseli Değiştir (İsteğe Bağlı)
+          </label>
+          <input type="file" class="form-input" id="edit-logo-file" accept="image/png, image/jpeg, image/svg+xml, image/webp" style="padding: 6px;">
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn-link btn-secondary" id="btn-cancel-edit" style="border: 1px solid var(--border-color); cursor: pointer;">
+            İptal
+          </button>
+          <button type="submit" class="btn-link btn-primary" style="border: none; cursor: pointer;">
+            Değişiklikleri Kaydet
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast notifications container -->
+  <div id="toast-container"></div>
+
+  <script src="/js/logos.js"></script>
+</body>
+</html>

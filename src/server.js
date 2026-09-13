@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const store = require('./store');
+const logos = require('./logos');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -25,7 +26,7 @@ function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   });
   res.end(JSON.stringify(data));
@@ -36,7 +37,7 @@ function parseJsonBody(req) {
     let body = '';
     req.on('data', chunk => {
       body += chunk;
-      if (body.length > 5 * 1024 * 1024) req.destroy();
+      if (body.length > 15 * 1024 * 1024) req.destroy();
     });
     req.on('end', () => {
       try {
@@ -106,6 +107,53 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  // --- Logo Endpoints ---
+  if (pathname.startsWith('/uploads/logos/')) {
+    const filename = path.basename(pathname);
+    const filePath = path.join(logos.LOGOS_DIR, filename);
+    return serveStaticFile(res, filePath);
+  }
+
+  // Get all logos
+  if (pathname === '/api/logos' && method === 'GET') {
+    return sendJson(res, 200, { success: true, logos: logos.getAllLogos() });
+  }
+
+  // Upload/Create new logo
+  if (pathname === '/api/logos' && method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      const newLogo = logos.saveLogo(body);
+      return sendJson(res, 201, { success: true, logo: newLogo });
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
+  }
+
+  // Update existing logo (name / image)
+  const logoPutMatch = pathname.match(/^\/api\/logos\/([a-zA-Z0-9_-]+)$/);
+  if (logoPutMatch && method === 'PUT') {
+    try {
+      const id = logoPutMatch[1];
+      const body = await parseJsonBody(req);
+      const updated = logos.updateLogo(id, body);
+      return sendJson(res, 200, { success: true, logo: updated });
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
+  }
+
+  // Delete logo
+  const logoDeleteMatch = pathname.match(/^\/api\/logos\/([a-zA-Z0-9_-]+)$/);
+  if (logoDeleteMatch && method === 'DELETE') {
+    const id = logoDeleteMatch[1];
+    const deleted = logos.deleteLogo(id);
+    if (deleted) {
+      return sendJson(res, 200, { success: true });
+    }
+    return sendJson(res, 404, { success: false, error: 'Logo bulunamadı.' });
+  }
+
   // List all boards
   if (pathname === '/api/boards' && method === 'GET') {
     return sendJson(res, 200, store.getAllBoardsSummary());
@@ -119,7 +167,20 @@ const server = http.createServer(async (req, res) => {
     if (body.preset && store.PRESETS[body.preset]) {
       store.executeAction(id, 'reset_match');
     }
-    return sendJson(res, 200, { success: true, boardId: id, board });
+    if (body.teamA || body.teamB) {
+      store.executeAction(id, 'update_teams', {
+        teamA: body.teamA,
+        teamB: body.teamB
+      });
+    }
+    if (body.title || body.subtitle || body.adminPin) {
+      store.executeAction(id, 'update_meta', {
+        title: body.title,
+        subtitle: body.subtitle,
+        adminPin: body.adminPin
+      });
+    }
+    return sendJson(res, 200, { success: true, boardId: id, board: store.getBoard(id) });
   }
 
   // Get specific board
@@ -183,6 +244,11 @@ const server = http.createServer(async (req, res) => {
   // Live Spectator / Gym Scoreboard
   if (pathname.startsWith('/live') || pathname.startsWith('/board')) {
     return serveStaticFile(res, path.join(PUBLIC_DIR, 'live.html'));
+  }
+
+  // Logo Management Page
+  if (pathname === '/logos' || pathname === '/logos.html') {
+    return serveStaticFile(res, path.join(PUBLIC_DIR, 'logos.html'));
   }
 
   // Root / Index
