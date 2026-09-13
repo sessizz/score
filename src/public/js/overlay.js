@@ -62,52 +62,17 @@
     let leftHasTimeout = isTimeoutActive && (isSwapped ? isTeamB : isTeamA);
     let rightHasTimeout = isTimeoutActive && (isSwapped ? isTeamA : isTeamB);
 
-    // Fallback if timeout is active but team was somehow not identified
-    const centerCapsule = document.getElementById('dc-top-capsule');
-    if (isTimeoutActive && !leftHasTimeout && !rightHasTimeout) {
-      if (centerCapsule && clockEl) {
-        clockEl.textContent = `MOLA ${remainSec}s`;
-        centerCapsule.classList.add('is-timeout');
-      }
-    } else {
-      if (centerCapsule) {
-        centerCapsule.classList.remove('is-timeout');
-      }
-    }
-
-    const badgeLeft = document.getElementById('dc-timeout-badge-left');
-    const badgeRight = document.getElementById('dc-timeout-badge-right');
-    const secLeft = document.getElementById('dc-timeout-sec-left');
-    const secRight = document.getElementById('dc-timeout-sec-right');
     const inlineLeft = document.getElementById('dc-to-inline-left');
     const inlineRight = document.getElementById('dc-to-inline-right');
-    const boxLeft = document.getElementById('dc-team-box-left');
-    const boxRight = document.getElementById('dc-team-box-right');
 
-    if (badgeLeft) {
-      badgeLeft.style.display = leftHasTimeout ? 'inline-flex' : 'none';
-      if (secLeft) secLeft.textContent = `${remainSec}s`;
-    }
     if (inlineLeft) {
       inlineLeft.style.display = leftHasTimeout ? 'inline-block' : 'none';
-      inlineLeft.textContent = `${remainSec}s`;
-    }
-    if (boxLeft) {
-      if (leftHasTimeout) boxLeft.classList.add('is-timeout-team');
-      else boxLeft.classList.remove('is-timeout-team');
+      if (leftHasTimeout) inlineLeft.textContent = `${remainSec}s`;
     }
 
-    if (badgeRight) {
-      badgeRight.style.display = rightHasTimeout ? 'inline-flex' : 'none';
-      if (secRight) secRight.textContent = `${remainSec}s`;
-    }
     if (inlineRight) {
       inlineRight.style.display = rightHasTimeout ? 'inline-block' : 'none';
-      inlineRight.textContent = `${remainSec}s`;
-    }
-    if (boxRight) {
-      if (rightHasTimeout) boxRight.classList.add('is-timeout-team');
-      else boxRight.classList.remove('is-timeout-team');
+      if (rightHasTimeout) inlineRight.textContent = `${remainSec}s`;
     }
   }
 
@@ -165,30 +130,12 @@
       <div class="dc-board-container">
         <div class="dc-board-scale-wrapper">
 
-          <!-- Üst Satır: Sol Takım Molası | Merkez Set & Zaman Kapsülü | Sağ Takım Molası -->
-          <div class="dc-top-row-grid">
-            <div class="dc-top-timeout-col-left">
-              <div class="dc-top-timeout-badge" id="dc-timeout-badge-left" style="display: none;">
-                <span class="dc-timeout-pulse-dot"></span>
-                <span>MOLA</span>
-                <span class="dc-timeout-sec" id="dc-timeout-sec-left">30s</span>
-              </div>
-            </div>
-
-            <div class="dc-top-capsule-col">
-              <div class="dc-top-capsule" id="dc-top-capsule">
-                <span class="dc-capsule-set">${board.currentSet || 1}. SET</span>
-                <span class="dc-capsule-sep">•</span>
-                <span class="dc-capsule-time" id="dc-overlay-clock">00:00</span>
-              </div>
-            </div>
-
-            <div class="dc-top-timeout-col-right">
-              <div class="dc-top-timeout-badge" id="dc-timeout-badge-right" style="display: none;">
-                <span class="dc-timeout-pulse-dot"></span>
-                <span>MOLA</span>
-                <span class="dc-timeout-sec" id="dc-timeout-sec-right">30s</span>
-              </div>
+          <!-- Zaman ve Set Kapsülü (Scoreboard'un Üstünde) -->
+          <div class="dc-top-capsule-row">
+            <div class="dc-top-capsule" id="dc-top-capsule">
+              <span class="dc-capsule-set">${board.currentSet || 1}. SET</span>
+              <span class="dc-capsule-sep">•</span>
+              <span class="dc-capsule-time" id="dc-overlay-clock">00:00</span>
             </div>
           </div>
 
