@@ -44,23 +44,48 @@
   }
 
   function updateLiveClock() {
-    if (!elClock || !latestBoard) return;
+    if (!latestBoard) return;
 
-    if (latestBoard.status === 'timeout' && latestBoard.timeoutState && latestBoard.timeoutState.endsAt) {
-      const remainSec = Math.max(0, Math.ceil((latestBoard.timeoutState.endsAt - Date.now()) / 1000));
-      elClock.textContent = `MOLA: ${remainSec}s`;
-      elClock.classList.add('is-timeout');
-      return;
-    }
-
-    elClock.classList.remove('is-timeout');
-
+    // Regular set timer on top header
     const clock = latestBoard.setClock || { running: false, startedAt: null, elapsedMs: 0 };
     let ms = clock.elapsedMs || 0;
     if (clock.running && clock.startedAt) {
       ms += Math.max(0, Date.now() - clock.startedAt);
     }
-    elClock.textContent = formatClockMs(ms);
+    if (elClock) {
+      elClock.textContent = formatClockMs(ms);
+      elClock.classList.remove('is-timeout');
+    }
+
+    // Team-specific timeout countdown check
+    const isSwapped = Boolean(latestBoard.courtSwapped);
+    let remainSec = 0;
+    let isTimeoutActive = false;
+    let timeoutTeam = null;
+
+    if (latestBoard.status === 'timeout' && latestBoard.timeoutState && latestBoard.timeoutState.endsAt) {
+      remainSec = Math.max(0, Math.ceil((latestBoard.timeoutState.endsAt - Date.now()) / 1000));
+      isTimeoutActive = remainSec > 0;
+      timeoutTeam = latestBoard.timeoutState.team;
+    }
+
+    const leftHasTimeout = isTimeoutActive && (isSwapped ? timeoutTeam === 'b' : timeoutTeam === 'a');
+    const rightHasTimeout = isTimeoutActive && (isSwapped ? timeoutTeam === 'a' : timeoutTeam === 'b');
+
+    const badgeLeft = document.getElementById('live-timeout-badge-left');
+    const badgeRight = document.getElementById('live-timeout-badge-right');
+    const secLeft = document.getElementById('live-timeout-sec-left');
+    const secRight = document.getElementById('live-timeout-sec-right');
+
+    if (badgeLeft) {
+      badgeLeft.style.display = leftHasTimeout ? 'flex' : 'none';
+      if (secLeft) secLeft.textContent = `${remainSec}s`;
+    }
+
+    if (badgeRight) {
+      badgeRight.style.display = rightHasTimeout ? 'flex' : 'none';
+      if (secRight) secRight.textContent = `${remainSec}s`;
+    }
   }
 
   function connectSSE() {

@@ -27,25 +27,71 @@
 
   function updateClockDisplay() {
     const clockEl = document.getElementById('dc-overlay-clock');
-    const capsuleEl = document.getElementById('dc-top-capsule');
-    if (!clockEl || !latestBoard) return;
+    if (!latestBoard) return;
 
-    // Timeout countdown check
-    if (latestBoard.status === 'timeout' && latestBoard.timeoutState && latestBoard.timeoutState.endsAt) {
-      const remainSec = Math.max(0, Math.ceil((latestBoard.timeoutState.endsAt - Date.now()) / 1000));
-      clockEl.textContent = `MOLA ${remainSec}s`;
-      if (capsuleEl) capsuleEl.classList.add('is-timeout');
-      return;
-    }
-
-    if (capsuleEl) capsuleEl.classList.remove('is-timeout');
-
+    // Set match timer
     const clock = latestBoard.setClock || { running: false, startedAt: null, elapsedMs: 0 };
     let ms = clock.elapsedMs || 0;
     if (clock.running && clock.startedAt) {
       ms += Math.max(0, Date.now() - clock.startedAt);
     }
-    clockEl.textContent = formatClockMs(ms);
+    if (clockEl) {
+      clockEl.textContent = formatClockMs(ms);
+    }
+
+    // Team-specific timeout countdown check
+    const isSwapped = Boolean(latestBoard.courtSwapped);
+    let remainSec = 0;
+    let isTimeoutActive = false;
+    let timeoutTeam = null;
+
+    if (latestBoard.status === 'timeout' && latestBoard.timeoutState && latestBoard.timeoutState.endsAt) {
+      remainSec = Math.max(0, Math.ceil((latestBoard.timeoutState.endsAt - Date.now()) / 1000));
+      isTimeoutActive = remainSec > 0;
+      timeoutTeam = latestBoard.timeoutState.team; // 'a' or 'b'
+    }
+
+    const leftHasTimeout = isTimeoutActive && (isSwapped ? timeoutTeam === 'b' : timeoutTeam === 'a');
+    const rightHasTimeout = isTimeoutActive && (isSwapped ? timeoutTeam === 'a' : timeoutTeam === 'b');
+
+    const badgeLeft = document.getElementById('dc-timeout-badge-left');
+    const badgeRight = document.getElementById('dc-timeout-badge-right');
+    const secLeft = document.getElementById('dc-timeout-sec-left');
+    const secRight = document.getElementById('dc-timeout-sec-right');
+    const boxLeft = document.getElementById('dc-team-box-left');
+    const boxRight = document.getElementById('dc-team-box-right');
+
+    if (badgeLeft) {
+      if (leftHasTimeout) {
+        badgeLeft.style.visibility = 'visible';
+        badgeLeft.style.opacity = '1';
+        if (secLeft) secLeft.textContent = `${remainSec}s`;
+      } else {
+        badgeLeft.style.visibility = 'hidden';
+        badgeLeft.style.opacity = '0';
+      }
+    }
+
+    if (badgeRight) {
+      if (rightHasTimeout) {
+        badgeRight.style.visibility = 'visible';
+        badgeRight.style.opacity = '1';
+        if (secRight) secRight.textContent = `${remainSec}s`;
+      } else {
+        badgeRight.style.visibility = 'hidden';
+        badgeRight.style.opacity = '0';
+      }
+    }
+
+    if (boxLeft) {
+      if (leftHasTimeout) boxLeft.classList.add('is-timeout-team');
+      else boxLeft.classList.remove('is-timeout-team');
+    }
+
+    if (boxRight) {
+      if (rightHasTimeout) boxRight.classList.add('is-timeout-team');
+      else boxRight.classList.remove('is-timeout-team');
+    }
   }
 
   // Connect SSE
@@ -102,12 +148,30 @@
       <div class="dc-board-container">
         <div class="dc-board-scale-wrapper">
 
-          <!-- Zaman ve Set Kapsülü (Scoreboard'un Üstünde) -->
-          <div class="dc-top-capsule-row">
-            <div class="dc-top-capsule" id="dc-top-capsule">
-              <span class="dc-capsule-set">${board.currentSet || 1}. SET</span>
-              <span class="dc-capsule-sep">•</span>
-              <span class="dc-capsule-time" id="dc-overlay-clock">00:00</span>
+          <!-- Üst Satır: Sol Takım Molası | Merkez Set & Zaman Kapsülü | Sağ Takım Molası -->
+          <div class="dc-top-row-grid">
+            <div class="dc-top-timeout-col-left">
+              <div class="dc-top-timeout-badge" id="dc-timeout-badge-left" style="visibility: hidden; opacity: 0;">
+                <span class="dc-timeout-pulse-dot"></span>
+                <span>MOLA</span>
+                <span class="dc-timeout-sec" id="dc-timeout-sec-left">30s</span>
+              </div>
+            </div>
+
+            <div class="dc-top-capsule-col">
+              <div class="dc-top-capsule" id="dc-top-capsule">
+                <span class="dc-capsule-set">${board.currentSet || 1}. SET</span>
+                <span class="dc-capsule-sep">•</span>
+                <span class="dc-capsule-time" id="dc-overlay-clock">00:00</span>
+              </div>
+            </div>
+
+            <div class="dc-top-timeout-col-right">
+              <div class="dc-top-timeout-badge" id="dc-timeout-badge-right" style="visibility: hidden; opacity: 0;">
+                <span class="dc-timeout-pulse-dot"></span>
+                <span>MOLA</span>
+                <span class="dc-timeout-sec" id="dc-timeout-sec-right">30s</span>
+              </div>
             </div>
           </div>
 
@@ -115,7 +179,7 @@
 
             <!-- Team A Column (Left) -->
             <div class="dc-team-col-a">
-              <div class="dc-team-name-box">
+              <div class="dc-team-name-box" id="dc-team-box-left">
                 <img src="${escapeHtml(logoA)}" class="dc-team-name-logo" alt="" />
                 <span class="dc-team-name-text">${escapeHtml(nameA)}</span>
                 <div class="dc-timeout-dots" title="Mola: ${leftTimeouts}/2">
@@ -159,7 +223,7 @@
 
             <!-- Team B Column (Right) -->
             <div class="dc-team-col-b">
-              <div class="dc-team-name-box">
+              <div class="dc-team-name-box" id="dc-team-box-right">
                 <div class="dc-timeout-dots" title="Mola: ${rightTimeouts}/2">
                   <span class="dc-to-dot ${rightTimeouts >= 1 ? 'is-used' : ''}"></span>
                   <span class="dc-to-dot ${rightTimeouts >= 2 ? 'is-used' : ''}"></span>
