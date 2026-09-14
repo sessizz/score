@@ -81,7 +81,7 @@
               <label>Takım Renkleri</label>
               <div class="colors-grid">
                 <div class="color-picker-box">
-                  <label>1. Renk (Ana Renk)</label>
+                  <label>1. Renk</label>
                   <div class="color-input-wrap">
                     <input type="color" class="color-native-picker" id="color-primary" value="#ffed00">
                     <input type="text" class="color-hex-text" id="hex-primary" value="#FFED00" maxlength="7">
@@ -89,7 +89,7 @@
                 </div>
 
                 <div class="color-picker-box">
-                  <label>2. Renk (İkincil Renk)</label>
+                  <label>2. Renk</label>
                   <div class="color-input-wrap">
                     <input type="color" class="color-native-picker" id="color-secondary" value="#002d72">
                     <input type="text" class="color-hex-text" id="hex-secondary" value="#002D72" maxlength="7">
@@ -235,12 +235,12 @@
           </div>
         </div>
 
-        <div style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button type="button" class="btn-link btn-secondary" id="btn-cancel-edit" style="border: 1px solid var(--border-color); cursor: pointer;">
+        <div class="modal-footer">
+          <button type="button" class="btn-modal-cancel" id="btn-cancel-edit">
             İptal
           </button>
-          <button type="submit" class="btn-link btn-primary" style="border: none; cursor: pointer;">
-            Değişiklikleri Kaydet
+          <button type="submit" class="btn-modal-save">
+            💾 Değişiklikleri Kaydet
           </button>
         </div>
       </form>
