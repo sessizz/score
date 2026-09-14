@@ -123,8 +123,8 @@
     const logoUrl = '/assets/tvf-logo-beyaz.svg';
 
     // Team logos, shown inside each team's name panel
-    const logoA = leftData.logo || '/assets/fenerbahce.svg';
-    const logoB = rightData.logo || '/assets/opponent.svg';
+    const logoA = leftData.logo || '';
+    const logoB = rightData.logo || '';
 
     root.innerHTML = `
       <div class="dc-board-container">
@@ -144,7 +144,7 @@
             <!-- Team A Column (Left) -->
             <div class="dc-team-col-a">
               <div class="dc-team-name-box" id="dc-team-box-left">
-                <img src="${escapeHtml(logoA)}" class="dc-team-name-logo" alt="" />
+                ${logoA ? `<img src="${escapeHtml(logoA)}" class="dc-team-name-logo" alt="" />` : ''}
                 <span class="dc-team-name-text">${escapeHtml(nameA)}</span>
                 <div class="dc-timeout-box">
                   <span class="dc-to-inline-timer" id="dc-to-inline-left" style="display: none;">30s</span>
@@ -199,7 +199,7 @@
                   </div>
                 </div>
                 <span class="dc-team-name-text">${escapeHtml(nameB)}</span>
-                <img src="${escapeHtml(logoB)}" class="dc-team-name-logo" alt="" />
+                ${logoB ? `<img src="${escapeHtml(logoB)}" class="dc-team-name-logo" alt="" />` : ''}
               </div>
               <div class="dc-team-stripe-b">
                 <span style="background: ${colorB};"></span>

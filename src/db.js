@@ -72,6 +72,12 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_logos_user ON logos(user_id);
 `);
 
+// Migration: Add team fields to logos table if they don't exist
+try { db.exec("ALTER TABLE logos ADD COLUMN short_name TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE logos ADD COLUMN color TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE logos ADD COLUMN color2 TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE logos ADD COLUMN text_color TEXT;"); } catch (e) {}
+
 // Ensure all existing boards have an operator_token
 try {
   const missingTokens = db.prepare("SELECT id FROM boards WHERE operator_token IS NULL OR operator_token = ''").all();
@@ -277,44 +283,126 @@ function assignLegacyDataToUser(userId) {
   stmtLogos.run(userId);
 }
 
-// --- Logos DB Functions ---
-function getLogosForUser(userId) {
-  // Returns user's own logos + default system logos
+// --- Teams & Logos DB Functions ---
+function getTeamsForUser(userId) {
   const stmt = db.prepare(`
     SELECT * FROM logos 
-    WHERE user_id = ? OR is_default = 1
-    ORDER BY is_default ASC, created_at DESC
+    WHERE user_id = ? OR is_default = 1 OR user_id IS NULL
+    ORDER BY created_at DESC
   `);
-  return stmt.all(userId || '');
+  const rows = stmt.all(userId || '');
+  return rows.map(r => ({
+    id: r.id,
+    userId: r.user_id,
+    name: r.name,
+    shortName: r.short_name || (r.name ? r.name.replace(/[^a-zA-Z0-9çÇğĞıİöÖşŞüÜ]/g, '').slice(0, 3).toUpperCase() : ''),
+    logo: r.url || '',
+    url: r.url || '',
+    color: r.color || '#ffed00',
+    color2: r.color2 || '#002d72',
+    textColor: r.text_color || '#ffffff',
+    filename: r.filename,
+    isDefault: Boolean(r.is_default),
+    createdAt: r.created_at,
+    updatedAt: r.updated_at
+  }));
 }
 
-function saveLogoToDb({ id, userId, name, url, filename, isDefault = 0 }) {
+function getLogosForUser(userId) {
+  return getTeamsForUser(userId);
+}
+
+function saveTeamToDb({ id, userId, name, shortName, logo, color, color2, textColor, filename, isDefault = 0 }) {
   const now = Date.now();
   const stmt = db.prepare(`
-    INSERT INTO logos (id, user_id, name, url, filename, is_default, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO logos (id, user_id, name, short_name, url, color, color2, text_color, filename, is_default, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  stmt.run(id, userId || null, name, url, filename || null, isDefault ? 1 : 0, now, now);
+  stmt.run(
+    id,
+    userId || null,
+    name,
+    shortName || '',
+    logo || '',
+    color || '#ffed00',
+    color2 || '#002d72',
+    textColor || '#ffffff',
+    filename || null,
+    isDefault ? 1 : 0,
+    now,
+    now
+  );
 }
 
-function updateLogoInDb(id, userId, { name, url }) {
+function saveLogoToDb({ id, userId, name, url, filename, isDefault = 0, shortName, color, color2, textColor }) {
+  return saveTeamToDb({ id, userId, name, shortName, logo: url, color, color2, textColor, filename, isDefault });
+}
+
+function updateTeamInDb(id, userId, { name, shortName, logo, color, color2, textColor, filename }) {
   const now = Date.now();
+  const existing = getTeamById(id);
+  if (!existing) return;
+
+  const newName = name !== undefined ? name : existing.name;
+  const newShort = shortName !== undefined ? shortName : existing.shortName;
+  const newLogo = logo !== undefined ? logo : existing.logo;
+  const newColor = color !== undefined ? color : existing.color;
+  const newColor2 = color2 !== undefined ? color2 : existing.color2;
+  const newTextColor = textColor !== undefined ? textColor : existing.textColor;
+  const newFilename = filename !== undefined ? filename : existing.filename;
+
   const stmt = db.prepare(`
     UPDATE logos
-    SET name = ?, url = ?, updated_at = ?
-    WHERE id = ? AND (user_id = ? OR user_id IS NULL)
+    SET name = ?,
+        short_name = ?,
+        url = ?,
+        color = ?,
+        color2 = ?,
+        text_color = ?,
+        filename = ?,
+        updated_at = ?
+    WHERE id = ? AND (user_id = ? OR is_default = 1 OR user_id IS NULL)
   `);
-  stmt.run(name, url, now, id, userId || '');
+  stmt.run(newName, newShort, newLogo, newColor, newColor2, newTextColor, newFilename, now, id, userId || '');
+}
+
+function updateLogoInDb(id, userId, { name, url, shortName, color, color2, textColor }) {
+  return updateTeamInDb(id, userId, { name, logo: url, shortName, color, color2, textColor });
+}
+
+function deleteTeamFromDb(id, userId) {
+  // Allow deleting ANY team/logo including system defaults
+  const stmt = db.prepare('DELETE FROM logos WHERE id = ? AND (user_id = ? OR is_default = 1 OR user_id IS NULL)');
+  stmt.run(id, userId || '');
 }
 
 function deleteLogoFromDb(id, userId) {
-  const stmt = db.prepare('DELETE FROM logos WHERE id = ? AND user_id = ? AND is_default = 0');
-  stmt.run(id, userId);
+  return deleteTeamFromDb(id, userId);
+}
+
+function getTeamById(id) {
+  const stmt = db.prepare('SELECT * FROM logos WHERE id = ?');
+  const r = stmt.get(id);
+  if (!r) return null;
+  return {
+    id: r.id,
+    userId: r.user_id,
+    name: r.name,
+    shortName: r.short_name || (r.name ? r.name.replace(/[^a-zA-Z0-9çÇğĞıİöÖşŞüÜ]/g, '').slice(0, 3).toUpperCase() : ''),
+    logo: r.url || '',
+    url: r.url || '',
+    color: r.color || '#ffed00',
+    color2: r.color2 || '#002d72',
+    textColor: r.text_color || '#ffffff',
+    filename: r.filename,
+    isDefault: Boolean(r.is_default),
+    createdAt: r.created_at,
+    updatedAt: r.updated_at
+  };
 }
 
 function getLogoById(id) {
-  const stmt = db.prepare('SELECT * FROM logos WHERE id = ?');
-  return stmt.get(id) || null;
+  return getTeamById(id);
 }
 
 module.exports = {
@@ -340,5 +428,10 @@ module.exports = {
   saveLogoToDb,
   updateLogoInDb,
   deleteLogoFromDb,
-  getLogoById
+  getLogoById,
+  getTeamsForUser,
+  saveTeamToDb,
+  updateTeamInDb,
+  deleteTeamFromDb,
+  getTeamById
 };

@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const store = require('./store');
 const logos = require('./logos');
+const teams = require('./teams');
 const auth = require('./auth');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -183,67 +184,67 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
-  // --- Logo Endpoints ---
+  // --- Logo & Team Static Assets ---
   if (pathname.startsWith('/uploads/logos/')) {
     const filename = path.basename(pathname);
-    const filePath = path.join(logos.LOGOS_DIR, filename);
+    const filePath = path.join(teams.LOGOS_DIR, filename);
     return serveStaticFile(res, filePath);
   }
 
-  // Get logos (user logos + default logos)
-  if (pathname === '/api/logos' && method === 'GET') {
+  // Get teams (user teams + default teams)
+  if ((pathname === '/api/teams' || pathname === '/api/logos') && method === 'GET') {
     const user = auth.getUserFromRequest(req);
-    const list = logos.getAllLogos(user ? user.id : null);
-    return sendJson(res, 200, { success: true, logos: list });
+    const list = teams.getAllTeams(user ? user.id : null);
+    return sendJson(res, 200, { success: true, teams: list, logos: list });
   }
 
-  // Upload/Create new logo (User only)
-  if (pathname === '/api/logos' && method === 'POST') {
+  // Create new team (User only)
+  if ((pathname === '/api/teams' || pathname === '/api/logos') && method === 'POST') {
     const user = auth.getUserFromRequest(req);
     if (!user) {
-      return sendJson(res, 401, { success: false, error: 'Logo yüklemek için giriş yapmalısınız.' });
+      return sendJson(res, 401, { success: false, error: 'Takım eklemek için giriş yapmalısınız.' });
     }
     try {
       const body = await parseJsonBody(req);
       body.userId = user.id;
-      const newLogo = logos.saveLogo(body);
-      return sendJson(res, 201, { success: true, logo: newLogo });
+      const newTeam = teams.saveTeam(body);
+      return sendJson(res, 201, { success: true, team: newTeam, logo: newTeam });
     } catch (err) {
       return sendJson(res, 400, { success: false, error: err.message });
     }
   }
 
-  // Update existing logo
-  const logoPutMatch = pathname.match(/^\/api\/logos\/([a-zA-Z0-9_-]+)$/);
-  if (logoPutMatch && method === 'PUT') {
+  // Update existing team
+  const teamPutMatch = pathname.match(/^\/api\/(?:teams|logos)\/([a-zA-Z0-9_-]+)$/);
+  if (teamPutMatch && method === 'PUT') {
     const user = auth.getUserFromRequest(req);
     if (!user) {
       return sendJson(res, 401, { success: false, error: 'Giriş yapmalısınız.' });
     }
     try {
-      const id = logoPutMatch[1];
+      const id = teamPutMatch[1];
       const body = await parseJsonBody(req);
-      const updated = logos.updateLogo(id, body, user.id);
-      return sendJson(res, 200, { success: true, logo: updated });
+      const updated = teams.updateTeam(id, body, user.id);
+      return sendJson(res, 200, { success: true, team: updated, logo: updated });
     } catch (err) {
       return sendJson(res, 400, { success: false, error: err.message });
     }
   }
 
-  // Delete logo
-  const logoDeleteMatch = pathname.match(/^\/api\/logos\/([a-zA-Z0-9_-]+)$/);
-  if (logoDeleteMatch && method === 'DELETE') {
+  // Delete team
+  const teamDeleteMatch = pathname.match(/^\/api\/(?:teams|logos)\/([a-zA-Z0-9_-]+)$/);
+  if (teamDeleteMatch && method === 'DELETE') {
     const user = auth.getUserFromRequest(req);
     if (!user) {
       return sendJson(res, 401, { success: false, error: 'Giriş yapmalısınız.' });
     }
     try {
-      const id = logoDeleteMatch[1];
-      const deleted = logos.deleteLogo(id, user.id);
+      const id = teamDeleteMatch[1];
+      const deleted = teams.deleteTeam(id, user.id);
       if (deleted) {
         return sendJson(res, 200, { success: true });
       }
-      return sendJson(res, 404, { success: false, error: 'Logo bulunamadı.' });
+      return sendJson(res, 404, { success: false, error: 'Takım bulunamadı.' });
     } catch (err) {
       return sendJson(res, 400, { success: false, error: err.message });
     }
@@ -404,9 +405,9 @@ const server = http.createServer(async (req, res) => {
     return serveStaticFile(res, path.join(PUBLIC_DIR, 'live.html'));
   }
 
-  // Logo Management Page
-  if (pathname === '/logos' || pathname === '/logos.html') {
-    return serveStaticFile(res, path.join(PUBLIC_DIR, 'logos.html'));
+  // Team & Logo Management Page
+  if (pathname === '/teams' || pathname === '/teams.html' || pathname === '/logos' || pathname === '/logos.html') {
+    return serveStaticFile(res, path.join(PUBLIC_DIR, 'teams.html'));
   }
 
   // Root / Index (Dashboard)

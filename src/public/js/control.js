@@ -187,8 +187,12 @@
     leftName.textContent = leftData.name;
     leftShort.textContent = leftData.shortName;
     leftSets.textContent = `${leftData.setsWon} Set`;
-    leftPointVal.textContent = leftData.points;
-    leftLogo.src = leftData.logo || '/assets/fenerbahce.svg';
+    if (leftData.logo) {
+      leftLogo.src = leftData.logo;
+      leftLogo.style.display = 'block';
+    } else {
+      leftLogo.style.display = 'none';
+    }
     leftCard.style.borderColor = leftData.isServing ? 'var(--fb-yellow)' : 'var(--border-color)';
     leftServeBtn.className = `serve-btn ${leftData.isServing ? 'is-serving' : ''}`;
     leftToDot1.className = `to-dot ${leftData.timeouts >= 1 ? 'used' : ''}`;
@@ -199,7 +203,12 @@
     rightShort.textContent = rightData.shortName;
     rightSets.textContent = `${rightData.setsWon} Set`;
     rightPointVal.textContent = rightData.points;
-    rightLogo.src = rightData.logo || '/assets/opponent.svg';
+    if (rightData.logo) {
+      rightLogo.src = rightData.logo;
+      rightLogo.style.display = 'block';
+    } else {
+      rightLogo.style.display = 'none';
+    }
     rightCard.style.borderColor = rightData.isServing ? 'var(--fb-yellow)' : 'var(--border-color)';
     rightServeBtn.className = `serve-btn ${rightData.isServing ? 'is-serving' : ''}`;
     rightToDot1.className = `to-dot ${rightData.timeouts >= 1 ? 'used' : ''}`;
@@ -497,33 +506,58 @@
       ? document.getElementById('setting-logo-a').value 
       : document.getElementById('setting-logo-b').value;
 
-    const filtered = controlLogos.filter(l => !q || (l.name || '').toLowerCase().includes(q));
+    const filtered = controlLogos.filter(l => !q || (l.name || '').toLowerCase().includes(q) || (l.shortName || '').toLowerCase().includes(q));
 
     controlPickerGrid.innerHTML = filtered.map(l => {
-      const isSelected = l.url === currentVal;
+      const isSelected = (l.url && l.url === currentVal) || (l.logo && l.logo === currentVal);
+      const c1 = l.color || '#ffed00';
+      const thumb = (l.logo || l.url)
+        ? `<img src="${l.logo || l.url}" alt="" onerror="this.src='/assets/volleyball.svg'">`
+        : `<span style="font-weight: 800; font-size: 0.9rem; color: ${c1};">${escapeHtml(l.shortName || l.name.slice(0, 3))}</span>`;
       return `
-        <div class="logo-picker-item ${isSelected ? 'selected' : ''}" data-url="${l.url}">
-          <div class="logo-picker-thumb">
-            <img src="${l.url}" alt="" onerror="this.src='/assets/volleyball.svg'">
+        <div class="logo-picker-item ${isSelected ? 'selected' : ''}" data-id="${l.id}" data-url="${l.logo || l.url || ''}">
+          <div class="logo-picker-thumb" style="border-top: 3px solid ${c1};">
+            ${thumb}
           </div>
           <div class="logo-picker-title">${escapeHtml(l.name)}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(l.shortName || '')}</div>
         </div>
       `;
     }).join('');
 
     controlPickerGrid.querySelectorAll('.logo-picker-item').forEach(item => {
       item.addEventListener('click', () => {
-        const url = item.dataset.url;
-        if (controlPickerTarget === 'a') {
-          document.getElementById('setting-logo-a').value = url;
-          if (selectLogoA) selectLogoA.value = url;
-          if (previewImgA) previewImgA.src = url;
-        } else {
-          document.getElementById('setting-logo-b').value = url;
-          if (selectLogoB) selectLogoB.value = url;
-          if (previewImgB) previewImgB.src = url;
+        const teamId = item.dataset.id;
+        const selectedTeam = controlLogos.find(t => t.id === teamId) || controlLogos.find(t => (t.logo || t.url) === item.dataset.url);
+        if (!selectedTeam) return;
+
+        const target = controlPickerTarget; // 'a' or 'b'
+        const nameInput = document.getElementById(`setting-name-${target}`);
+        const shortInput = document.getElementById(`setting-short-${target}`);
+        const logoInput = document.getElementById(`setting-logo-${target}`);
+        const color1Input = document.getElementById(`setting-color-${target}`);
+        const color2Input = document.getElementById(`setting-color-${target}2`);
+        const selectLogo = target === 'a' ? selectLogoA : selectLogoB;
+        const previewImg = target === 'a' ? previewImgA : previewImgB;
+
+        if (nameInput && selectedTeam.name) nameInput.value = selectedTeam.name;
+        if (shortInput && selectedTeam.shortName) shortInput.value = selectedTeam.shortName;
+        const teamLogoUrl = selectedTeam.logo || selectedTeam.url || '';
+        if (logoInput) logoInput.value = teamLogoUrl;
+        if (selectLogo) selectLogo.value = teamLogoUrl;
+        if (previewImg) {
+          if (teamLogoUrl) {
+            previewImg.src = teamLogoUrl;
+            previewImg.style.display = 'block';
+          } else {
+            previewImg.style.display = 'none';
+          }
         }
+        if (color1Input && selectedTeam.color) color1Input.value = selectedTeam.color;
+        if (color2Input && selectedTeam.color2) color2Input.value = selectedTeam.color2;
+
         if (modalControlPicker) modalControlPicker.classList.remove('active');
+        showToast(`✓ "${selectedTeam.name}" takımı ve renkleri seçildi!`);
       });
     });
   }

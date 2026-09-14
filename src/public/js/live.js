@@ -116,7 +116,12 @@
     const rightData = isSwapped ? board.teamA : board.teamB;
 
     // Left Team
-    teamLeftLogo.src = leftData.logo || '/assets/fenerbahce.svg';
+    if (leftData.logo) {
+      teamLeftLogo.src = leftData.logo;
+      teamLeftLogo.style.display = 'block';
+    } else {
+      teamLeftLogo.style.display = 'none';
+    }
     teamLeftName.textContent = leftData.name;
     teamLeftSets.textContent = `${leftData.setsWon} SET`;
     teamLeftPoints.textContent = leftData.points;
@@ -128,7 +133,12 @@
     if (teamLeftTimeouts) teamLeftTimeouts.title = `Mola: ${leftTimeouts}/2`;
 
     // Right Team
-    teamRightLogo.src = rightData.logo || '/assets/opponent.svg';
+    if (rightData.logo) {
+      teamRightLogo.src = rightData.logo;
+      teamRightLogo.style.display = 'block';
+    } else {
+      teamRightLogo.style.display = 'none';
+    }
     teamRightName.textContent = rightData.name;
     teamRightSets.textContent = `${rightData.setsWon} SET`;
     teamRightPoints.textContent = rightData.points;

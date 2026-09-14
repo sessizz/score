@@ -25,8 +25,8 @@
       <a href="/" class="btn-action-main" style="padding: 6px 10px; font-size: 0.75rem; text-decoration: none;">
         🏠 Panoya Dön
       </a>
-      <a href="/logos" target="_blank" class="btn-action-main" style="padding: 6px 10px; font-size: 0.75rem; text-decoration: none;">
-        🖼️ Logolar
+      <a href="/teams" target="_blank" class="btn-action-main" style="padding: 6px 10px; font-size: 0.75rem; text-decoration: none;">
+        🏐 Takımlar
       </a>
       <button class="btn-action-main" id="btn-open-obs" style="padding: 6px 10px; font-size: 0.75rem;">
         📺 OBS Link
@@ -227,7 +227,7 @@
         <div class="form-group">
           <div class="flex-between">
             <label class="form-label">Logo Seçimi</label>
-            <a href="/logos" target="_blank" style="font-size: 0.75rem; color: var(--fb-yellow); text-decoration: none; font-weight: 700;">➕ Yeni Yükle</a>
+            <a href="/teams" target="_blank" style="font-size: 0.75rem; color: var(--fb-yellow); text-decoration: none; font-weight: 700;">➕ Takım Ekle</a>
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
             <div class="logo-preview-thumb" id="control-preview-a" style="width: 42px; height: 42px; border-radius: 6px; border: 1px solid var(--border-color); background: repeating-conic-gradient(#1c2742 0% 25%, #151f36 0% 50%) 50% / 8px 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
@@ -237,7 +237,7 @@
               <!-- Populated via JS -->
             </select>
             <button type="button" class="btn-link btn-secondary btn-control-open-picker" data-target="a" style="padding: 0 10px; height: 42px; font-size: 0.8rem; white-space: nowrap;">
-              🖼️ Seç
+              🏐 Seç
             </button>
           </div>
           <input type="hidden" id="setting-logo-a" value="/assets/fenerbahce.svg">
@@ -274,7 +274,7 @@
         <div class="form-group">
           <div class="flex-between">
             <label class="form-label">Logo Seçimi</label>
-            <a href="/logos" target="_blank" style="font-size: 0.75rem; color: var(--fb-yellow); text-decoration: none; font-weight: 700;">➕ Yeni Yükle</a>
+            <a href="/teams" target="_blank" style="font-size: 0.75rem; color: var(--fb-yellow); text-decoration: none; font-weight: 700;">➕ Takım Ekle</a>
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
             <div class="logo-preview-thumb" id="control-preview-b" style="width: 42px; height: 42px; border-radius: 6px; border: 1px solid var(--border-color); background: repeating-conic-gradient(#1c2742 0% 25%, #151f36 0% 50%) 50% / 8px 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
@@ -284,7 +284,7 @@
               <!-- Populated via JS -->
             </select>
             <button type="button" class="btn-link btn-secondary btn-control-open-picker" data-target="b" style="padding: 0 10px; height: 42px; font-size: 0.8rem; white-space: nowrap;">
-              🖼️ Seç
+              🏐 Seç
             </button>
           </div>
           <input type="hidden" id="setting-logo-b" value="/assets/opponent.svg">
@@ -387,12 +387,12 @@
 <div class="modal-backdrop" id="modal-control-logo-picker">
   <div class="modal-box" style="max-width: 580px;">
     <div class="flex-between" style="margin-bottom: 12px;">
-      <h3 style="font-weight: 800; font-size: 1.15rem;">🖼️ Logo Seç</h3>
+      <h3 style="font-weight: 800; font-size: 1.15rem;">🏐 Takım & Logo Seç</h3>
       <button class="btn-modal-close" id="btn-close-control-picker">&times;</button>
     </div>
 
     <div style="margin-bottom: 10px;">
-      <input type="text" class="form-input" id="control-picker-search" placeholder="Logo ara..." style="padding: 8px 12px;">
+      <input type="text" class="form-input" id="control-picker-search" placeholder="Takım veya logo ara..." style="padding: 8px 12px;">
     </div>
 
     <div class="logo-picker-grid" id="control-picker-grid">
@@ -400,8 +400,8 @@
     </div>
 
     <div class="flex-between" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color);">
-      <a href="/logos" target="_blank" style="font-size: 0.85rem; color: var(--fb-yellow); font-weight: 700; text-decoration: none;">
-        ➕ Yeni Logo Yükle veya Düzenle
+      <a href="/teams" target="_blank" style="font-size: 0.85rem; color: var(--fb-yellow); font-weight: 700; text-decoration: none;">
+        ➕ Takım Ekle / Düzenle
       </a>
       <button type="button" class="btn-link btn-secondary" id="btn-cancel-control-picker" style="padding: 6px 14px; font-size: 0.85rem; cursor: pointer;">
         Kapat

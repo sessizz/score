@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Takım Yönetimi | Voleybol Skorboard</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/control.css">
+  <link rel="stylesheet" href="/css/teams.css">
+  <link rel="icon" href="/assets/volleyball.svg">
+</head>
+<body>
+
+  <div class="teams-container">
+    <!-- Top Navigation -->
+    <header class="teams-nav-bar">
+      <a href="/" class="teams-nav-brand">
+        <img src="/assets/volleyball.svg" style="width: 28px; height: 28px;" alt="Logo">
+        <span>Voleybol Skorboard</span>
+      </a>
+      <nav class="teams-nav-links">
+        <a href="/" class="nav-btn">🏠 Ana Panel</a>
+        <a href="/teams" class="nav-btn active">🏐 Takımlar</a>
+        <a href="/control/fenerbahce" class="nav-btn">🎛️ Hakem Kumandası</a>
+        <button id="btn-logout" class="nav-btn" style="cursor: pointer; display: none;">🚪 Çıkış</button>
+      </nav>
+    </header>
+
+    <!-- Header -->
+    <div class="teams-header">
+      <h1 class="teams-title">🏐 Takım Yönetim Merkezi</h1>
+      <p class="teams-subtitle">
+        Maçlarınızda kullanacağınız takımları, kısaltmaları, logoları ve renkleri buradan yönetin. Eklediğiniz takımlar hem yeni maç oluştururken hem de hakem kumanda panelinde anında seçilebilir olacaktır.
+      </p>
+    </div>
+
+    <!-- Layout: Add/Edit Form (Left) & Teams Library Grid (Right) -->
+    <div class="teams-layout">
+      <!-- Left Column: Add Team Form -->
+      <div>
+        <div class="team-form-card">
+          <h2>
+            <span>➕ Yeni Takım Ekle</span>
+          </h2>
+
+          <form id="form-add-team">
+            <!-- Team Name -->
+            <div class="form-group">
+              <label for="input-team-name">Takım Adı <span style="color: var(--crimson-light);">*</span></label>
+              <input type="text" class="form-input" id="input-team-name" placeholder="Örn: Galatasaray Daikin" required autocomplete="off">
+            </div>
+
+            <!-- Short Code -->
+            <div class="form-group">
+              <label for="input-team-short">Takım Kısaltması (2-5 Harf)</label>
+              <input type="text" class="form-input" id="input-team-short" placeholder="Örn: GS" maxlength="8" style="text-transform: uppercase;">
+            </div>
+
+            <!-- Logo Upload (Optional) -->
+            <div class="form-group">
+              <label>Takım Logosu <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">(İsteğe bağlı, boş bırakılabilir)</span></label>
+              <div class="team-dropzone" id="team-dropzone">
+                <input type="file" id="file-team-logo" accept="image/png, image/jpeg, image/svg+xml, image/webp">
+                <div class="dropzone-icon">📁</div>
+                <div style="font-weight: 700; font-size: 0.88rem; margin-bottom: 2px;">Logo Seç veya Sürükle</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">PNG, SVG, JPG veya WebP (Maks 8MB)</div>
+              </div>
+
+              <!-- Selected Logo Preview Box -->
+              <div class="team-logo-preview-box" id="logo-preview-box" style="display: none;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img id="logo-preview-img" src="" alt="Önizleme">
+                  <span id="logo-preview-name" style="font-size: 0.82rem; font-weight: 700;">Logo yüklendi</span>
+                </div>
+                <button type="button" class="btn-clear-logo" id="btn-clear-logo" title="Logoyu Kaldır">✕ Kaldır</button>
+              </div>
+            </div>
+
+            <!-- Colors -->
+            <div class="form-group">
+              <label>Takım Renkleri</label>
+              <div class="colors-grid">
+                <div class="color-picker-box">
+                  <label>1. Renk (Ana Renk)</label>
+                  <div class="color-input-wrap">
+                    <input type="color" class="color-native-picker" id="color-primary" value="#ffed00">
+                    <input type="text" class="color-hex-text" id="hex-primary" value="#FFED00" maxlength="7">
+                  </div>
+                </div>
+
+                <div class="color-picker-box">
+                  <label>2. Renk (İkincil Renk)</label>
+                  <div class="color-input-wrap">
+                    <input type="color" class="color-native-picker" id="color-secondary" value="#002d72">
+                    <input type="text" class="color-hex-text" id="hex-secondary" value="#002D72" maxlength="7">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Eyedropper Button -->
+              <button type="button" class="btn-eyedropper" id="btn-open-eyedropper">
+                <span>💧 Logodan Renk Seç (Damlalık)</span>
+              </button>
+            </div>
+
+            <!-- Live Scoreboard Card Preview -->
+            <div class="live-preview-section">
+              <div class="live-preview-title">Canlı Skor Kartı Önizlemesi</div>
+              <div class="live-team-badge" id="live-team-badge">
+                <div class="live-badge-left">
+                  <div class="live-badge-logo" id="live-preview-logo">
+                    <span id="live-preview-initials">TAK</span>
+                    <img id="live-preview-logo-img" src="" alt="" style="display: none;">
+                  </div>
+                  <div>
+                    <div class="live-badge-name" id="live-preview-name">TAKIM ADI</div>
+                    <div class="live-badge-short" id="live-preview-short">TAK</div>
+                  </div>
+                </div>
+                <div class="live-badge-score">25</div>
+              </div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn-save-team" id="btn-submit-team">
+              💾 Takımı Kütüphaneye Kaydet
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: Teams Library Grid -->
+      <div class="teams-library-section">
+        <div class="teams-toolbar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="input-search-teams" placeholder="Takım veya kısaltma ara...">
+          </div>
+          <div class="badge badge-set" id="badge-team-count" style="font-size: 0.85rem; padding: 8px 14px;">
+            Yükleniyor...
+          </div>
+        </div>
+
+        <!-- Grid Container -->
+        <div class="teams-grid" id="teams-grid">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state" style="display: none;">
+          <div style="font-size: 3rem; margin-bottom: 12px;">🏐</div>
+          <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;">Kayıtlı Takım Bulunamadı</h3>
+          <p style="font-size: 0.9rem;">Farklı bir arama yapabilir veya soldaki formdan yeni bir takım ekleyebilirsiniz.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-backdrop" id="modal-edit-team">
+    <div class="modal-box">
+      <div class="flex-between" style="margin-bottom: 16px;">
+        <h3 style="font-weight: 800; font-size: 1.2rem;">✏️ Takımı Düzenle</h3>
+        <button type="button" class="btn-modal-close" id="btn-close-edit-modal">&times;</button>
+      </div>
+
+      <form id="form-edit-team">
+        <input type="hidden" id="edit-team-id">
+
+        <div class="form-group">
+          <label for="edit-team-name">Takım Adı <span style="color: var(--crimson-light);">*</span></label>
+          <input type="text" class="form-input" id="edit-team-name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-team-short">Takım Kısaltması</label>
+          <input type="text" class="form-input" id="edit-team-short" maxlength="8" style="text-transform: uppercase;">
+        </div>
+
+        <!-- Edit Logo Section -->
+        <div class="form-group">
+          <label>Logo (İsteğe Bağlı)</label>
+          <div class="team-logo-preview-box" id="edit-logo-preview-box" style="margin-top: 0; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <img id="edit-logo-img" src="" alt="Logo">
+              <span id="edit-logo-label" style="font-size: 0.82rem; font-weight: 700;">Logo mevcut</span>
+            </div>
+            <button type="button" class="btn-clear-logo" id="btn-edit-clear-logo">✕ Kaldır</button>
+          </div>
+          <input type="file" class="form-input" id="edit-team-file" accept="image/png, image/jpeg, image/svg+xml, image/webp" style="padding: 6px;">
+        </div>
+
+        <!-- Edit Colors Section -->
+        <div class="form-group">
+          <label>Takım Renkleri</label>
+          <div class="colors-grid">
+            <div class="color-picker-box">
+              <label>1. Renk</label>
+              <div class="color-input-wrap">
+                <input type="color" class="color-native-picker" id="edit-color-primary" value="#ffed00">
+                <input type="text" class="color-hex-text" id="edit-hex-primary" value="#FFED00" maxlength="7">
+              </div>
+            </div>
+
+            <div class="color-picker-box">
+              <label>2. Renk</label>
+              <div class="color-input-wrap">
+                <input type="color" class="color-native-picker" id="edit-color-secondary" value="#002d72">
+                <input type="text" class="color-hex-text" id="edit-hex-secondary" value="#002D72" maxlength="7">
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Eyedropper Button -->
+          <button type="button" class="btn-eyedropper" id="btn-edit-eyedropper">
+            <span>💧 Logodan Renk Seç (Damlalık)</span>
+          </button>
+        </div>
+
+        <!-- Edit Live Preview Card -->
+        <div class="live-preview-section" style="margin-bottom: 18px;">
+          <div class="live-preview-title">Canlı Önizleme</div>
+          <div class="live-team-badge" id="edit-live-badge">
+            <div class="live-badge-left">
+              <div class="live-badge-logo" id="edit-live-logo">
+                <span id="edit-live-initials">TAK</span>
+                <img id="edit-live-logo-img" src="" alt="" style="display: none;">
+              </div>
+              <div>
+                <div class="live-badge-name" id="edit-live-name">TAKIM ADI</div>
+                <div class="live-badge-short" id="edit-live-short">TAK</div>
+              </div>
+            </div>
+            <div class="live-badge-score">25</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn-link btn-secondary" id="btn-cancel-edit" style="border: 1px solid var(--border-color); cursor: pointer;">
+            İptal
+          </button>
+          <button type="submit" class="btn-link btn-primary" style="border: none; cursor: pointer;">
+            Değişiklikleri Kaydet
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Eyedropper Component & Teams App Logic -->
+  <script src="/js/eyedropper.js"></script>
+  <script src="/js/teams.js"></script>
+</body>
+</html>
