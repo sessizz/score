@@ -72,7 +72,9 @@ function serveStaticFile(res, filePath) {
 
     res.writeHead(200, {
       'Content-Type': contentType,
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
       'Access-Control-Allow-Origin': '*'
     });
 
@@ -302,7 +304,7 @@ const server = http.createServer(async (req, res) => {
   const opBoardMatch = pathname.match(/^\/api\/board\/by-operator\/([a-zA-Z0-9_-]+)$/);
   if (opBoardMatch && method === 'GET') {
     const opToken = opBoardMatch[1];
-    const board = store.getBoardByOperatorToken(opToken);
+    const board = store.getBoardByOperatorToken(opToken) || store.getBoard(opToken);
     if (!board) {
       return sendJson(res, 404, { success: false, error: 'Geçersiz veya süresi dolmuş operatör bağlantısı.' });
     }
@@ -312,25 +314,31 @@ const server = http.createServer(async (req, res) => {
   // Action on board (Unified handler: checks Owner Session vs Operator Token)
   const actionMatch = pathname.match(/^\/api\/board\/([a-zA-Z0-9_-]+)\/action$/);
   if (actionMatch && method === 'POST') {
-    const boardId = actionMatch[1];
+    const rawTarget = actionMatch[1];
     const body = await parseJsonBody(req);
     const { action, payload } = body;
 
-    const board = store.getBoard(boardId);
+    let board = store.getBoard(rawTarget);
+    if (!board) {
+      board = store.getBoardByOperatorToken(rawTarget);
+    }
     if (!board) {
       return sendJson(res, 404, { success: false, error: 'Skorboard bulunamadı.' });
     }
 
+    const boardId = board.id;
     const user = auth.getUserFromRequest(req);
-    const operatorToken = req.headers['x-operator-token'] || reqUrl.searchParams.get('op') || body.operatorToken;
+    const operatorToken = (req.headers['x-operator-token'] || reqUrl.searchParams.get('op') || body.operatorToken || '').toString().trim().toLowerCase();
 
     // Determine authorization level:
     // 1. Is the requester the logged-in owner?
     // If board has no owner (unclaimed/legacy), any logged in user or admin can control it.
     const isOwner = Boolean(user && (!board.userId || board.userId === user.id));
 
-    // 2. Is the requester using the valid operator token?
-    const isOperator = Boolean(operatorToken && board.operatorToken && operatorToken === board.operatorToken);
+    // 2. Is the requester using the valid operator token or board id?
+    const boardOpToken = (board.operatorToken || '').toLowerCase();
+    const boardIdClean = (board.id || '').toLowerCase();
+    const isOperator = Boolean(operatorToken && (operatorToken === boardOpToken || operatorToken === boardIdClean));
 
     if (!isOwner && !isOperator) {
       return sendJson(res, 403, {
@@ -346,7 +354,9 @@ const server = http.createServer(async (req, res) => {
   // SSE Stream (Real-time live scores for OBS, live spectator, and controllers)
   const streamMatch = pathname.match(/^\/api\/board\/([a-zA-Z0-9_-]+)\/stream$/);
   if (streamMatch && method === 'GET') {
-    const boardId = streamMatch[1];
+    const rawTarget = streamMatch[1];
+    const board = store.getBoard(rawTarget) || store.getBoardByOperatorToken(rawTarget);
+    const boardId = board ? board.id : rawTarget;
 
     res.writeHead(200, {
       'Content-Type': 'text/event-stream; charset=utf-8',

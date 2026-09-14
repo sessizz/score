@@ -1,5 +1,7 @@
 // Operator (Referee/Scorer) Control Panel JS
 (function () {
+  'use strict';
+
   let currentBoard = null;
   let boardId = null;
   let operatorToken = null;
@@ -7,15 +9,24 @@
   let timeoutInterval = null;
   let clockInterval = null;
   let clockState = { running: false, startedAt: null, elapsedMs: 0 };
+  let audioCtx = null;
 
-  // Extract operatorToken from URL path (/operate/:token) or query param (?token=...)
-  const pathParts = window.location.pathname.split('/').filter(Boolean);
-  if (pathParts.length >= 2 && pathParts[0] === 'operate') {
-    operatorToken = pathParts[1];
-  } else {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('token')) operatorToken = urlParams.get('token');
-    else if (urlParams.has('op')) operatorToken = urlParams.get('op');
+  // Extract token from URL path (/operate/:token) or query params
+  function extractToken() {
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    if (pathParts.length >= 2 && (pathParts[0] === 'operate' || pathParts[0] === 'operate.html')) {
+      return decodeURIComponent(pathParts[1]).trim();
+    }
+    const params = new URLSearchParams(window.location.search);
+    return params.get('token') || params.get('op') || params.get('id') || params.get('board') || (pathParts.length === 1 && pathParts[0] !== 'operate' ? pathParts[0] : null);
+  }
+
+  // Safe DOM helper
+  function on(idOrEl, event, handler) {
+    const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
+    if (el) {
+      el.addEventListener(event, handler);
+    }
   }
 
   // DOM Elements
@@ -59,11 +70,11 @@
   const rightSubPointBtn = document.getElementById('right-sub-point');
   const rightTimeoutBtn = document.getElementById('right-timeout-btn');
 
-  // Sound Synth via Web Audio API
-  let audioCtx = null;
+  // Audio Synth via Web Audio API
   function playBeep(freq = 800, type = 'sine', duration = 0.08) {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = type;
@@ -80,15 +91,6 @@
   function playWhistle() {
     playBeep(1200, 'square', 0.25);
     setTimeout(() => playBeep(1400, 'square', 0.25), 80);
-  }
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
   }
 
   // Toast Notification
@@ -109,9 +111,10 @@
 
   // Action Dispatcher for Operator
   async function sendAction(action, payload = {}) {
-    if (!boardId || !operatorToken) return;
+    const targetId = boardId || operatorToken;
+    if (!targetId || !operatorToken) return false;
     try {
-      const response = await fetch(`/api/board/${boardId}/action`, {
+      const response = await fetch(`/api/board/${encodeURIComponent(targetId)}/action`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +135,7 @@
     }
   }
 
-  // Formatting clock
+  // Clock format & ticker
   function formatTime(ms) {
     const totalSec = Math.floor(Math.max(0, ms) / 1000);
     const m = Math.floor(totalSec / 60);
@@ -149,8 +152,9 @@
   }
 
   function syncClockDisplay() {
-    if (!elClockVal) return;
-    elClockVal.textContent = formatTime(getActiveElapsedMs());
+    if (elClockVal) {
+      elClockVal.textContent = formatTime(getActiveElapsedMs());
+    }
     if (elClockPlay && elClockToggle) {
       if (clockState.running) {
         elClockPlay.classList.add('is-active');
@@ -169,10 +173,11 @@
 
   // Render Board
   function renderBoard(board) {
+    if (!board) return;
     currentBoard = board;
 
-    if (board.title) elMatchTitle.textContent = board.title;
-    if (board.subtitle) elMatchSub.textContent = board.subtitle;
+    if (elMatchTitle && board.title) elMatchTitle.textContent = board.title;
+    if (elMatchSub && board.subtitle) elMatchSub.textContent = board.subtitle;
 
     // Clock
     clockState = board.setClock || { running: false, startedAt: null, elapsedMs: 0 };
@@ -180,17 +185,19 @@
     startClockTicker();
 
     // Set Status
-    elSetPill.textContent = `${board.currentSet || 1}. SET`;
+    if (elSetPill) elSetPill.textContent = `${board.currentSet || 1}. SET`;
 
     // Set History
-    if (board.setHistory && board.setHistory.length > 0) {
-      elHistoryList.innerHTML = board.setHistory.map(h => {
-        const leftSc = board.courtSwapped ? h.scoreB : h.scoreA;
-        const rightSc = board.courtSwapped ? h.scoreA : h.scoreB;
-        return `<div class="history-pill">${h.set}. Set: ${leftSc}-${rightSc}</div>`;
-      }).join('');
-    } else {
-      elHistoryList.innerHTML = '';
+    if (elHistoryList) {
+      if (board.setHistory && board.setHistory.length > 0) {
+        elHistoryList.innerHTML = board.setHistory.map(h => {
+          const leftSc = board.courtSwapped ? h.scoreB : h.scoreA;
+          const rightSc = board.courtSwapped ? h.scoreA : h.scoreB;
+          return `<div class="history-pill">${h.set}. Set: ${leftSc}-${rightSc}</div>`;
+        }).join('');
+      } else {
+        elHistoryList.innerHTML = '';
+      }
     }
 
     // Timeout state
@@ -198,10 +205,10 @@
     const elRightBadge = document.getElementById('right-to-badge');
 
     if (board.status === 'timeout' && board.timeoutState && board.timeoutState.active) {
-      elTimeoutBanner.classList.add('active');
+      if (elTimeoutBanner) elTimeoutBanner.classList.add('active');
       const teamKey = board.timeoutState.team;
       const teamObj = teamKey === 'teamA' ? board.teamA : board.teamB;
-      elTimeoutTeamName.textContent = `${teamObj.name} Molası`;
+      if (elTimeoutTeamName && teamObj) elTimeoutTeamName.textContent = `${teamObj.name || ''} Molası`;
 
       const isSwapped = Boolean(board.courtSwapped);
       const isLeftTimeout = (teamKey === 'teamA' && !isSwapped) || (teamKey === 'teamB' && isSwapped);
@@ -209,7 +216,7 @@
       if (timeoutInterval) clearInterval(timeoutInterval);
       timeoutInterval = setInterval(() => {
         const remainSec = Math.max(0, Math.ceil((board.timeoutState.endsAt - Date.now()) / 1000));
-        elTimeoutTimer.textContent = `${remainSec}s`;
+        if (elTimeoutTimer) elTimeoutTimer.textContent = `${remainSec}s`;
         if (elLeftBadge) {
           elLeftBadge.style.display = isLeftTimeout ? 'inline-block' : 'none';
           if (isLeftTimeout) elLeftBadge.textContent = `${remainSec}s`;
@@ -220,13 +227,13 @@
         }
         if (remainSec <= 0) {
           clearInterval(timeoutInterval);
-          elTimeoutBanner.classList.remove('active');
+          if (elTimeoutBanner) elTimeoutBanner.classList.remove('active');
           if (elLeftBadge) elLeftBadge.style.display = 'none';
           if (elRightBadge) elRightBadge.style.display = 'none';
         }
       }, 250);
     } else {
-      elTimeoutBanner.classList.remove('active');
+      if (elTimeoutBanner) elTimeoutBanner.classList.remove('active');
       if (timeoutInterval) clearInterval(timeoutInterval);
       if (elLeftBadge) elLeftBadge.style.display = 'none';
       if (elRightBadge) elRightBadge.style.display = 'none';
@@ -238,52 +245,59 @@
     const rightData = isSwapped ? board.teamA : board.teamB;
 
     // Left Team
-    leftName.textContent = leftData.name || 'EV SAHİBİ';
-    leftShort.textContent = leftData.shortName || '';
-    leftSets.textContent = `${leftData.setsWon || 0} Set`;
-    leftPointVal.textContent = leftData.points || 0;
-    leftCard.style.borderColor = (leftData.color || '#ffed00') + '66';
+    if (leftName) leftName.textContent = leftData?.name || 'EV SAHİBİ';
+    if (leftShort) leftShort.textContent = leftData?.shortName || '';
+    if (leftSets) leftSets.textContent = `${leftData?.setsWon || 0} Set`;
+    if (leftPointVal) leftPointVal.textContent = leftData?.points || 0;
+    if (leftCard && leftData?.color) leftCard.style.borderColor = (leftData.color || '#ffed00') + '66';
 
-    if (leftData.logo) {
-      leftLogo.src = leftData.logo;
-      leftLogo.style.display = 'block';
-    } else {
-      leftLogo.style.display = 'none';
+    if (leftLogo) {
+      if (leftData?.logo) {
+        leftLogo.src = leftData.logo;
+        leftLogo.style.display = 'block';
+      } else {
+        leftLogo.style.display = 'none';
+      }
     }
 
-    leftServeBtn.classList.toggle('is-serving', Boolean(leftData.isServing));
-    leftToDot1.classList.toggle('is-used', (leftData.timeouts || 0) >= 1);
-    leftToDot2.classList.toggle('is-used', (leftData.timeouts || 0) >= 2);
-    leftTimeoutBtn.disabled = (leftData.timeouts || 0) >= 2;
+    if (leftServeBtn) leftServeBtn.classList.toggle('is-serving', Boolean(leftData?.isServing));
+    if (leftToDot1) leftToDot1.classList.toggle('is-used', (leftData?.timeouts || 0) >= 1);
+    if (leftToDot2) leftToDot2.classList.toggle('is-used', (leftData?.timeouts || 0) >= 2);
+    if (leftTimeoutBtn) leftTimeoutBtn.disabled = (leftData?.timeouts || 0) >= 2;
 
     // Right Team
-    rightName.textContent = rightData.name || 'DEPLASMAN';
-    rightShort.textContent = rightData.shortName || '';
-    rightSets.textContent = `${rightData.setsWon || 0} Set`;
-    rightPointVal.textContent = rightData.points || 0;
-    rightCard.style.borderColor = (rightData.color || '#d61c35') + '66';
+    if (rightName) rightName.textContent = rightData?.name || 'DEPLASMAN';
+    if (rightShort) rightShort.textContent = rightData?.shortName || '';
+    if (rightSets) rightSets.textContent = `${rightData?.setsWon || 0} Set`;
+    if (rightPointVal) rightPointVal.textContent = rightData?.points || 0;
+    if (rightCard && rightData?.color) rightCard.style.borderColor = (rightData.color || '#d61c35') + '66';
 
-    if (rightData.logo) {
-      rightLogo.src = rightData.logo;
-      rightLogo.style.display = 'block';
-    } else {
-      rightLogo.style.display = 'none';
+    if (rightLogo) {
+      if (rightData?.logo) {
+        rightLogo.src = rightData.logo;
+        rightLogo.style.display = 'block';
+      } else {
+        rightLogo.style.display = 'none';
+      }
     }
 
-    rightServeBtn.classList.toggle('is-serving', Boolean(rightData.isServing));
-    rightToDot1.classList.toggle('is-used', (rightData.timeouts || 0) >= 1);
-    rightToDot2.classList.toggle('is-used', (rightData.timeouts || 0) >= 2);
-    rightTimeoutBtn.disabled = (rightData.timeouts || 0) >= 2;
+    if (rightServeBtn) rightServeBtn.classList.toggle('is-serving', Boolean(rightData?.isServing));
+    if (rightToDot1) rightToDot1.classList.toggle('is-used', (rightData?.timeouts || 0) >= 1);
+    if (rightToDot2) rightToDot2.classList.toggle('is-used', (rightData?.timeouts || 0) >= 2);
+    if (rightTimeoutBtn) rightTimeoutBtn.disabled = (rightData?.timeouts || 0) >= 2;
   }
 
   // Connect SSE
   function connectSSE() {
-    if (eventSource) eventSource.close();
-    eventSource = new EventSource(`/api/board/${boardId}/stream`);
+    if (!boardId) return;
+    if (eventSource) {
+      try { eventSource.close(); } catch (e) {}
+    }
+    eventSource = new EventSource(`/api/board/${encodeURIComponent(boardId)}/stream`);
 
     eventSource.onopen = () => {
-      elConnDot.classList.add('online');
-      elConnText.textContent = 'Canlı Bağlantı';
+      if (elConnDot) elConnDot.className = 'conn-dot';
+      if (elConnText) elConnText.textContent = 'Canlı Bağlantı';
     };
 
     eventSource.addEventListener('state', (e) => {
@@ -296,116 +310,115 @@
     });
 
     eventSource.onerror = () => {
-      elConnDot.classList.remove('online');
-      elConnText.textContent = 'Bağlantı koptu';
+      if (elConnDot) elConnDot.className = 'conn-dot disconnected';
+      if (elConnText) elConnText.textContent = 'Bağlantı koptu';
     };
   }
 
-  // Resolve board by operator token
+  // Resolve board by operator token or board ID
   async function initOperator() {
+    operatorToken = extractToken();
     if (!operatorToken) {
-      elMatchTitle.textContent = 'Geçersiz Operatör Linki';
-      elMatchSub.textContent = 'Lütfen yöneticiden aldığınız linki kontrol edin.';
+      if (elMatchTitle) elMatchTitle.textContent = 'Operatör Kodu Bulunamadı';
+      if (elMatchSub) elMatchSub.textContent = 'URL adresinde geçerli bir kod bulunamadı (Örn: /operate/abcd)';
+      if (elConnDot) elConnDot.className = 'conn-dot disconnected';
+      if (elConnText) elConnText.textContent = 'Bağlantı Yok';
       return;
     }
 
+    if (elConnText) elConnText.textContent = 'Bağlanıyor...';
+
     try {
-      const res = await fetch(`/api/board/by-operator/${operatorToken}`);
+      const res = await fetch(`/api/board/by-operator/${encodeURIComponent(operatorToken)}`);
       const data = await res.json();
 
       if (!res.ok || !data.success || !data.board) {
-        elMatchTitle.textContent = 'Skorboard Bulunamadı';
-        elMatchSub.textContent = data.error || 'Operatör linki geçersiz.';
+        if (elMatchTitle) elMatchTitle.textContent = 'Skorboard Bulunamadı';
+        if (elMatchSub) elMatchSub.textContent = (data && data.error) ? data.error : 'Operatör linki geçersiz veya bulunamadı.';
+        if (elConnDot) elConnDot.className = 'conn-dot disconnected';
+        if (elConnText) elConnText.textContent = 'Bulunamadı';
         return;
       }
 
-      boardId = data.boardId;
+      boardId = data.boardId || data.board.id;
       renderBoard(data.board);
       connectSSE();
     } catch (e) {
-      elMatchTitle.textContent = 'Bağlantı Hatası';
-      elMatchSub.textContent = 'Sunucuya ulaşılamadı.';
+      console.error('Operator init error:', e);
+      if (elMatchTitle) elMatchTitle.textContent = 'Bağlantı Hatası';
+      if (elMatchSub) elMatchSub.textContent = 'Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edin.';
+      if (elConnDot) elConnDot.className = 'conn-dot disconnected';
+      if (elConnText) elConnText.textContent = 'Hata';
     }
   }
 
-  // Wire User Interactions
-
-  // Left Point (+1)
-  leftPointArea.addEventListener('click', () => {
+  // Wire User Interactions defensively
+  on('left-point-area', 'click', () => {
     if (!currentBoard) return;
     const teamAction = currentBoard.courtSwapped ? 'point_b' : 'point_a';
     playBeep(880, 'sine', 0.1);
     sendAction(teamAction);
   });
 
-  // Right Point (+1)
-  rightPointArea.addEventListener('click', () => {
+  on('right-point-area', 'click', () => {
     if (!currentBoard) return;
     const teamAction = currentBoard.courtSwapped ? 'point_a' : 'point_b';
     playBeep(880, 'sine', 0.1);
     sendAction(teamAction);
   });
 
-  // Left Sub Point (-1)
-  leftSubPointBtn.addEventListener('click', () => {
+  on('left-sub-point', 'click', () => {
     if (!currentBoard) return;
     const teamAction = currentBoard.courtSwapped ? 'sub_point_b' : 'sub_point_a';
     playBeep(440, 'sine', 0.08);
     sendAction(teamAction);
   });
 
-  // Right Sub Point (-1)
-  rightSubPointBtn.addEventListener('click', () => {
+  on('right-sub-point', 'click', () => {
     if (!currentBoard) return;
     const teamAction = currentBoard.courtSwapped ? 'sub_point_a' : 'sub_point_b';
     playBeep(440, 'sine', 0.08);
     sendAction(teamAction);
   });
 
-  // Left Serve
-  leftServeBtn.addEventListener('click', () => {
+  on('left-serve-btn', 'click', () => {
     if (!currentBoard) return;
     const team = currentBoard.courtSwapped ? 'teamB' : 'teamA';
     playBeep(660, 'triangle', 0.08);
     sendAction('set_serve', { team });
   });
 
-  // Right Serve
-  rightServeBtn.addEventListener('click', () => {
+  on('right-serve-btn', 'click', () => {
     if (!currentBoard) return;
     const team = currentBoard.courtSwapped ? 'teamA' : 'teamB';
     playBeep(660, 'triangle', 0.08);
     sendAction('set_serve', { team });
   });
 
-  // Left Timeout
-  leftTimeoutBtn.addEventListener('click', () => {
+  on('left-timeout-btn', 'click', () => {
     if (!currentBoard) return;
     const teamAction = currentBoard.courtSwapped ? 'timeout_b' : 'timeout_a';
     playWhistle();
     sendAction(teamAction, { duration: 30 });
   });
 
-  // Right Timeout
-  rightTimeoutBtn.addEventListener('click', () => {
+  on('right-timeout-btn', 'click', () => {
     if (!currentBoard) return;
     const teamAction = currentBoard.courtSwapped ? 'timeout_a' : 'timeout_b';
     playWhistle();
     sendAction(teamAction, { duration: 30 });
   });
 
-  // End Timeout
-  document.getElementById('btn-end-timeout').addEventListener('click', () => {
+  on('btn-end-timeout', 'click', () => {
     playWhistle();
     sendAction('end_timeout');
   });
 
-  // Set Clock Controls
-  elClockPlay.addEventListener('click', () => {
+  on('btn-clock-play', 'click', () => {
     sendAction('clock_start');
   });
 
-  elClockToggle.addEventListener('click', () => {
+  on('btn-clock-toggle', 'click', () => {
     if (clockState.running) {
       sendAction('clock_pause');
     } else {
@@ -415,28 +428,26 @@
     }
   });
 
-  // Undo Action
-  document.getElementById('btn-undo').addEventListener('click', () => {
+  on('btn-undo', 'click', () => {
     playBeep(520, 'sine', 0.12);
     sendAction('undo');
   });
 
-  // Swap Sides
-  const btnSwapEl = document.getElementById('btn-swap') || document.getElementById('btn-swap-sides');
-  if (btnSwapEl) {
-    btnSwapEl.addEventListener('click', () => {
-      playBeep(700, 'sine', 0.08);
-      sendAction('swap_sides');
-    });
-  }
+  on('btn-swap', 'click', () => {
+    playBeep(700, 'sine', 0.08);
+    sendAction('swap_sides');
+  });
+  on('btn-swap-sides', 'click', () => {
+    playBeep(700, 'sine', 0.08);
+    sendAction('swap_sides');
+  });
 
-  // End Set
-  document.getElementById('btn-end-set').addEventListener('click', () => {
+  on('btn-end-set', 'click', () => {
     if (!currentBoard) return;
-    const pA = currentBoard.teamA.points;
-    const pB = currentBoard.teamB.points;
+    const pA = currentBoard.teamA?.points || 0;
+    const pB = currentBoard.teamB?.points || 0;
     const winner = pA > pB ? 'teamA' : (pB > pA ? 'teamB' : null);
-    const winName = winner === 'teamA' ? currentBoard.teamA.name : (winner === 'teamB' ? currentBoard.teamB.name : 'Belirsiz');
+    const winName = winner === 'teamA' ? currentBoard.teamA?.name : (winner === 'teamB' ? currentBoard.teamB?.name : 'Belirsiz');
 
     if (confirm(`Seti bitirmek istediğinizden emin misiniz?\nKazanan: ${winName} (${pA} - ${pB})`)) {
       playWhistle();
@@ -444,11 +455,14 @@
     }
   });
 
-  // New Set
-  document.getElementById('btn-new-set').addEventListener('click', () => {
+  on('btn-new-set', 'click', () => {
     sendAction('new_set');
   });
 
-  // Init
-  initOperator();
+  // Start initialization when DOM is loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOperator);
+  } else {
+    initOperator();
+  }
 })();

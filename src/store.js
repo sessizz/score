@@ -178,6 +178,10 @@ function initStore() {
     const dbBoards = db.getAllBoardsFromDb();
     if (dbBoards && dbBoards.length > 0) {
       for (const b of dbBoards) {
+        if (!b.operatorToken) {
+          b.operatorToken = generateUniqueOperatorToken();
+          db.saveBoardToDb(b);
+        }
         boards.set(b.id, b);
         undoStacks.set(b.id, []);
       }
@@ -233,31 +237,39 @@ function pushUndo(boardId) {
 }
 
 function getBoard(boardId) {
-  if (!boards.has(boardId)) {
-    const fromDb = db.getBoardFromDb(boardId);
-    if (fromDb) {
-      boards.set(boardId, fromDb);
-      undoStacks.set(boardId, []);
-    } else {
-      return null;
-    }
-  }
-  const board = boards.get(boardId);
-  if (board) {
+  if (!boardId) return null;
+  if (boards.has(boardId)) {
+    const board = boards.get(boardId);
     ensureSetClock(board);
+    return board;
   }
-  return board;
-}
-
-function getBoardByOperatorToken(token) {
-  if (!token) return null;
+  const clean = String(boardId).trim().toLowerCase();
   for (const b of boards.values()) {
-    if (b.operatorToken === token) {
+    if ((b.id && b.id.toLowerCase() === clean) || (b.operatorToken && b.operatorToken.toLowerCase() === clean)) {
       ensureSetClock(b);
       return b;
     }
   }
-  const fromDb = db.getBoardByOperatorToken(token);
+  const fromDb = db.getBoardFromDb(clean) || db.getBoardByOperatorToken(clean);
+  if (fromDb) {
+    boards.set(fromDb.id, fromDb);
+    undoStacks.set(fromDb.id, []);
+    ensureSetClock(fromDb);
+    return fromDb;
+  }
+  return null;
+}
+
+function getBoardByOperatorToken(token) {
+  if (!token) return null;
+  const clean = String(token).trim().toLowerCase();
+  for (const b of boards.values()) {
+    if ((b.operatorToken && b.operatorToken.toLowerCase() === clean) || (b.id && b.id.toLowerCase() === clean)) {
+      ensureSetClock(b);
+      return b;
+    }
+  }
+  const fromDb = db.getBoardByOperatorToken(token) || db.getBoardFromDb(token);
   if (fromDb) {
     boards.set(fromDb.id, fromDb);
     undoStacks.set(fromDb.id, []);

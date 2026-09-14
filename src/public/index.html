@@ -508,7 +508,7 @@
         const ptsB = b.teamB?.points || 0;
 
         const controlUrl = `${origin}/control/${b.id}`;
-        const operateUrl = `${origin}/operate/${b.operatorToken}`;
+        const operateUrl = `${origin}/operate/${b.operatorToken || b.id}`;
         const overlayTopUrl = `${origin}/overlay/${b.id}?theme=topbar`;
         const overlayBottomUrl = `${origin}/overlay/${b.id}?theme=bottom`;
         const overlayMiniUrl = `${origin}/overlay/${b.id}?theme=mini`;

@@ -72,6 +72,15 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_logos_user ON logos(user_id);
 `);
 
+// Ensure all existing boards have an operator_token
+try {
+  const missingTokens = db.prepare("SELECT id FROM boards WHERE operator_token IS NULL OR operator_token = ''").all();
+  for (const row of missingTokens) {
+    const code = crypto.randomBytes(3).toString('hex').slice(0, 4);
+    db.prepare('UPDATE boards SET operator_token = ? WHERE id = ?').run(code, row.id);
+  }
+} catch (e) {}
+
 // --- Users DB Functions ---
 function createUser({ id, email, passwordHash, salt, verificationCode, verificationExpiresAt }) {
   const stmt = db.prepare(`
@@ -152,20 +161,23 @@ function cleanExpiredSessions() {
 
 // --- Boards DB Functions ---
 function saveBoardToDb(board) {
-  const existing = db.prepare('SELECT id FROM boards WHERE id = ?').get(board.id);
+  const existing = db.prepare('SELECT id, operator_token, user_id FROM boards WHERE id = ?').get(board.id);
   const now = Date.now();
+  if (!board.operatorToken) {
+    board.operatorToken = (existing && existing.operator_token) ? existing.operator_token : crypto.randomBytes(3).toString('hex').slice(0, 4);
+  }
   const stateJson = JSON.stringify(board);
   const name = (board.title || board.id);
 
   if (existing) {
     const stmt = db.prepare(`
       UPDATE boards
-      SET name = ?, state_json = ?, updated_at = ?
+      SET name = ?, user_id = coalesce(?, user_id), operator_token = ?, state_json = ?, updated_at = ?
       WHERE id = ?
     `);
-    stmt.run(name, stateJson, now, board.id);
+    stmt.run(name, board.userId || null, board.operatorToken, stateJson, now, board.id);
   } else {
-    const opToken = board.operatorToken || crypto.randomBytes(12).toString('hex');
+    const opToken = board.operatorToken || crypto.randomBytes(3).toString('hex').slice(0, 4);
     board.operatorToken = opToken;
     const stmt = db.prepare(`
       INSERT INTO boards (id, user_id, name, operator_token, state_json, created_at, updated_at)
@@ -176,8 +188,10 @@ function saveBoardToDb(board) {
 }
 
 function getBoardFromDb(id) {
-  const stmt = db.prepare('SELECT * FROM boards WHERE id = ?');
-  const row = stmt.get(id);
+  if (!id) return null;
+  const clean = String(id).trim().toLowerCase();
+  const stmt = db.prepare('SELECT * FROM boards WHERE LOWER(id) = ? OR LOWER(operator_token) = ?');
+  const row = stmt.get(clean, clean);
   if (!row) return null;
   try {
     const board = JSON.parse(row.state_json);
@@ -191,8 +205,10 @@ function getBoardFromDb(id) {
 }
 
 function getBoardByOperatorToken(token) {
-  const stmt = db.prepare('SELECT * FROM boards WHERE operator_token = ?');
-  const row = stmt.get(token);
+  if (!token) return null;
+  const clean = String(token).trim().toLowerCase();
+  const stmt = db.prepare('SELECT * FROM boards WHERE LOWER(operator_token) = ? OR LOWER(id) = ?');
+  const row = stmt.get(clean, clean);
   if (!row) return null;
   try {
     const board = JSON.parse(row.state_json);
