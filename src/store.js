@@ -129,9 +129,39 @@ const PRESETS = {
   }
 };
 
+const CODE_CHARS = '23456789abcdefghjkmnpqrstuvwxyz';
+
+function generate4CharCode() {
+  let code = '';
+  for (let i = 0; i < 4; i++) {
+    code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  }
+  return code;
+}
+
+function generateUniqueBoardId() {
+  for (let i = 0; i < 1000; i++) {
+    const code = generate4CharCode();
+    if (!boards.has(code) && !db.getBoardFromDb(code)) {
+      return code;
+    }
+  }
+  return crypto.randomBytes(3).toString('hex').slice(0, 4);
+}
+
+function generateUniqueOperatorToken() {
+  for (let i = 0; i < 1000; i++) {
+    const code = generate4CharCode();
+    if (!db.getBoardByOperatorToken(code)) {
+      return code;
+    }
+  }
+  return crypto.randomBytes(3).toString('hex').slice(0, 4);
+}
+
 function createDefaultBoard(id, presetKey = 'fenerbahce', userId = null) {
   const base = PRESETS[presetKey] || PRESETS.fenerbahce;
-  const opToken = crypto.randomBytes(12).toString('hex');
+  const opToken = generateUniqueOperatorToken();
   return {
     id,
     userId,
@@ -244,8 +274,10 @@ function saveBoard(board) {
 }
 
 function createBoard(userId, options = {}) {
-  const rawId = options.id || `match-${Date.now().toString(36)}`;
-  const id = rawId.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+  // Always assign a fresh, unique 4-character code so repeated match titles never overwrite
+  const id = (options.id && options.id.length === 4 && /^[a-z0-9]{4}$/.test(options.id) && !boards.has(options.id))
+    ? options.id
+    : generateUniqueBoardId();
   const presetKey = options.preset || 'fenerbahce';
   const newBoard = createDefaultBoard(id, presetKey, userId);
 

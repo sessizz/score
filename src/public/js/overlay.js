@@ -146,10 +146,12 @@
               <div class="dc-team-name-box" id="dc-team-box-left">
                 <img src="${escapeHtml(logoA)}" class="dc-team-name-logo" alt="" />
                 <span class="dc-team-name-text">${escapeHtml(nameA)}</span>
-                <div class="dc-timeout-dots" title="Mola: ${leftTimeouts}/2">
-                  <span class="dc-to-dot ${leftTimeouts >= 1 ? 'is-used' : ''}"></span>
-                  <span class="dc-to-dot ${leftTimeouts >= 2 ? 'is-used' : ''}"></span>
+                <div class="dc-timeout-box">
                   <span class="dc-to-inline-timer" id="dc-to-inline-left" style="display: none;">30s</span>
+                  <div class="dc-timeout-dots" title="Mola: ${leftTimeouts}/2">
+                    <span class="dc-to-dot ${leftTimeouts >= 1 ? 'is-used' : ''}"></span>
+                    <span class="dc-to-dot ${leftTimeouts >= 2 ? 'is-used' : ''}"></span>
+                  </div>
                 </div>
               </div>
               <div class="dc-team-stripe-a">
@@ -189,10 +191,12 @@
             <!-- Team B Column (Right) -->
             <div class="dc-team-col-b">
               <div class="dc-team-name-box" id="dc-team-box-right">
-                <div class="dc-timeout-dots" title="Mola: ${rightTimeouts}/2">
+                <div class="dc-timeout-box">
                   <span class="dc-to-inline-timer" id="dc-to-inline-right" style="display: none;">30s</span>
-                  <span class="dc-to-dot ${rightTimeouts >= 1 ? 'is-used' : ''}"></span>
-                  <span class="dc-to-dot ${rightTimeouts >= 2 ? 'is-used' : ''}"></span>
+                  <div class="dc-timeout-dots" title="Mola: ${rightTimeouts}/2">
+                    <span class="dc-to-dot ${rightTimeouts >= 1 ? 'is-used' : ''}"></span>
+                    <span class="dc-to-dot ${rightTimeouts >= 2 ? 'is-used' : ''}"></span>
+                  </div>
                 </div>
                 <span class="dc-team-name-text">${escapeHtml(nameB)}</span>
                 <img src="${escapeHtml(logoB)}" class="dc-team-name-logo" alt="" />

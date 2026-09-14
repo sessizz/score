@@ -382,8 +382,22 @@ const server = http.createServer(async (req, res) => {
     return serveStaticFile(res, path.join(PUBLIC_DIR, 'operate.html'));
   }
 
-  // Admin Control Panel (Owner)
+  // Admin Control Panel (Owner Only)
   if (pathname.startsWith('/control')) {
+    const user = auth.getUserFromRequest(req);
+    if (!user) {
+      res.writeHead(302, { 'Location': '/login' });
+      return res.end();
+    }
+    const match = pathname.match(/^\/control\/([a-zA-Z0-9_-]+)$/);
+    if (match) {
+      const boardId = match[1];
+      const board = store.getBoard(boardId);
+      if (board && board.userId && board.userId !== user.id) {
+        res.writeHead(302, { 'Location': '/' });
+        return res.end();
+      }
+    }
     return serveStaticFile(res, path.join(PUBLIC_DIR, 'control.html'));
   }
 

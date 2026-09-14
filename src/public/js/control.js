@@ -261,8 +261,13 @@
     elClockVal.classList.toggle('is-running', running);
   }
 
+  const elLeftBadge = document.getElementById('left-to-badge');
+  const elRightBadge = document.getElementById('right-to-badge');
+
   function hideTimeoutBanner() {
     elTimeoutBanner.classList.remove('active');
+    if (elLeftBadge) elLeftBadge.style.display = 'none';
+    if (elRightBadge) elRightBadge.style.display = 'none';
     if (timeoutInterval) {
       clearInterval(timeoutInterval);
       timeoutInterval = null;
@@ -276,6 +281,21 @@
     function update() {
       const remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
       elTimeoutTimer.textContent = `${remaining}s`;
+
+      if (currentBoard && currentBoard.timeoutState) {
+        const teamKey = currentBoard.timeoutState.team;
+        const isSwapped = Boolean(currentBoard.courtSwapped);
+        const isLeftTimeout = (teamKey === 'teamA' && !isSwapped) || (teamKey === 'teamB' && isSwapped);
+        if (elLeftBadge) {
+          elLeftBadge.style.display = isLeftTimeout ? 'inline-block' : 'none';
+          if (isLeftTimeout) elLeftBadge.textContent = `${remaining}s`;
+        }
+        if (elRightBadge) {
+          elRightBadge.style.display = !isLeftTimeout ? 'inline-block' : 'none';
+          if (!isLeftTimeout) elRightBadge.textContent = `${remaining}s`;
+        }
+      }
+
       if (remaining > 0) return;
       // Mola bitti: banner'ı kaldır, düdüğü bu mola için bir kez çal
       hideTimeoutBanner();
@@ -749,7 +769,22 @@
     }
   });
 
+  // Session Auth Verification
+  async function checkAuth() {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      if (!data.authenticated || !data.user) {
+        window.location.href = '/login';
+        return;
+      }
+    } catch (e) {
+      window.location.href = '/login';
+    }
+  }
+
   // Initialize
+  checkAuth();
   loadControlLogos();
   connectSSE();
 })();

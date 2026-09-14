@@ -194,24 +194,42 @@
     }
 
     // Timeout state
+    const elLeftBadge = document.getElementById('left-to-badge');
+    const elRightBadge = document.getElementById('right-to-badge');
+
     if (board.status === 'timeout' && board.timeoutState && board.timeoutState.active) {
       elTimeoutBanner.classList.add('active');
       const teamKey = board.timeoutState.team;
       const teamObj = teamKey === 'teamA' ? board.teamA : board.teamB;
       elTimeoutTeamName.textContent = `${teamObj.name} Molası`;
 
+      const isSwapped = Boolean(board.courtSwapped);
+      const isLeftTimeout = (teamKey === 'teamA' && !isSwapped) || (teamKey === 'teamB' && isSwapped);
+
       if (timeoutInterval) clearInterval(timeoutInterval);
       timeoutInterval = setInterval(() => {
         const remainSec = Math.max(0, Math.ceil((board.timeoutState.endsAt - Date.now()) / 1000));
         elTimeoutTimer.textContent = `${remainSec}s`;
+        if (elLeftBadge) {
+          elLeftBadge.style.display = isLeftTimeout ? 'inline-block' : 'none';
+          if (isLeftTimeout) elLeftBadge.textContent = `${remainSec}s`;
+        }
+        if (elRightBadge) {
+          elRightBadge.style.display = !isLeftTimeout ? 'inline-block' : 'none';
+          if (!isLeftTimeout) elRightBadge.textContent = `${remainSec}s`;
+        }
         if (remainSec <= 0) {
           clearInterval(timeoutInterval);
           elTimeoutBanner.classList.remove('active');
+          if (elLeftBadge) elLeftBadge.style.display = 'none';
+          if (elRightBadge) elRightBadge.style.display = 'none';
         }
       }, 250);
     } else {
       elTimeoutBanner.classList.remove('active');
       if (timeoutInterval) clearInterval(timeoutInterval);
+      if (elLeftBadge) elLeftBadge.style.display = 'none';
+      if (elRightBadge) elRightBadge.style.display = 'none';
     }
 
     // Left vs Right teams mapped by courtSwapped
@@ -404,10 +422,13 @@
   });
 
   // Swap Sides
-  document.getElementById('btn-swap-sides').addEventListener('click', () => {
-    playBeep(700, 'sine', 0.08);
-    sendAction('swap_sides');
-  });
+  const btnSwapEl = document.getElementById('btn-swap') || document.getElementById('btn-swap-sides');
+  if (btnSwapEl) {
+    btnSwapEl.addEventListener('click', () => {
+      playBeep(700, 'sine', 0.08);
+      sendAction('swap_sides');
+    });
+  }
 
   // End Set
   document.getElementById('btn-end-set').addEventListener('click', () => {

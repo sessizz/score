@@ -15,9 +15,9 @@
       background: rgba(16, 185, 129, 0.2);
       border: 1px solid rgba(16, 185, 129, 0.4);
       color: #6ee7b7;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 20px;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       font-weight: 800;
       letter-spacing: 0.5px;
     }
@@ -97,21 +97,24 @@
           <img src="/assets/volleyball.svg" class="volleyball-icon-mini" alt="Serve">
           <span>SERVİS</span>
         </button>
-        <div class="timeouts-tracker">
-          <span>Mola:</span>
-          <div class="to-dot" id="left-to-dot-1"></div>
-          <div class="to-dot" id="left-to-dot-2"></div>
+        <div class="timeouts-tracker-col">
+          <span class="to-countdown-badge" id="left-to-badge" style="display: none;">30s</span>
+          <div class="timeouts-tracker">
+            <span>Mola:</span>
+            <div class="to-dot" id="left-to-dot-1"></div>
+            <div class="to-dot" id="left-to-dot-2"></div>
+          </div>
         </div>
       </div>
 
       <div class="point-tap-area" id="left-point-area">
-        <div class="point-val" id="left-point-val">0</div>
-        <span class="point-tap-label">SAYI EKLE (+1)</span>
+        <div class="point-display" id="left-point-val">0</div>
+        <div class="point-tap-label">+1 SAYI</div>
       </div>
 
-      <div class="card-actions-row">
-        <button class="btn-sub-point" id="left-sub-point">-1 Sayı Düş</button>
-        <button class="btn-timeout" id="left-timeout-btn">⏱️ Mola Al</button>
+      <div class="team-action-row">
+        <button class="btn-sub-point" id="left-sub-point">-1 Sayı</button>
+        <button class="btn-timeout-call" id="left-timeout-btn">⏱️ Mola Al</button>
       </div>
     </div>
 
@@ -133,38 +136,45 @@
           <img src="/assets/volleyball.svg" class="volleyball-icon-mini" alt="Serve">
           <span>SERVİS</span>
         </button>
-        <div class="timeouts-tracker">
-          <span>Mola:</span>
-          <div class="to-dot" id="right-to-dot-1"></div>
-          <div class="to-dot" id="right-to-dot-2"></div>
+        <div class="timeouts-tracker-col">
+          <span class="to-countdown-badge" id="right-to-badge" style="display: none;">30s</span>
+          <div class="timeouts-tracker">
+            <span>Mola:</span>
+            <div class="to-dot" id="right-to-dot-1"></div>
+            <div class="to-dot" id="right-to-dot-2"></div>
+          </div>
         </div>
       </div>
 
       <div class="point-tap-area" id="right-point-area">
-        <div class="point-val" id="right-point-val">0</div>
-        <span class="point-tap-label">SAYI EKLE (+1)</span>
+        <div class="point-display" id="right-point-val">0</div>
+        <div class="point-tap-label">+1 SAYI</div>
       </div>
 
-      <div class="card-actions-row">
-        <button class="btn-sub-point" id="right-sub-point">-1 Sayı Düş</button>
-        <button class="btn-timeout" id="right-timeout-btn">⏱️ Mola Al</button>
+      <div class="team-action-row">
+        <button class="btn-sub-point" id="right-sub-point">-1 Sayı</button>
+        <button class="btn-timeout-call" id="right-timeout-btn">⏱️ Mola Al</button>
       </div>
     </div>
   </div>
 
-  <!-- Operator Action Bar (Undo, Swap Sides, Set Control) -->
-  <div class="control-actions-footer">
-    <button class="btn-footer-action btn-undo" id="btn-undo">
-      ↩️ Geri Al (Undo)
+  <!-- Bottom Global Controls Bar -->
+  <div class="bottom-controls">
+    <button class="btn-action-main btn-undo" id="btn-undo">
+      <span style="font-size: 1.2rem;">↩</span>
+      <span>Geri Al (Undo)</span>
     </button>
-    <button class="btn-footer-action" id="btn-swap-sides">
-      🔄 Sahayı Çevir
+    <button class="btn-action-main btn-swap" id="btn-swap">
+      <span style="font-size: 1.2rem;">🔄</span>
+      <span>Saha Değiş</span>
     </button>
-    <button class="btn-footer-action" id="btn-end-set">
-      🏁 Seti Bitir
+    <button class="btn-action-main btn-end-set" id="btn-end-set">
+      <span style="font-size: 1.2rem;">🏁</span>
+      <span>Seti Bitir</span>
     </button>
-    <button class="btn-footer-action" id="btn-new-set">
-      ▶️ Yeni Set Başlat
+    <button class="btn-action-main" id="btn-new-set">
+      <span style="font-size: 1.2rem;">▶️</span>
+      <span>Yeni Set</span>
     </button>
   </div>
 </div>

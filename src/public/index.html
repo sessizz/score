@@ -407,12 +407,6 @@
       </div>
 
       <div class="modal-group">
-        <label class="modal-label" for="board-slug">Benzersiz Link ID (Slug)</label>
-        <input type="text" id="board-slug" class="modal-input" placeholder="Örn: fenerbahce-voleybol" pattern="[a-zA-Z0-9_-]+" title="Sadece harf, rakam, alt çizgi ve tire" required>
-        <small style="color: var(--text-muted); font-size: 0.75rem;">Yayın ve kumanda linklerinde yer alacaktır.</small>
-      </div>
-
-      <div class="modal-group">
         <label class="modal-label" for="board-preset">Tasarım & Renk Şablonu</label>
         <select id="board-preset" class="modal-select">
           <option value="fenerbahce">Fenerbahçe Sarı-Lacivert Şablonu</option>
@@ -675,23 +669,6 @@
     if (e.target === modal) closeModal();
   });
 
-  // Slug auto-generator from title
-  document.getElementById('board-title').addEventListener('input', (e) => {
-    const slugInput = document.getElementById('board-slug');
-    if (!slugInput.dataset.manual) {
-      slugInput.value = e.target.value
-        .toLowerCase()
-        .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
-        .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-        .replace(/[^a-z0-9_-]/g, '-')
-        .replace(/-+/g, '-')
-        .slice(0, 30);
-    }
-  });
-  document.getElementById('board-slug').addEventListener('input', () => {
-    document.getElementById('board-slug').dataset.manual = 'true';
-  });
-
   // Form submit
   document.getElementById('form-create-board').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -699,7 +676,6 @@
     btn.disabled = true;
     btn.textContent = 'Oluşturuluyor...';
 
-    const id = document.getElementById('board-slug').value.trim();
     const title = document.getElementById('board-title').value.trim();
     const subtitle = document.getElementById('board-subtitle').value.trim();
     const preset = document.getElementById('board-preset').value;
@@ -713,7 +689,6 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id,
           title,
           subtitle,
           preset,
