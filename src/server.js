@@ -311,43 +311,26 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, { success: true, boardId: board.id, board });
   }
 
-  // Action on board (Unified handler: checks Owner Session vs Operator Token)
+  // Action on board (Unified handler: checks Owner Session vs Operator permissions)
   const actionMatch = pathname.match(/^\/api\/board\/([a-zA-Z0-9_-]+)\/action$/);
   if (actionMatch && method === 'POST') {
     const rawTarget = actionMatch[1];
     const body = await parseJsonBody(req);
     const { action, payload } = body;
 
-    let board = store.getBoard(rawTarget);
-    if (!board) {
-      board = store.getBoardByOperatorToken(rawTarget);
-    }
+    const board = store.getBoard(rawTarget) || store.getBoardByOperatorToken(rawTarget);
     if (!board) {
       return sendJson(res, 404, { success: false, error: 'Skorboard bulunamadı.' });
     }
 
     const boardId = board.id;
     const user = auth.getUserFromRequest(req);
-    const operatorToken = (req.headers['x-operator-token'] || reqUrl.searchParams.get('op') || body.operatorToken || '').toString().trim().toLowerCase();
 
-    // Determine authorization level:
-    // 1. Is the requester the logged-in owner?
-    // If board has no owner (unclaimed/legacy), any logged in user or admin can control it.
+    // Is the requester the logged-in owner of this board?
     const isOwner = Boolean(user && (!board.userId || board.userId === user.id));
 
-    // 2. Is the requester using the valid operator token or board id?
-    const boardOpToken = (board.operatorToken || '').toLowerCase();
-    const boardIdClean = (board.id || '').toLowerCase();
-    const isOperator = Boolean(operatorToken && (operatorToken === boardOpToken || operatorToken === boardIdClean));
-
-    if (!isOwner && !isOperator) {
-      return sendJson(res, 403, {
-        success: false,
-        error: 'Bu skorboard üzerinde işlem yapma yetkiniz yok. Lütfen giriş yapın veya geçerli operatör bağlantısını kullanın.'
-      });
-    }
-
-    const result = store.executeAction(boardId, action, payload, { isOwner, isOperator });
+    // Non-owners act as operators (only allowed scoring, timeouts, serves, undo, clock, set transitions)
+    const result = store.executeAction(boardId, action, payload, { isOwner, isOperator: !isOwner });
     return sendJson(res, result.success ? 200 : 400, result);
   }
 

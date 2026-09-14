@@ -4,24 +4,23 @@
 
   let currentBoard = null;
   let boardId = null;
-  let operatorToken = null;
   let eventSource = null;
   let timeoutInterval = null;
   let clockInterval = null;
   let clockState = { running: false, startedAt: null, elapsedMs: 0 };
   let audioCtx = null;
 
-  // Extract token from URL path (/operate/:token) or query params
-  function extractToken() {
+  // Extract scoreboard ID from URL path (/operate/:id) or query params (?id=...)
+  function extractBoardId() {
     const pathParts = window.location.pathname.split('/').filter(Boolean);
     if (pathParts.length >= 2 && (pathParts[0] === 'operate' || pathParts[0] === 'operate.html')) {
       return decodeURIComponent(pathParts[1]).trim();
     }
     const params = new URLSearchParams(window.location.search);
-    return params.get('token') || params.get('op') || params.get('id') || params.get('board') || (pathParts.length === 1 && pathParts[0] !== 'operate' ? pathParts[0] : null);
+    return params.get('id') || params.get('board') || params.get('token') || (pathParts.length === 1 && pathParts[0] !== 'operate' ? pathParts[0] : null);
   }
 
-  // Safe DOM helper
+  // Safe DOM event listener helper
   function on(idOrEl, event, handler) {
     const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
     if (el) {
@@ -111,16 +110,14 @@
 
   // Action Dispatcher for Operator
   async function sendAction(action, payload = {}) {
-    const targetId = boardId || operatorToken;
-    if (!targetId || !operatorToken) return false;
+    if (!boardId) return false;
     try {
-      const response = await fetch(`/api/board/${encodeURIComponent(targetId)}/action`, {
+      const response = await fetch(`/api/board/${encodeURIComponent(boardId)}/action`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Operator-Token': operatorToken
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ action, payload, operatorToken })
+        body: JSON.stringify({ action, payload })
       });
       const data = await response.json();
 
@@ -287,7 +284,7 @@
     if (rightTimeoutBtn) rightTimeoutBtn.disabled = (rightData?.timeouts || 0) >= 2;
   }
 
-  // Connect SSE
+  // Connect SSE for real-time live score updates
   function connectSSE() {
     if (!boardId) return;
     if (eventSource) {
@@ -315,12 +312,12 @@
     };
   }
 
-  // Resolve board by operator token or board ID
+  // Resolve scoreboard by ID
   async function initOperator() {
-    operatorToken = extractToken();
-    if (!operatorToken) {
-      if (elMatchTitle) elMatchTitle.textContent = 'Operatör Kodu Bulunamadı';
-      if (elMatchSub) elMatchSub.textContent = 'URL adresinde geçerli bir kod bulunamadı (Örn: /operate/abcd)';
+    boardId = extractBoardId();
+    if (!boardId) {
+      if (elMatchTitle) elMatchTitle.textContent = 'Skorboard Kodu Bulunamadı';
+      if (elMatchSub) elMatchSub.textContent = 'URL adresinde geçerli bir skorboard kodu bulunamadı (Örn: /operate/abcd)';
       if (elConnDot) elConnDot.className = 'conn-dot disconnected';
       if (elConnText) elConnText.textContent = 'Bağlantı Yok';
       return;
@@ -329,19 +326,19 @@
     if (elConnText) elConnText.textContent = 'Bağlanıyor...';
 
     try {
-      const res = await fetch(`/api/board/by-operator/${encodeURIComponent(operatorToken)}`);
-      const data = await res.json();
+      const res = await fetch(`/api/board/${encodeURIComponent(boardId)}`);
+      const board = await res.json();
 
-      if (!res.ok || !data.success || !data.board) {
+      if (!res.ok || !board || board.error) {
         if (elMatchTitle) elMatchTitle.textContent = 'Skorboard Bulunamadı';
-        if (elMatchSub) elMatchSub.textContent = (data && data.error) ? data.error : 'Operatör linki geçersiz veya bulunamadı.';
+        if (elMatchSub) elMatchSub.textContent = (board && board.error) ? board.error : 'Skorboard bulunamadı.';
         if (elConnDot) elConnDot.className = 'conn-dot disconnected';
         if (elConnText) elConnText.textContent = 'Bulunamadı';
         return;
       }
 
-      boardId = data.boardId || data.board.id;
-      renderBoard(data.board);
+      boardId = board.id || boardId;
+      renderBoard(board);
       connectSSE();
     } catch (e) {
       console.error('Operator init error:', e);

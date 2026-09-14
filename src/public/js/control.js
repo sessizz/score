@@ -612,8 +612,8 @@
 
     // Operator Link
     const opInput = document.getElementById('setting-operator-url');
-    if (opInput && currentBoard.operatorToken) {
-      opInput.value = `${window.location.origin}/operate/${currentBoard.operatorToken}`;
+    if (opInput) {
+      opInput.value = `${window.location.origin}/operate/${currentBoard.id}`;
     }
 
     modalSettings.classList.add('active');
