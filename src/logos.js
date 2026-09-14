@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const db = require('./db');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 const LOGOS_DIR = path.join(DATA_DIR, 'logos');
@@ -20,69 +21,78 @@ const DEFAULT_LOGOS = [
     name: 'Fenerbahçe SK',
     url: '/assets/fenerbahce.svg',
     filename: null,
-    isDefault: true,
-    createdAt: 1700000000000,
-    updatedAt: 1700000000000
+    isDefault: 1,
+    createdAt: 1700000000000
   },
   {
     id: 'opponent-default',
     name: 'Rakip Takım (Genel)',
     url: '/assets/opponent.svg',
     filename: null,
-    isDefault: true,
-    createdAt: 1700000000001,
-    updatedAt: 1700000000001
+    isDefault: 1,
+    createdAt: 1700000000001
   },
   {
     id: 'volleyball-default',
     name: 'Voleybol Topu',
     url: '/assets/volleyball.svg',
     filename: null,
-    isDefault: true,
-    createdAt: 1700000000002,
-    updatedAt: 1700000000002
+    isDefault: 1,
+    createdAt: 1700000000002
   }
 ];
 
-function readLogosFile() {
-  try {
-    if (!fs.existsSync(LOGOS_FILE)) {
-      fs.writeFileSync(LOGOS_FILE, JSON.stringify(DEFAULT_LOGOS, null, 2), 'utf-8');
-      return [...DEFAULT_LOGOS];
+// Initialize logos in DB
+function initLogosInDb() {
+  // Ensure default system logos exist in DB
+  for (const item of DEFAULT_LOGOS) {
+    const existing = db.getLogoById(item.id);
+    if (!existing) {
+      db.saveLogoToDb({
+        id: item.id,
+        userId: null,
+        name: item.name,
+        url: item.url,
+        filename: item.filename,
+        isDefault: 1
+      });
     }
-    const raw = fs.readFileSync(LOGOS_FILE, 'utf-8');
-    const list = JSON.parse(raw);
-    if (!Array.isArray(list)) return [...DEFAULT_LOGOS];
-    return list;
-  } catch (err) {
-    console.error('Error reading logos.json:', err);
-    return [...DEFAULT_LOGOS];
+  }
+
+  // Check if legacy logos.json exists and import
+  if (fs.existsSync(LOGOS_FILE)) {
+    try {
+      const raw = fs.readFileSync(LOGOS_FILE, 'utf-8');
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) {
+        for (const item of list) {
+          if (!item.isDefault && !db.getLogoById(item.id)) {
+            db.saveLogoToDb({
+              id: item.id,
+              userId: null, // will be assigned to first user
+              name: item.name,
+              url: item.url,
+              filename: item.filename,
+              isDefault: 0
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error migrating legacy logos:', e);
+    }
   }
 }
 
-function writeLogosFile(list) {
-  try {
-    fs.writeFileSync(LOGOS_FILE, JSON.stringify(list, null, 2), 'utf-8');
-    return true;
-  } catch (err) {
-    console.error('Error writing logos.json:', err);
-    return false;
-  }
-}
+// Run init
+initLogosInDb();
 
-function getAllLogos() {
-  const list = readLogosFile();
-  // Sort custom logos first (newest to oldest), then default logos
-  return list.sort((a, b) => {
-    if (a.isDefault && !b.isDefault) return 1;
-    if (!a.isDefault && b.isDefault) return -1;
-    return (b.createdAt || 0) - (a.createdAt || 0);
-  });
+function getAllLogos(userId = null) {
+  return db.getLogosForUser(userId);
 }
 
 function getLogo(id) {
-  const list = readLogosFile();
-  return list.find(item => item.id === id) || null;
+  return db.getLogoById(id);
 }
 
 const MIME_EXT_MAP = {
@@ -98,7 +108,6 @@ const MIME_EXT_MAP = {
 function parseDataUri(dataUri) {
   if (typeof dataUri !== 'string') return null;
 
-  // Pattern: data:image/png;base64,iVBORw...
   const match = dataUri.match(/^data:([^;,]+)(?:;charset=[^;,]+)?;base64,(.+)$/i);
   if (match) {
     const mime = match[1].toLowerCase();
@@ -107,14 +116,12 @@ function parseDataUri(dataUri) {
     return { ext, buffer, mime };
   }
 
-  // Raw SVG UTF-8 check: data:image/svg+xml;utf8,...
   const svgMatch = dataUri.match(/^data:image\/svg\+xml(?:;utf8)?,(.*)$/i);
   if (svgMatch) {
     const buffer = Buffer.from(decodeURIComponent(svgMatch[1]), 'utf-8');
     return { ext: 'svg', buffer, mime: 'image/svg+xml' };
   }
 
-  // Fallback: try raw base64 string
   try {
     const buffer = Buffer.from(dataUri, 'base64');
     if (buffer.length > 0) {
@@ -125,7 +132,7 @@ function parseDataUri(dataUri) {
   return null;
 }
 
-function saveLogo({ name, data, originalName }) {
+function saveLogo({ name, data, originalName, userId = null }) {
   if (!name || typeof name !== 'string' || !name.trim()) {
     throw new Error('Logo ismi zorunludur.');
   }
@@ -138,7 +145,6 @@ function saveLogo({ name, data, originalName }) {
     throw new Error('Geçersiz görsel formatı. PNG, JPG, SVG veya WebP yükleyin.');
   }
 
-  // Max 8MB
   if (parsed.buffer.length > 8 * 1024 * 1024) {
     throw new Error('Dosya boyutu çok büyük. Maksimum 8 MB yükleyebilirsiniz.');
   }
@@ -151,53 +157,47 @@ function saveLogo({ name, data, originalName }) {
     }
   }
 
-  const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9]/gi, '_').substring(0, 30);
-  const id = `logo_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-  const filename = `${cleanName}_${id}.${ext}`;
+  const id = 'logo_' + crypto.randomBytes(8).toString('hex');
+  const filename = `${id}.${ext}`;
   const filePath = path.join(LOGOS_DIR, filename);
 
   fs.writeFileSync(filePath, parsed.buffer);
 
-  const newLogo = {
+  const url = `/uploads/logos/${filename}`;
+  const cleanName = name.trim().slice(0, 80);
+
+  db.saveLogoToDb({
     id,
-    name: name.trim(),
+    userId,
+    name: cleanName,
+    url,
     filename,
-    url: `/uploads/logos/${filename}`,
-    isDefault: false,
-    sizeBytes: parsed.buffer.length,
-    createdAt: Date.now(),
-    updatedAt: Date.now()
-  };
+    isDefault: 0
+  });
 
-  const list = readLogosFile();
-  list.unshift(newLogo);
-  writeLogosFile(list);
-
-  return newLogo;
+  return { id, name: cleanName, url, filename, userId };
 }
 
-function updateLogo(id, { name, data, originalName }) {
-  const list = readLogosFile();
-  const index = list.findIndex(item => item.id === id);
-  if (index === -1) {
-    throw new Error('Düzenlenecek logo bulunamadı.');
+function updateLogo(id, { name, data, originalName }, userId = null) {
+  const existing = db.getLogoById(id);
+  if (!existing) {
+    throw new Error('Logo bulunamadı.');
+  }
+  if (existing.is_default) {
+    throw new Error('Varsayılan sistem logoları değiştirilemez.');
+  }
+  if (userId && existing.user_id && existing.user_id !== userId) {
+    throw new Error('Bu logoyu düzenleme yetkiniz yok.');
   }
 
-  const logo = list[index];
-
-  if (name && typeof name === 'string' && name.trim()) {
-    logo.name = name.trim();
-  }
+  let url = existing.url;
+  let filename = existing.filename;
 
   if (data) {
     const parsed = parseDataUri(data);
     if (!parsed || !parsed.buffer || parsed.buffer.length === 0) {
-      throw new Error('Geçersiz görsel verisi.');
+      throw new Error('Geçersiz görsel formatı.');
     }
-    if (parsed.buffer.length > 8 * 1024 * 1024) {
-      throw new Error('Dosya boyutu çok büyük (maks 8 MB).');
-    }
-
     let ext = parsed.ext;
     if (originalName) {
       const origExt = path.extname(originalName).replace('.', '').toLowerCase();
@@ -206,61 +206,50 @@ function updateLogo(id, { name, data, originalName }) {
       }
     }
 
-    // Delete old file if existed and not a default asset
-    if (logo.filename) {
-      const oldPath = path.join(LOGOS_DIR, logo.filename);
+    if (existing.filename) {
+      const oldPath = path.join(LOGOS_DIR, existing.filename);
       if (fs.existsSync(oldPath)) {
         try { fs.unlinkSync(oldPath); } catch (e) {}
       }
     }
 
-    const cleanName = logo.name.toLowerCase().replace(/[^a-z0-9]/gi, '_').substring(0, 30);
-    const newFilename = `${cleanName}_${logo.id}_v${Date.now()}.${ext}`;
-    const newFilePath = path.join(LOGOS_DIR, newFilename);
-
-    fs.writeFileSync(newFilePath, parsed.buffer);
-    logo.filename = newFilename;
-    logo.url = `/uploads/logos/${newFilename}`;
-    logo.sizeBytes = parsed.buffer.length;
-    logo.isDefault = false;
+    filename = `${id}_${Date.now()}.${ext}`;
+    const filePath = path.join(LOGOS_DIR, filename);
+    fs.writeFileSync(filePath, parsed.buffer);
+    url = `/uploads/logos/${filename}`;
   }
 
-  logo.updatedAt = Date.now();
-  list[index] = logo;
-  writeLogosFile(list);
+  const cleanName = (name && name.trim()) ? name.trim().slice(0, 80) : existing.name;
 
-  return logo;
+  db.updateLogoInDb(id, userId, { name: cleanName, url });
+
+  return db.getLogoById(id);
 }
 
-function deleteLogo(id) {
-  const list = readLogosFile();
-  const index = list.findIndex(item => item.id === id);
-  if (index === -1) {
-    return false;
+function deleteLogo(id, userId = null) {
+  const existing = db.getLogoById(id);
+  if (!existing) return false;
+  if (existing.is_default) {
+    throw new Error('Varsayılan sistem logoları silinemez.');
+  }
+  if (userId && existing.user_id && existing.user_id !== userId) {
+    throw new Error('Bu logoyu silme yetkiniz yok.');
   }
 
-  const logo = list[index];
-
-  // If there's an uploaded file, delete it
-  if (logo.filename) {
-    const filePath = path.join(LOGOS_DIR, logo.filename);
+  if (existing.filename) {
+    const filePath = path.join(LOGOS_DIR, existing.filename);
     if (fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.error(`Failed to delete logo file ${filePath}:`, err);
-      }
+      try { fs.unlinkSync(filePath); } catch (e) {}
     }
   }
 
-  list.splice(index, 1);
-  writeLogosFile(list);
+  db.deleteLogoFromDb(id, userId || existing.user_id);
   return true;
 }
 
 module.exports = {
-  DATA_DIR,
   LOGOS_DIR,
+  DEFAULT_LOGOS,
   getAllLogos,
   getLogo,
   saveLogo,

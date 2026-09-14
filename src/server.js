@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const store = require('./store');
 const logos = require('./logos');
+const auth = require('./auth');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -22,12 +23,13 @@ const MIME_TYPES = {
   '.wav': 'audio/wav'
 };
 
-function sendJson(res, statusCode, data) {
+function sendJson(res, statusCode, data, extraHeaders = {}) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Operator-Token',
+    ...extraHeaders
   });
   res.end(JSON.stringify(data));
 }
@@ -53,7 +55,6 @@ function parseJsonBody(req) {
 function serveStaticFile(res, filePath) {
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      // Fallback to index.html
       const indexPath = path.join(PUBLIC_DIR, 'index.html');
       fs.readFile(indexPath, (err2, data) => {
         if (err2) {
@@ -89,8 +90,8 @@ const server = http.createServer(async (req, res) => {
   if (method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Operator-Token',
       'Access-Control-Max-Age': '86400'
     });
     return res.end();
@@ -107,6 +108,79 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  // --- Auth Endpoints ---
+
+  // Register
+  if (pathname === '/api/auth/register' && method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      const result = await auth.register(body.email, body.password);
+      return sendJson(res, 200, result);
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
+  }
+
+  // Verify email with code
+  if (pathname === '/api/auth/verify' && method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      const result = await auth.verify(body.email, body.code);
+      const cookie = auth.createSessionCookie(result.sessionToken);
+      return sendJson(res, 200, result, { 'Set-Cookie': cookie });
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
+  }
+
+  // Resend verification code
+  if (pathname === '/api/auth/resend-code' && method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      const result = await auth.resendCode(body.email);
+      return sendJson(res, 200, result);
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
+  }
+
+  // Login
+  if (pathname === '/api/auth/login' && method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      const result = await auth.login(body.email, body.password);
+      const cookie = auth.createSessionCookie(result.sessionToken);
+      return sendJson(res, 200, result, { 'Set-Cookie': cookie });
+    } catch (err) {
+      return sendJson(res, 400, {
+        success: false,
+        error: err.message,
+        unverified: Boolean(err.unverified),
+        email: err.email
+      });
+    }
+  }
+
+  // Logout
+  if (pathname === '/api/auth/logout' && method === 'POST') {
+    const cookies = auth.parseCookies(req.headers['cookie']);
+    if (cookies.sid) auth.logout(cookies.sid);
+    const clearCookie = auth.createClearCookie();
+    return sendJson(res, 200, { success: true }, { 'Set-Cookie': clearCookie });
+  }
+
+  // Current session user
+  if (pathname === '/api/auth/me' && method === 'GET') {
+    const user = auth.getUserFromRequest(req);
+    if (!user) {
+      return sendJson(res, 200, { authenticated: false, user: null });
+    }
+    return sendJson(res, 200, {
+      authenticated: true,
+      user: { id: user.id, email: user.email, isVerified: user.is_verified }
+    });
+  }
+
   // --- Logo Endpoints ---
   if (pathname.startsWith('/uploads/logos/')) {
     const filename = path.basename(pathname);
@@ -114,15 +188,22 @@ const server = http.createServer(async (req, res) => {
     return serveStaticFile(res, filePath);
   }
 
-  // Get all logos
+  // Get logos (user logos + default logos)
   if (pathname === '/api/logos' && method === 'GET') {
-    return sendJson(res, 200, { success: true, logos: logos.getAllLogos() });
+    const user = auth.getUserFromRequest(req);
+    const list = logos.getAllLogos(user ? user.id : null);
+    return sendJson(res, 200, { success: true, logos: list });
   }
 
-  // Upload/Create new logo
+  // Upload/Create new logo (User only)
   if (pathname === '/api/logos' && method === 'POST') {
+    const user = auth.getUserFromRequest(req);
+    if (!user) {
+      return sendJson(res, 401, { success: false, error: 'Logo yüklemek için giriş yapmalısınız.' });
+    }
     try {
       const body = await parseJsonBody(req);
+      body.userId = user.id;
       const newLogo = logos.saveLogo(body);
       return sendJson(res, 201, { success: true, logo: newLogo });
     } catch (err) {
@@ -130,13 +211,17 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // Update existing logo (name / image)
+  // Update existing logo
   const logoPutMatch = pathname.match(/^\/api\/logos\/([a-zA-Z0-9_-]+)$/);
   if (logoPutMatch && method === 'PUT') {
+    const user = auth.getUserFromRequest(req);
+    if (!user) {
+      return sendJson(res, 401, { success: false, error: 'Giriş yapmalısınız.' });
+    }
     try {
       const id = logoPutMatch[1];
       const body = await parseJsonBody(req);
-      const updated = logos.updateLogo(id, body);
+      const updated = logos.updateLogo(id, body, user.id);
       return sendJson(res, 200, { success: true, logo: updated });
     } catch (err) {
       return sendJson(res, 400, { success: false, error: err.message });
@@ -146,73 +231,119 @@ const server = http.createServer(async (req, res) => {
   // Delete logo
   const logoDeleteMatch = pathname.match(/^\/api\/logos\/([a-zA-Z0-9_-]+)$/);
   if (logoDeleteMatch && method === 'DELETE') {
-    const id = logoDeleteMatch[1];
-    const deleted = logos.deleteLogo(id);
-    if (deleted) {
-      return sendJson(res, 200, { success: true });
+    const user = auth.getUserFromRequest(req);
+    if (!user) {
+      return sendJson(res, 401, { success: false, error: 'Giriş yapmalısınız.' });
     }
-    return sendJson(res, 404, { success: false, error: 'Logo bulunamadı.' });
+    try {
+      const id = logoDeleteMatch[1];
+      const deleted = logos.deleteLogo(id, user.id);
+      if (deleted) {
+        return sendJson(res, 200, { success: true });
+      }
+      return sendJson(res, 404, { success: false, error: 'Logo bulunamadı.' });
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
   }
 
-  // List all boards
+  // --- Board Endpoints ---
+
+  // List all boards for the logged in user
   if (pathname === '/api/boards' && method === 'GET') {
-    return sendJson(res, 200, store.getAllBoardsSummary());
+    const user = auth.getUserFromRequest(req);
+    if (!user) {
+      return sendJson(res, 401, { success: false, error: 'Skorboardları görmek için giriş yapmalısınız.' });
+    }
+    const userBoards = store.getAllBoardsSummary(user.id);
+    return sendJson(res, 200, userBoards);
   }
 
-  // Create or clone a board
+  // Create new board
   if (pathname === '/api/boards' && method === 'POST') {
+    const user = auth.getUserFromRequest(req);
+    if (!user) {
+      return sendJson(res, 401, { success: false, error: 'Skorboard oluşturmak için giriş yapmalısınız.' });
+    }
     const body = await parseJsonBody(req);
-    const id = body.id ? body.id.toLowerCase().replace(/[^a-z0-9_-]/g, '-') : `match-${Date.now().toString(36)}`;
-    const board = store.getBoard(id);
-    if (body.preset && store.PRESETS[body.preset]) {
-      store.executeAction(id, 'reset_match');
-    }
-    if (body.teamA || body.teamB) {
-      store.executeAction(id, 'update_teams', {
-        teamA: body.teamA,
-        teamB: body.teamB
-      });
-    }
-    if (body.title || body.subtitle || body.adminPin) {
-      store.executeAction(id, 'update_meta', {
-        title: body.title,
-        subtitle: body.subtitle,
-        adminPin: body.adminPin
-      });
-    }
-    return sendJson(res, 200, { success: true, boardId: id, board: store.getBoard(id) });
+    const newBoard = store.createBoard(user.id, body);
+    return sendJson(res, 201, { success: true, boardId: newBoard.id, board: newBoard });
   }
 
-  // Get specific board
+  // Delete board
+  const boardDeleteMatch = pathname.match(/^\/api\/boards\/([a-zA-Z0-9_-]+)$/);
+  if (boardDeleteMatch && method === 'DELETE') {
+    const user = auth.getUserFromRequest(req);
+    if (!user) {
+      return sendJson(res, 401, { success: false, error: 'Giriş yapmalısınız.' });
+    }
+    const boardId = boardDeleteMatch[1];
+    try {
+      const deleted = store.deleteBoard(boardId, user.id);
+      if (deleted) return sendJson(res, 200, { success: true });
+      return sendJson(res, 404, { success: false, error: 'Skorboard bulunamadı.' });
+    } catch (err) {
+      return sendJson(res, 403, { success: false, error: err.message });
+    }
+  }
+
+  // Get specific board by ID (Used by OBS Overlays, Spectator Screen, Admin Control)
   const boardMatch = pathname.match(/^\/api\/board\/([a-zA-Z0-9_-]+)$/);
   if (boardMatch && method === 'GET') {
     const boardId = boardMatch[1];
     const board = store.getBoard(boardId);
+    if (!board) {
+      return sendJson(res, 404, { success: false, error: 'Skorboard bulunamadı.' });
+    }
     return sendJson(res, 200, board);
   }
 
-  // Action on board
+  // Get specific board by Operator Token (Used by operator screen)
+  const opBoardMatch = pathname.match(/^\/api\/board\/by-operator\/([a-zA-Z0-9_-]+)$/);
+  if (opBoardMatch && method === 'GET') {
+    const opToken = opBoardMatch[1];
+    const board = store.getBoardByOperatorToken(opToken);
+    if (!board) {
+      return sendJson(res, 404, { success: false, error: 'Geçersiz veya süresi dolmuş operatör bağlantısı.' });
+    }
+    return sendJson(res, 200, { success: true, boardId: board.id, board });
+  }
+
+  // Action on board (Unified handler: checks Owner Session vs Operator Token)
   const actionMatch = pathname.match(/^\/api\/board\/([a-zA-Z0-9_-]+)\/action$/);
   if (actionMatch && method === 'POST') {
     const boardId = actionMatch[1];
     const body = await parseJsonBody(req);
-    const { action, payload, pin } = body;
+    const { action, payload } = body;
 
     const board = store.getBoard(boardId);
-
-    // PIN check for protected actions
-    if (board.adminPin && board.adminPin.trim() !== '') {
-      const protectedActions = ['update_teams', 'update_rules', 'update_meta', 'reset_match'];
-      if (protectedActions.includes(action) && pin !== board.adminPin) {
-        return sendJson(res, 403, { success: false, error: 'Geçersiz Yönetici PIN Kodu!' });
-      }
+    if (!board) {
+      return sendJson(res, 404, { success: false, error: 'Skorboard bulunamadı.' });
     }
 
-    const result = store.executeAction(boardId, action, payload);
+    const user = auth.getUserFromRequest(req);
+    const operatorToken = req.headers['x-operator-token'] || reqUrl.searchParams.get('op') || body.operatorToken;
+
+    // Determine authorization level:
+    // 1. Is the requester the logged-in owner?
+    // If board has no owner (unclaimed/legacy), any logged in user or admin can control it.
+    const isOwner = Boolean(user && (!board.userId || board.userId === user.id));
+
+    // 2. Is the requester using the valid operator token?
+    const isOperator = Boolean(operatorToken && board.operatorToken && operatorToken === board.operatorToken);
+
+    if (!isOwner && !isOperator) {
+      return sendJson(res, 403, {
+        success: false,
+        error: 'Bu skorboard üzerinde işlem yapma yetkiniz yok. Lütfen giriş yapın veya geçerli operatör bağlantısını kullanın.'
+      });
+    }
+
+    const result = store.executeAction(boardId, action, payload, { isOwner, isOperator });
     return sendJson(res, result.success ? 200 : 400, result);
   }
 
-  // SSE Stream
+  // SSE Stream (Real-time live scores for OBS, live spectator, and controllers)
   const streamMatch = pathname.match(/^\/api\/board\/([a-zA-Z0-9_-]+)\/stream$/);
   if (streamMatch && method === 'GET') {
     const boardId = streamMatch[1];
@@ -231,7 +362,27 @@ const server = http.createServer(async (req, res) => {
 
   // --- Page Routes & Static Files ---
 
-  // Control Panel
+  // Login Page
+  if (pathname === '/login' || pathname === '/login.html') {
+    return serveStaticFile(res, path.join(PUBLIC_DIR, 'login.html'));
+  }
+
+  // Register Page
+  if (pathname === '/register' || pathname === '/register.html') {
+    return serveStaticFile(res, path.join(PUBLIC_DIR, 'register.html'));
+  }
+
+  // Verify Email Page
+  if (pathname === '/verify' || pathname === '/verify.html') {
+    return serveStaticFile(res, path.join(PUBLIC_DIR, 'verify.html'));
+  }
+
+  // Operator Controller Page (Simplified, password-free referee/scorer link)
+  if (pathname.startsWith('/operate')) {
+    return serveStaticFile(res, path.join(PUBLIC_DIR, 'operate.html'));
+  }
+
+  // Admin Control Panel (Owner)
   if (pathname.startsWith('/control')) {
     return serveStaticFile(res, path.join(PUBLIC_DIR, 'control.html'));
   }
@@ -251,7 +402,7 @@ const server = http.createServer(async (req, res) => {
     return serveStaticFile(res, path.join(PUBLIC_DIR, 'logos.html'));
   }
 
-  // Root / Index
+  // Root / Index (Dashboard)
   if (pathname === '/' || pathname === '/index.html') {
     return serveStaticFile(res, path.join(PUBLIC_DIR, 'index.html'));
   }
@@ -264,10 +415,12 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`=================================================`);
-  console.log(`🏐 Voleybol Skorboard Sistemi Başlatıldı (Native 0-Dep HTTP)`);
+  console.log(`🏐 Voleybol Skorboard Sistemi Başlatıldı (Multi-User & SQLite)`);
   console.log(`📡 Port: http://0.0.0.0:${PORT}`);
-  console.log(`🎛️ Kumanda Paneli: http://localhost:${PORT}/control/fenerbahce`);
-  console.log(`📺 OBS Overlay:    http://localhost:${PORT}/overlay/fenerbahce`);
-  console.log(`🏟️ Salon Ekranı:   http://localhost:${PORT}/live/fenerbahce`);
+  console.log(`🏠 Ana Panel (Dashboard): http://localhost:${PORT}/`);
+  console.log(`🔑 Giriş / Kayıt:        http://localhost:${PORT}/login`);
+  console.log(`🎛️ Yönetici Kumandası:    http://localhost:${PORT}/control/fenerbahce`);
+  console.log(`📺 OBS Overlay:          http://localhost:${PORT}/overlay/fenerbahce`);
+  console.log(`🏟️ Salon Ekranı:         http://localhost:${PORT}/live/fenerbahce`);
   console.log(`=================================================`);
 });

@@ -50,6 +50,21 @@ html, body {
   padding-bottom: 1.5cqw;
 }
 
+#overlay-root.theme-mini,
+#overlay-root.theme-bug {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding-top: 1.5cqw;
+  padding-left: 1.5cqw;
+}
+
+#overlay-root.theme-mini .dc-board-container,
+#overlay-root.theme-bug .dc-board-container {
+  max-width: 36cqw;
+  min-width: 420px;
+}
+
 /* Responsive Inline Container */
 .dc-board-container {
   container-type: inline-size;

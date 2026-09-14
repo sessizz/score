@@ -1,14 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const db = require('./db');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
-const DATA_FILE = path.join(DATA_DIR, 'boards.json');
-
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+const LEGACY_FILE = path.join(DATA_DIR, 'boards.json');
 
 // In-memory boards cache & undo stacks
 const boards = new Map();
@@ -51,14 +47,14 @@ const PRESETS = {
     currentSet: 1,
     setHistory: [],
     rules: {
-      maxSets: 5, // Best of 5 (First to 3)
+      maxSets: 5,
       setsToWin: 3,
       setPoints: 25,
       finalSetPoints: 15,
       winByTwo: true
     },
-    courtSwapped: false, // Visual swap for referee panel & overlay
-    status: 'live', // 'live', 'timeout', 'set_break', 'finished'
+    courtSwapped: false,
+    status: 'live',
     timeoutState: {
       active: false,
       team: null,
@@ -71,7 +67,6 @@ const PRESETS = {
       startedAt: null,
       elapsedMs: 0
     },
-    adminPin: '1907',
     bannerText: '',
     showBanner: false
   },
@@ -129,62 +124,71 @@ const PRESETS = {
       startedAt: null,
       elapsedMs: 0
     },
-    adminPin: '1234',
     bannerText: '',
     showBanner: false
   }
 };
 
-function createDefaultBoard(id, presetKey = 'fenerbahce') {
+function createDefaultBoard(id, presetKey = 'fenerbahce', userId = null) {
   const base = PRESETS[presetKey] || PRESETS.fenerbahce;
-  return JSON.parse(JSON.stringify({
+  const opToken = crypto.randomBytes(12).toString('hex');
+  return {
     id,
-    ...base,
+    userId,
+    operatorToken: opToken,
+    ...JSON.parse(JSON.stringify(base)),
     createdAt: Date.now(),
     updatedAt: Date.now()
-  }));
+  };
 }
 
-// Load data from disk
-function loadBoardsFromDisk() {
+// Load boards from SQLite & handle migration from boards.json
+function initStore() {
   try {
-    if (fs.existsSync(DATA_FILE)) {
-      const raw = fs.readFileSync(DATA_FILE, 'utf8');
-      const parsed = JSON.parse(raw);
-      for (const [id, board] of Object.entries(parsed)) {
-        boards.set(id, board);
-        undoStacks.set(id, []);
+    const dbBoards = db.getAllBoardsFromDb();
+    if (dbBoards && dbBoards.length > 0) {
+      for (const b of dbBoards) {
+        boards.set(b.id, b);
+        undoStacks.set(b.id, []);
+      }
+    } else {
+      // Check legacy boards.json
+      let migrated = false;
+      if (fs.existsSync(LEGACY_FILE)) {
+        try {
+          const raw = fs.readFileSync(LEGACY_FILE, 'utf8');
+          const parsed = JSON.parse(raw);
+          for (const [id, board] of Object.entries(parsed)) {
+            if (!board.operatorToken) {
+              board.operatorToken = crypto.randomBytes(12).toString('hex');
+            }
+            delete board.adminPin; // Remove PIN completely
+            db.saveBoardToDb(board);
+            boards.set(id, board);
+            undoStacks.set(id, []);
+            migrated = true;
+          }
+        } catch (e) {
+          console.error('Error reading legacy boards.json:', e);
+        }
+      }
+
+      // Ensure default / fenerbahce board exists
+      if (!boards.has('fenerbahce')) {
+        const fbBoard = createDefaultBoard('fenerbahce', 'fenerbahce', null);
+        db.saveBoardToDb(fbBoard);
+        boards.set('fenerbahce', fbBoard);
+        undoStacks.set('fenerbahce', []);
       }
     }
   } catch (err) {
-    console.error('Error loading boards from disk:', err);
-  }
-
-  // Ensure default main / fenerbahce board exists
-  if (!boards.has('default')) {
-    const defaultBoard = createDefaultBoard('default', 'fenerbahce');
-    boards.set('default', defaultBoard);
-    undoStacks.set('default', []);
-    saveBoardsToDisk();
+    console.error('Error initializing boards store:', err);
   }
 }
 
-// Save data to disk atomically
-function saveBoardsToDisk() {
-  try {
-    const obj = {};
-    for (const [id, board] of boards.entries()) {
-      obj[id] = board;
-    }
-    const tempFile = `${DATA_FILE}.tmp.${Date.now()}`;
-    fs.writeFileSync(tempFile, JSON.stringify(obj, null, 2), 'utf8');
-    fs.renameSync(tempFile, DATA_FILE);
-  } catch (err) {
-    console.error('Error saving boards to disk:', err);
-  }
-}
+// Run init
+initStore();
 
-// Push state to undo stack
 function pushUndo(boardId) {
   const board = boards.get(boardId);
   if (!board) return;
@@ -192,7 +196,6 @@ function pushUndo(boardId) {
     undoStacks.set(boardId, []);
   }
   const stack = undoStacks.get(boardId);
-  // Keep deep clone
   stack.push(JSON.parse(JSON.stringify(board)));
   if (stack.length > 40) {
     stack.shift();
@@ -201,21 +204,84 @@ function pushUndo(boardId) {
 
 function getBoard(boardId) {
   if (!boards.has(boardId)) {
-    // Create new board if not found
-    const newBoard = createDefaultBoard(boardId, 'fenerbahce');
-    boards.set(boardId, newBoard);
-    undoStacks.set(boardId, []);
-    saveBoardsToDisk();
+    const fromDb = db.getBoardFromDb(boardId);
+    if (fromDb) {
+      boards.set(boardId, fromDb);
+      undoStacks.set(boardId, []);
+    } else {
+      return null;
+    }
   }
-  ensureSetClock(boards.get(boardId));
-  return boards.get(boardId);
+  const board = boards.get(boardId);
+  if (board) {
+    ensureSetClock(board);
+  }
+  return board;
 }
 
-function getAllBoardsSummary() {
+function getBoardByOperatorToken(token) {
+  if (!token) return null;
+  for (const b of boards.values()) {
+    if (b.operatorToken === token) {
+      ensureSetClock(b);
+      return b;
+    }
+  }
+  const fromDb = db.getBoardByOperatorToken(token);
+  if (fromDb) {
+    boards.set(fromDb.id, fromDb);
+    undoStacks.set(fromDb.id, []);
+    ensureSetClock(fromDb);
+    return fromDb;
+  }
+  return null;
+}
+
+function saveBoard(board) {
+  board.updatedAt = Date.now();
+  boards.set(board.id, board);
+  db.saveBoardToDb(board);
+}
+
+function createBoard(userId, options = {}) {
+  const rawId = options.id || `match-${Date.now().toString(36)}`;
+  const id = rawId.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+  const presetKey = options.preset || 'fenerbahce';
+  const newBoard = createDefaultBoard(id, presetKey, userId);
+
+  if (options.title) newBoard.title = options.title;
+  if (options.subtitle) newBoard.subtitle = options.subtitle;
+  if (options.teamA) newBoard.teamA = { ...newBoard.teamA, ...options.teamA };
+  if (options.teamB) newBoard.teamB = { ...newBoard.teamB, ...options.teamB };
+
+  saveBoard(newBoard);
+  undoStacks.set(id, []);
+  return newBoard;
+}
+
+function deleteBoard(boardId, userId) {
+  const board = getBoard(boardId);
+  if (!board) return false;
+  if (board.userId && board.userId !== userId) {
+    throw new Error('Bu skorboardu silme yetkiniz yok.');
+  }
+
+  boards.delete(boardId);
+  undoStacks.delete(boardId);
+  db.deleteBoardFromDb(boardId, userId);
+  return true;
+}
+
+function getAllBoardsSummary(userId = null) {
+  if (userId) {
+    return db.getBoardsByUser(userId);
+  }
   const list = [];
   for (const [id, b] of boards.entries()) {
     list.push({
       id,
+      name: b.title || id,
+      operatorToken: b.operatorToken,
       title: b.title,
       subtitle: b.subtitle,
       teamA: { name: b.teamA.name, shortName: b.teamA.shortName, setsWon: b.teamA.setsWon, points: b.teamA.points },
@@ -228,18 +294,15 @@ function getAllBoardsSummary() {
   return list;
 }
 
-// Helper to check target points for a given set
 function getTargetPointsForSet(board, setNumber) {
   const isFinalSet = setNumber >= board.rules.maxSets;
   return isFinalSet ? board.rules.finalSetPoints : board.rules.setPoints;
 }
 
-// Helper to check if a set or match is won
 function checkSetStatus(board) {
   const target = getTargetPointsForSet(board, board.currentSet);
   const pA = board.teamA.points;
   const pB = board.teamB.points;
-  const diff = Math.abs(pA - pB);
 
   let setWinner = null;
   if (board.rules.winByTwo) {
@@ -259,15 +322,46 @@ function checkSetStatus(board) {
   };
 }
 
-// Clock actions are not part of the match history
 const NO_UNDO_ACTIONS = ['undo', 'clock_start', 'clock_pause', 'clock_reset'];
 
-// Execute an action on a board
-function executeAction(boardId, action, payload = {}) {
-  const board = getBoard(boardId);
-  if (!board) return { success: false, error: 'Board not found' };
+const OPERATOR_ALLOWED_ACTIONS = [
+  'point_a',
+  'point_b',
+  'sub_point_a',
+  'sub_point_b',
+  'set_serve',
+  'timeout_a',
+  'timeout_b',
+  'sub_timeout_a',
+  'sub_timeout_b',
+  'end_timeout',
+  'clock_start',
+  'clock_pause',
+  'clock_reset',
+  'swap_sides',
+  'end_set',
+  'new_set',
+  'undo'
+];
 
-  // For state-modifying actions, save to undo stack first
+/**
+ * Execute an action on a board.
+ * authContext can be:
+ * - { isOwner: true } -> full permissions
+ * - { isOperator: true } -> only operator allowed actions
+ */
+function executeAction(boardId, action, payload = {}, authContext = { isOwner: true }) {
+  const board = getBoard(boardId);
+  if (!board) return { success: false, error: 'Skorboard bulunamadı.' };
+
+  // Operator permission check
+  if (authContext && authContext.isOperator && !authContext.isOwner) {
+    if (!OPERATOR_ALLOWED_ACTIONS.includes(action)) {
+      return { success: false, error: 'Bu işlem için yönetici yetkisi gereklidir.' };
+    }
+  }
+
+  // Save to undo stack
   if (!NO_UNDO_ACTIONS.includes(action)) {
     pushUndo(boardId);
   }
@@ -278,7 +372,6 @@ function executeAction(boardId, action, payload = {}) {
     case 'point_a': {
       maybeAutoStartClock(board);
       board.teamA.points += (payload.amount || 1);
-      // In volleyball, the team winning the rally serves
       board.teamA.isServing = true;
       board.teamB.isServing = false;
       break;
@@ -304,7 +397,7 @@ function executeAction(boardId, action, payload = {}) {
       break;
     }
     case 'set_serve': {
-      const team = payload.team; // 'teamA' or 'teamB'
+      const team = payload.team;
       if (team === 'teamA') {
         board.teamA.isServing = true;
         board.teamB.isServing = false;
@@ -312,7 +405,6 @@ function executeAction(boardId, action, payload = {}) {
         board.teamB.isServing = true;
         board.teamA.isServing = false;
       } else {
-        // toggle
         board.teamA.isServing = !board.teamA.isServing;
         board.teamB.isServing = !board.teamA.isServing;
       }
@@ -370,13 +462,11 @@ function executeAction(boardId, action, payload = {}) {
       break;
     }
     case 'end_set': {
-      // Determine winner based on score or payload
       let winner = payload.winner;
       if (!winner) {
         winner = board.teamA.points > board.teamB.points ? 'teamA' : 'teamB';
       }
 
-      // Record set history
       board.setHistory.push({
         set: board.currentSet,
         scoreA: board.teamA.points,
@@ -387,21 +477,18 @@ function executeAction(boardId, action, payload = {}) {
       if (winner === 'teamA') board.teamA.setsWon += 1;
       else if (winner === 'teamB') board.teamB.setsWon += 1;
 
-      // Check if match won
       const setsToWin = board.rules.setsToWin || Math.ceil(board.rules.maxSets / 2);
       if (board.teamA.setsWon >= setsToWin || board.teamB.setsWon >= setsToWin) {
         board.status = 'finished';
       } else {
         board.status = 'set_break';
         board.currentSet += 1;
-        // Reset current set points & timeouts
         board.teamA.points = 0;
         board.teamB.points = 0;
         board.teamA.timeouts = 0;
         board.teamB.timeouts = 0;
         board.teamA.substitutions = 0;
         board.teamB.substitutions = 0;
-        // Usually teams swap courts between sets
         board.courtSwapped = !board.courtSwapped;
         resetSetClock(board);
       }
@@ -446,12 +533,8 @@ function executeAction(boardId, action, payload = {}) {
       break;
     }
     case 'update_teams': {
-      if (payload.teamA) {
-        board.teamA = { ...board.teamA, ...payload.teamA };
-      }
-      if (payload.teamB) {
-        board.teamB = { ...board.teamB, ...payload.teamB };
-      }
+      if (payload.teamA) board.teamA = { ...board.teamA, ...payload.teamA };
+      if (payload.teamB) board.teamB = { ...board.teamB, ...payload.teamB };
       break;
     }
     case 'update_rules': {
@@ -466,14 +549,12 @@ function executeAction(boardId, action, payload = {}) {
       if (payload.subtitle !== undefined) board.subtitle = payload.subtitle;
       if (payload.bannerText !== undefined) board.bannerText = payload.bannerText;
       if (payload.showBanner !== undefined) board.showBanner = Boolean(payload.showBanner);
-      if (payload.adminPin !== undefined) board.adminPin = payload.adminPin;
       break;
     }
     case 'undo': {
       const stack = undoStacks.get(boardId);
       if (stack && stack.length > 0) {
         const previousState = stack.pop();
-        // Sayaç maç geçmişinin parçası değil, geri almadan etkilenmesin
         previousState.setClock = board.setClock;
         boards.set(boardId, previousState);
         modified = true;
@@ -488,9 +569,7 @@ function executeAction(boardId, action, payload = {}) {
   }
 
   if (modified) {
-    const current = boards.get(boardId);
-    current.updatedAt = Date.now();
-    saveBoardsToDisk();
+    saveBoard(boards.get(boardId));
     broadcastBoard(boardId);
   }
 
@@ -510,8 +589,6 @@ function getClockElapsed(clock) {
   return base + Math.max(0, Date.now() - clock.startedAt);
 }
 
-// Setin ilk sayısı girilince sayaç kendiliğinden başlar.
-// Elle duraklatılmış bir sayaç kendi başına devam etmez.
 function maybeAutoStartClock(board) {
   const clock = ensureSetClock(board);
   if (clock.running || clock.startedAt || (clock.elapsedMs || 0) > 0) return;
@@ -521,6 +598,27 @@ function maybeAutoStartClock(board) {
 
 function resetSetClock(board) {
   board.setClock = { running: false, startedAt: null, elapsedMs: 0 };
+}
+
+function startTimeout(board, team, durationSeconds = 30) {
+  const now = Date.now();
+  board.timeoutState = {
+    active: true,
+    team,
+    duration: durationSeconds,
+    startedAt: now,
+    endsAt: now + (durationSeconds * 1000)
+  };
+  board.status = 'timeout';
+
+  setTimeout(() => {
+    const current = boards.get(board.id);
+    if (current && current.timeoutState && current.timeoutState.active && current.timeoutState.endsAt <= Date.now()) {
+      clearTimeoutState(current);
+      saveBoard(current);
+      broadcastBoard(board.id);
+    }
+  }, (durationSeconds + 1) * 1000);
 }
 
 function clearTimeoutState(board) {
@@ -536,99 +634,51 @@ function clearTimeoutState(board) {
   }
 }
 
-function startTimeout(board, team, duration = 30) {
-  const now = Date.now();
-  board.status = 'timeout';
-  board.timeoutState = {
-    active: true,
-    team,
-    duration,
-    startedAt: now,
-    endsAt: now + (duration * 1000)
-  };
-}
-
-// SSE Connection Management
 function addSseClient(boardId, res) {
   if (!sseClients.has(boardId)) {
     sseClients.set(boardId, new Set());
   }
-  const clients = sseClients.get(boardId);
-  clients.add(res);
+  const clientSet = sseClients.get(boardId);
+  clientSet.add(res);
 
-  // Send current state immediately
-  const board = getBoard(boardId);
-  const data = JSON.stringify(enrichBoardData(board));
-  res.write(`event: state\ndata: ${data}\n\n`);
+  const currentBoard = getBoard(boardId);
+  if (currentBoard) {
+    res.write(`event: state\ndata: ${JSON.stringify(currentBoard)}\n\n`);
+  }
 
-  // Remove on close
   res.on('close', () => {
-    clients.delete(res);
+    clientSet.delete(res);
   });
 }
 
-// Enrich board data with calculation flags (isSetPoint, isMatchPoint, etc.)
-function enrichBoardData(board) {
-  const flags = checkSetStatus(board);
-  return {
-    ...board,
-    flags
-  };
-}
-
 function broadcastBoard(boardId) {
-  const clients = sseClients.get(boardId);
-  if (!clients || clients.size === 0) return;
+  const clientSet = sseClients.get(boardId);
+  if (!clientSet || clientSet.size === 0) return;
 
-  const board = getBoard(boardId);
-  const data = JSON.stringify(enrichBoardData(board));
-  for (const client of clients) {
+  const currentBoard = getBoard(boardId);
+  if (!currentBoard) return;
+
+  const data = `event: state\ndata: ${JSON.stringify(currentBoard)}\n\n`;
+  for (const client of clientSet) {
     try {
-      client.write(`event: state\ndata: ${data}\n\n`);
+      client.write(data);
     } catch (e) {
-      clients.delete(client);
+      clientSet.delete(client);
     }
   }
 }
-
-// Expire finished timeouts so every client drops the timeout banner on its own
-setInterval(() => {
-  const now = Date.now();
-  let expired = false;
-  for (const [boardId, board] of boards.entries()) {
-    const state = board.timeoutState;
-    if (!state || !state.active) continue;
-    if (state.endsAt && state.endsAt > now) continue;
-    clearTimeoutState(board);
-    board.updatedAt = now;
-    expired = true;
-    broadcastBoard(boardId);
-  }
-  if (expired) saveBoardsToDisk();
-}, 1000);
-
-// Heartbeat every 15s to keep SSE alive
-setInterval(() => {
-  for (const [boardId, clients] of sseClients.entries()) {
-    for (const client of clients) {
-      try {
-        client.write(`event: ping\ndata: ${Date.now()}\n\n`);
-      } catch (e) {
-        clients.delete(client);
-      }
-    }
-  }
-}, 15000);
-
-// Initialize store
-loadBoardsFromDisk();
 
 module.exports = {
+  PRESETS,
   getBoard,
+  getBoardByOperatorToken,
+  saveBoard,
+  createBoard,
+  deleteBoard,
   getAllBoardsSummary,
   executeAction,
   addSseClient,
   broadcastBoard,
-  createDefaultBoard,
-  PRESETS
+  checkSetStatus,
+  OPERATOR_ALLOWED_ACTIONS
 };

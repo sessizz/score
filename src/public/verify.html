@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-posta Doğrulama - Voleybol Skorboard</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="icon" href="/assets/volleyball.svg">
+  <style>
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: radial-gradient(circle at top, #162447 0%, #0a0e1a 100%);
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(22, 33, 62, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    .auth-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      text-decoration: none;
+    }
+    .auth-brand img {
+      width: 36px;
+      height: 36px;
+    }
+    .auth-brand span {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+    .auth-brand span span {
+      color: var(--fb-yellow, #ffed00);
+    }
+    .auth-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+    .auth-desc {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .user-email-badge {
+      display: inline-block;
+      background: rgba(255, 237, 0, 0.12);
+      color: var(--fb-yellow, #ffed00);
+      border: 1px solid rgba(255, 237, 0, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      margin-top: 4px;
+    }
+    .code-input-container {
+      margin: 24px 0;
+    }
+    .code-input {
+      width: 100%;
+      max-width: 280px;
+      padding: 14px 16px;
+      background: #0f172a;
+      border: 2px solid rgba(255, 237, 0, 0.4);
+      border-radius: 10px;
+      color: var(--fb-yellow, #ffed00);
+      font-size: 1.8rem;
+      font-weight: 900;
+      text-align: center;
+      letter-spacing: 8px;
+      outline: none;
+      box-sizing: border-box;
+      transition: all 0.2s;
+    }
+    .code-input:focus {
+      border-color: var(--fb-yellow, #ffed00);
+      box-shadow: 0 0 16px rgba(255, 237, 0, 0.25);
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: var(--fb-yellow, #ffed00);
+      color: #002d72;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .btn-submit:hover {
+      background: #fff033;
+      transform: translateY(-1px);
+    }
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .resend-section {
+      margin-top: 24px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+    .btn-resend {
+      background: transparent;
+      border: none;
+      color: var(--fb-yellow, #ffed00);
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 4px 8px;
+    }
+    .btn-resend:disabled {
+      color: var(--text-muted);
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+    .alert-box {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      margin-bottom: 18px;
+      display: none;
+      text-align: left;
+    }
+    .alert-error {
+      background: rgba(220, 38, 38, 0.15);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      color: #fca5a5;
+    }
+    .alert-success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <a href="/" class="auth-brand">
+      <img src="/assets/volleyball.svg" alt="Logo">
+      <span>Voleybol<span>Skor</span></span>
+    </a>
+
+    <h1 class="auth-title">E-posta Doğrulama</h1>
+    <p class="auth-desc">
+      Lütfen e-posta adresinize gönderilen 6 haneli doğrulama kodunu girin:<br>
+      <span class="user-email-badge" id="email-badge">yükleniyor...</span>
+    </p>
+
+    <div class="alert-box" id="alert-box"></div>
+
+    <form id="verify-form">
+      <div class="code-input-container">
+        <input type="text" id="code" class="code-input" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" autocomplete="one-time-code" required autofocus>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submit-btn">Doğrula ve Başla</button>
+    </form>
+
+    <div class="resend-section">
+      Kodu almadınız mı? 
+      <button type="button" class="btn-resend" id="btn-resend">Tekrar Gönder</button>
+      <span id="countdown-text" style="display: none;">(60s)</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const emailParam = urlParams.get('email') || '';
+  const codeParam = urlParams.get('code') || '';
+
+  const emailBadge = document.getElementById('email-badge');
+  const codeInput = document.getElementById('code');
+  const alertBox = document.getElementById('alert-box');
+  const submitBtn = document.getElementById('submit-btn');
+  const btnResend = document.getElementById('btn-resend');
+  const countdownText = document.getElementById('countdown-text');
+
+  if (emailParam) {
+    emailBadge.textContent = emailParam;
+  } else {
+    // If no email in query, redirect to login
+    window.location.href = '/login';
+  }
+
+  if (codeParam) {
+    codeInput.value = codeParam;
+    // Auto-verify if code present in URL link
+    setTimeout(() => {
+      document.getElementById('verify-form').dispatchEvent(new Event('submit'));
+    }, 300);
+  }
+
+  function showAlert(msg, isSuccess = false) {
+    alertBox.textContent = msg;
+    alertBox.className = `alert-box ${isSuccess ? 'alert-success' : 'alert-error'}`;
+    alertBox.style.display = 'block';
+  }
+
+  // Handle Form Submit
+  document.getElementById('verify-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertBox.style.display = 'none';
+
+    const code = codeInput.value.trim();
+    if (!code || code.length !== 6) {
+      showAlert('Lütfen 6 haneli doğrulama kodunu eksiksiz girin.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Doğrulanıyor...';
+
+    try {
+      const res = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailParam, code })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        showAlert(data.error || 'Doğrulama başarısız.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Doğrula ve Başla';
+        return;
+      }
+
+      showAlert('E-posta adresiniz başarıyla doğrulandı! Yönlendiriliyorsunuz...', true);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+    } catch (err) {
+      showAlert('Sunucuya bağlanılamadı. Lütfen tekrar deneyin.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Doğrula ve Başla';
+    }
+  });
+
+  // Handle Resend
+  let countdown = 60;
+  let timerInterval = null;
+
+  btnResend.addEventListener('click', async () => {
+    btnResend.disabled = true;
+    countdownText.style.display = 'inline';
+    countdown = 60;
+    countdownText.textContent = `(${countdown}s)`;
+
+    timerInterval = setInterval(() => {
+      countdown--;
+      countdownText.textContent = `(${countdown}s)`;
+      if (countdown <= 0) {
+        clearInterval(timerInterval);
+        btnResend.disabled = false;
+        countdownText.style.display = 'none';
+      }
+    }, 1000);
+
+    try {
+      const res = await fetch('/api/auth/resend-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailParam })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showAlert('Yeni doğrulama kodu e-postanıza gönderildi.', true);
+      } else {
+        showAlert(data.error || 'Kod gönderilemedi.');
+      }
+    } catch (e) {
+      showAlert('Kod gönderilirken bir hata oluştu.');
+    }
+  });
+</script>
+
+</body>
+</html>

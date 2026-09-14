@@ -1,50 +1,55 @@
-# 🏐 Voleybol Canlı Skorboard & OBS Yayın Sistemi (Coolify Ready)
+# 🏐 Voleybol Canlı Skorboard & OBS Yayın Sistemi (Multi-User & Coolify Ready)
 
-**Fenerbahçe Altyapı Küçük Erkek Voleybol Ligi** canlı yayınları ve genel voleybol müsabakaları için tasarlanmış; **keepthescore.com** benzeri, ancak canlı yayınlara (OBS / vMix) ve **Coolify** ortamına özel olarak optimize edilmiş, ultra hafif ve sıfır gecikmeli (SSE) canlı skor yönetim sistemi.
+**Fenerbahçe Altyapı Küçük Erkek Voleybol Ligi** canlı yayınları ve tüm kulüp/okul müsabakaları için tasarlanmış; **kullanıcı girişli, e-posta doğrulamalı, SQLite veritabanlı, çok kullanıcılı (multi-tenant)**, OBS / vMix canlı yayınlarına ve **Coolify** ortamına özel olarak optimize edilmiş, ultra hafif ve sıfır gecikmeli (SSE) canlı skor yönetim sistemi.
 
 ---
 
-## 🚀 Öne Çıkan Özellikler
+## 🚀 Yeni & Öne Çıkan Özellikler
 
-1. **Ultra Hafif & Stabil (Zero-Dependency Node.js + SSE)**:
-   - Dış npm bağımlılığı gerektirmez (`node_modules` derdi yoktur).
-   - Sunucuda sadece **<25MB RAM** ve neredeyse **%0 CPU** tüketir.
-   - **Server-Sent Events (SSE)** ile canlı yayına ve tüm cihazlara `<50ms` sıfır gecikmeyle anlık veri iletir.
-   - Bağlantı kopsa bile otomatik yeniden bağlanır (auto-reconnect).
+1. **Çok Kullanıcılı Üyelik & E-posta Doğrulama (Resend Entegrasyonu)**:
+   - İsteyen herkes e-posta ve şifre ile üye olabilir.
+   - Resend API üzerinden 6 haneli doğrulama kodu ve tek tıkla aktivasyon linki gönderilir.
+   - Her kullanıcının kendi skorboard'ları, takımları ve yüklediği logoları izoledir.
+   - Sistemde daha önceden var olan skorboard ve veriler, **ilk kaydolan ve doğrulanan kullanıcıya otomatik olarak aktarılır.**
 
-2. **OBS Studio & vMix Canlı Yayın Katmanları (`/overlay`)**:
+2. **Gömülü SQLite Veritabanı (Sıfır Ek Maliyet & Sıfır Bakım)**:
+   - Node 22 yerleşik `node:sqlite` mimarisiyle çalışır; ek PostgreSQL veya MySQL konteyneri gerektirmez.
+   - Veriler kalıcı Docker Volume'daki `/app/data/scoreboard.db` dosyasında tutulur.
+
+3. **PIN Muhabbeti Kalktı & Şifresiz "Operatör Kumanda Linki"**:
+   - Kullanıcı zaten kendi hesabıyla giriş yaptığı için PIN girme zorunluluğu kaldırılmıştır.
+   - **Skorcu / Hakem Linki (`/operate/:token`)**: Salondaki görevliye veya arkadaşınıza şifresiz verebileceğiniz özel bir link üretilir. Bu kişi telefonundan skor ve mola girebilir, geri alabilir (Undo); ancak takım isimlerini, kuralları değiştiremez veya maçı sıfırlayamaz!
+
+4. **OBS Studio & vMix Canlı Yayın Katmanları (`/overlay`)**:
    - %100 Şeffaf (transparent) arka plan.
-   - **3 Farklı TV Yayın Teması**:
-     - **Top Bar (Üst Çubuk / Scorebug - Önerilen)**: Voleybol maçlarında sahayı kapatmayan kompakt TV stili.
-     - **Lower-Third (Geniş Alt Şerit)**: Set aralarında ve maç içinde detaylı set geçmişi çubuğu.
-     - **Mini Bug (Köşe Skor)**: Küçük köşe göstergesi.
-   - Sayı değişim efektleri, dinamik parıldayan **"SET SAYISI / SET POINT"** ve **"MAÇ SAYISI / MATCH POINT"** uyarıları, servis topu animasyonu ve mola geri sayımı.
-
-3. **Mobil & Tablet Uyumlu Kumanda Paneli (`/control`)**:
-   - Masa başındaki hakem veya veli/operatörün telefondan tek parmakla yönetebileceği büyük dokunmatik butonlar (+1, -1, Servis, Mola, Geri Al, Saha Değişimi).
-   - Yanlış basımlara karşı **Geri Al (Undo)** desteği (Ctrl+Z veya butona basarak).
-   - 30 saniyelik sesli & görsel mola sayacı.
-   - Takım isimleri, formaları, logoları ve şifreli PIN koruması.
-
-4. **Salon & Seyirci Ekranı (`/live`)**:
-   - Salondaki TV'ler veya yayını cepten takip eden taraftarlar için tam ekran dev skorboard.
+   - **Üst Bar (Top Bar)**: `https://alanadiniz.com/overlay/{id}?theme=topbar`
+   - **Alt Bant (Lower Third)**: `https://alanadiniz.com/overlay/{id}?theme=bottom`
+   - **Mini Skor (Köşe Bug)**: `https://alanadiniz.com/overlay/{id}?theme=mini`
+   - **Salon & Seyirci Ekranı**: `https://alanadiniz.com/live/{id}`
+   - Dinamik **"SET SAYISI"** ve **"MAÇ SAYISI"** uyarıları, animasyonlu servis topu ve 30 saniyelik mola geri sayımı.
 
 ---
 
 ## 🛠️ Coolify Üzerinde Kurulum (1 Dakikada Canlıya Alma)
 
-Sistem hem macOS üzerinde çalışan Coolify'da hem de herhangi bir Docker/Linux sunucusunda doğrudan çalışacak şekilde paketlenmiştir.
-
-### Yöntem 1: Coolify Git Repo Entegrasyonu (En Kolay)
-1. Bu projeyi GitHub / GitLab hesabınıza push edin (veya public repo olarak bağlayın).
+### Yöntem 1: Coolify Git Repo Entegrasyonu (Önerilen)
+1. Bu repoyu GitHub hesabınıza push edin.
 2. Coolify panelinizde **+ New Resource** > **Public / Private Repository** seçin.
-3. Repo URL'nizi girin.
-4. Coolify `Dockerfile`'ı otomatik algılayacaktır.
-5. **Port** alanına `3000` yazın.
-6. **Storage / Persistent Volume** bölümüne:
+3. Repo URL'nizi bağlayın. Coolify `Dockerfile`'ı otomatik algılayacaktır.
+4. **Environment Variables (.env)** bölümüne şunları ekleyin:
+   ```env
+   NODE_ENV=production
+   PORT=3000
+   DATA_DIR=/app/data
+   APP_URL=https://skor.alanadiniz.com
+   RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
+   RESEND_FROM=Voleybol Skorboard <onboarding@resend.dev>
+   ```
+   *(Not: `RESEND_API_KEY` girilmediğinde doğrulama kodları sunucu konsoluna yazdırılır; geliştirme ve test modunda sizi asla kitlemez).*
+5. **Storage / Persistent Volume** bölümüne:
    - Volume Adı: `scoreboard_data`
-   - Mount Path: `/app/data` (Maç durumlarının ve geçmişin sunucu yeniden başlasa bile silinmemesi için).
-7. **Deploy** butonuna tıklayın!
+   - Mount Path: `/app/data` (Kullanıcılar, maçlar, SQLite DB ve yüklenen logolar kalıcı diskte saklanır).
+6. **Deploy** butonuna tıklayın!
 
 ### Yöntem 2: Coolify Docker Compose ile Kurulum
 Coolify'da **+ New Resource** > **Docker Compose** seçip projedeki `docker-compose.yml` içeriğini yapıştırarak tek tıkla ayağa kaldırabilirsiniz.
@@ -53,18 +58,17 @@ Coolify'da **+ New Resource** > **Docker Compose** seçip projedeki `docker-comp
 
 ## 💻 Yerel Olarak (Lokalde) Çalıştırma
 
-Projeyi yerel bilgisayarınızda veya sunucunuzda çalıştırmak için:
-
 ```bash
 # Projeyi başlatın
 node src/server.js
 ```
 
 Tarayıcınızda açın:
-- 🏠 **Ana Menü**: `http://localhost:3000/`
-- 🎛️ **Fenerbahçe Kumanda**: `http://localhost:3000/control/fenerbahce`
-- 📺 **OBS Üst Bant**: `http://localhost:3000/overlay/fenerbahce?theme=topbar`
-- 📺 **OBS Alt Şerit**: `http://localhost:3000/overlay/fenerbahce?theme=lowerthird`
+- 🏠 **Kullanıcı Paneli (Dashboard)**: `http://localhost:3000/`
+- 🔑 **Giriş / Kayıt**: `http://localhost:3000/login`
+- 🎛️ **Yönetici Kumandası**: `http://localhost:3000/control/fenerbahce`
+- 📱 **Skorcu Kumandası**: `http://localhost:3000/operate/{operatorToken}`
+- 📺 **OBS Canlı Katman**: `http://localhost:3000/overlay/fenerbahce?theme=topbar`
 - 🏟️ **Salon Ekranı**: `http://localhost:3000/live/fenerbahce`
 
 ---
@@ -73,63 +77,10 @@ Tarayıcınızda açın:
 
 1. OBS Studio'yu açın.
 2. **Kaynaklar (Sources)** penceresinin altındaki **+ (Ekle)** butonuna basın.
-3. **Tarayıcı (Browser)** kaynağını seçin ve bir isim verin (Örn: *Voleybol Skor*).
+3. **Tarayıcı (Browser)** kaynağını seçin.
 4. Ayarlar:
-   - **URL**: `https://sunucunuz.com/overlay/fenerbahce?theme=topbar` (veya `theme=lowerthird`)
+   - **URL**: `https://alanadiniz.com/overlay/{boardId}?theme=topbar` (veya `theme=bottom`, `theme=mini`)
    - **Genişlik (Width)**: `1920`
    - **Yükseklik (Height)**: `1080`
-   - **Özel CSS**: Boş bırakabilirsiniz (kendiliğinden şeffaftır).
+   - **Özel CSS**: Boş bırakabilirsiniz.
 5. **Tamam**'a basın. Skor tablonuz yayına şeffaf şekilde yerleşecektir!
-
-### URL Parametreleri (Özelleştirme)
-- `theme=topbar` : Standart TV üst bant skoru (Varsayılan).
-- `theme=lowerthird` : Geniş TV alt bant skoru ve set geçmişi.
-- `theme=bug` : Sol üst köşe mini skor.
-- `scale=1.2` : Skorbord boyutunu %120 büyütür (veya `0.9` ile küçültür).
-- `sound=1` : Sayı alındığında veya mola başladığında OBS üzerinden düdük/ses efekti çalar.
-
----
-
-## ⌨️ Hakem / Operatör Klavye Kısayolları
-
-Kumanda panelinde mouse/dokunmatik ekran dışında klavyeyle süper hızlı skor tutabilirsiniz:
-- `Sol Ok` / `A Tuşu`: Sol Takıma +1 Sayı
-- `Sağ Ok` / `L Tuşu`: Sağ Takıma +1 Sayı
-- `Space (Boşluk)`: Servis Yönünü Değiştir
-- `Ctrl + Z`: Son Hareketi Geri Al (Undo)
-- `S Tuşu`: Saha Yönlerini Değiştir (Swap Sides)
-- `F Tuşu`: Salon Ekranında Tam Ekran (Fullscreen) Aç/Kapat
-
----
-
-## 📁 Proje Yapısı
-
-```
-score/
-├── src/
-│   ├── server.js              # Ultra hafif Native HTTP & SSE Sunucusu (0 dependency)
-│   ├── store.js               # Voleybol motoru, skor kuralları, kalıcılık ve SSE
-│   └── public/
-│       ├── index.html         # Ana karşılama & Maç oluşturma paneli
-│       ├── control.html       # Mobil/Tablet Hakem Kumanda Paneli
-│       ├── overlay.html       # OBS Studio Şeffaf Grafik Katmanı
-│       ├── live.html          # Salon TV / Seyirci Ekranı
-│       ├── css/
-│       │   ├── common.css     # Tasarım değişkenleri & modallar
-│       │   ├── control.css    # Kumanda arayüzü stilleri
-│       │   ├── overlay.css    # TV yayın grafikleri & animasyonlar
-│       │   └── live.css       # Salon ekranı stilleri
-│       ├── js/
-│       │   ├── control.js     # Dokunmatik kumanda & SSE istemcisi
-│       │   ├── overlay.js     # OBS grafik motoru & animasyonlar
-│       │   └── live.js        # Canlı ekran istemcisi
-│       └── assets/
-│           ├── fenerbahce.svg # Fenerbahçe amblemi
-│           ├── volleyball.svg # Voleybol servis topu
-│           └── opponent.svg   # Rakip takım varsayılan logosu
-├── data/                      # Kalıcı JSON veritabanı (/data/boards.json)
-├── Dockerfile                 # Coolify için optimize edilmiş Alpine Node.js
-├── docker-compose.yml         # Tek tıkla Coolify deploy dosyası
-├── package.json               # Paket konfigürasyonu
-└── README.md                  # Kapsamlı kullanım kılavuzu
-```

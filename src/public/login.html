@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giriş Yap - Voleybol Skorboard</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="icon" href="/assets/volleyball.svg">
+  <style>
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: radial-gradient(circle at top, #162447 0%, #0a0e1a 100%);
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(22, 33, 62, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    }
+    .auth-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      text-decoration: none;
+    }
+    .auth-brand img {
+      width: 36px;
+      height: 36px;
+    }
+    .auth-brand span {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+    .auth-brand span span {
+      color: var(--fb-yellow, #ffed00);
+    }
+    .auth-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+    .auth-desc {
+      font-size: 0.9rem;
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--fb-yellow, #ffed00);
+      box-shadow: 0 0 0 3px rgba(255, 237, 0, 0.15);
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: var(--fb-yellow, #ffed00);
+      color: #002d72;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .btn-submit:hover {
+      background: #fff033;
+      transform: translateY(-1px);
+    }
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .auth-footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+    .auth-footer a {
+      color: var(--fb-yellow, #ffed00);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+    .alert-box {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      margin-bottom: 18px;
+      display: none;
+    }
+    .alert-error {
+      background: rgba(220, 38, 38, 0.15);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      color: #fca5a5;
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <a href="/" class="auth-brand">
+      <img src="/assets/volleyball.svg" alt="Logo">
+      <span>Voleybol<span>Skor</span></span>
+    </a>
+
+    <h1 class="auth-title">Hesabınıza Giriş Yapın</h1>
+    <p class="auth-desc">Skorboardlarınızı yönetmek için giriş yapın</p>
+
+    <div class="alert-box alert-error" id="alert-box"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label class="form-label" for="email">E-posta Adresi</label>
+        <input type="email" id="email" class="form-input" placeholder="ornek@kulup.com" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Şifre</label>
+        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submit-btn">Giriş Yap</button>
+    </form>
+
+    <div class="auth-footer">
+      Hesabınız yok mu? <a href="/register">Kayıt Olun</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('login-form');
+  const alertBox = document.getElementById('alert-box');
+  const submitBtn = document.getElementById('submit-btn');
+
+  // Pre-fill email from query params
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('email')) {
+    document.getElementById('email').value = urlParams.get('email');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertBox.style.display = 'none';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Giriş yapılıyor...';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        if (data.unverified) {
+          // Account unverified: redirect to verify page
+          window.location.href = `/verify?email=${encodeURIComponent(data.email || email)}`;
+          return;
+        }
+        alertBox.textContent = data.error || 'Giriş yapılamadı.';
+        alertBox.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Giriş Yap';
+        return;
+      }
+
+      // Success: redirect to dashboard
+      window.location.href = '/';
+    } catch (err) {
+      alertBox.textContent = 'Sunucuya bağlanılamadı. Lütfen tekrar deneyin.';
+      alertBox.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Giriş Yap';
+    }
+  });
+</script>
+
+</body>
+</html>

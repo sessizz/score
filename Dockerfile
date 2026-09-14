@@ -27,4 +27,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1
 
 # Start zero-dependency high performance server
-CMD ["node", "src/server.js"]
+CMD ["node", "--no-warnings", "src/server.js"]

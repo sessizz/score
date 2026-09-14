@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Voleybol Skorcu Kumandası</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/control.css">
+  <link rel="icon" href="/assets/volleyball.svg">
+  <style>
+    .op-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="control-container">
+  <!-- Header -->
+  <header class="control-header">
+    <div>
+      <div class="match-info-title" id="match-title">Yükleniyor...</div>
+      <div class="match-info-sub" id="match-sub">Canlı Skor Girişi</div>
+    </div>
+    <div class="flex-center" style="gap: 10px;">
+      <span class="op-badge">📱 SKORCU EKRANI</span>
+      <div class="conn-indicator">
+        <div class="conn-dot" id="conn-dot"></div>
+        <span id="conn-text">Bağlanıyor...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Status Ribbon & Set History -->
+  <div class="status-ribbon">
+    <div class="flex-center" style="gap: 12px;">
+      <span class="set-pill" id="set-pill">1. SET</span>
+
+      <!-- Set Clock -->
+      <div class="set-clock">
+        <span class="set-clock-val" id="set-clock-val">00:00</span>
+        <button class="clock-btn" id="btn-clock-play" title="Başlat" aria-label="Set sayacını başlat">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+        </button>
+        <button class="clock-btn" id="btn-clock-toggle" title="Duraklat" aria-label="Set sayacını duraklat">
+          <svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1"/><rect x="13.4" y="5" width="3.6" height="14" rx="1"/></svg>
+          <svg class="ic-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="set-history-pills" id="history-list">
+      <!-- Past set scores will appear here -->
+    </div>
+  </div>
+
+  <!-- Timeout Active Banner -->
+  <div class="timeout-banner" id="timeout-banner">
+    <div>
+      <span style="font-size: 0.85rem; opacity: 0.9;">⏳ MOLA DEVAM EDİYOR</span>
+      <div id="timeout-team-name" style="font-size: 1.1rem; font-weight: 800;">Mola</div>
+    </div>
+    <div class="flex-center" style="gap: 12px;">
+      <div class="timeout-timer-val" id="timeout-timer">30s</div>
+      <button id="btn-end-timeout" style="background: rgba(0,0,0,0.4); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 4px; font-weight: 700; cursor: pointer;">
+        Molayı Bitir
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Teams Scoreboard Cards Grid -->
+  <div class="teams-grid">
+    <!-- Left Team Card -->
+    <div class="team-card" id="left-team-card">
+      <div class="team-card-header">
+        <div class="team-logo-title">
+          <img src="/assets/volleyball.svg" alt="Logo" class="team-logo-img" id="left-team-logo">
+          <div>
+            <div class="team-name-text" id="left-team-name">EV SAHİBİ</div>
+            <div class="team-short-code" id="left-team-short">EV</div>
+          </div>
+        </div>
+        <div class="sets-badge" id="left-sets-badge">0 Set</div>
+      </div>
+
+      <div class="sub-indicators">
+        <button class="serve-btn is-serving" id="left-serve-btn">
+          <img src="/assets/volleyball.svg" class="volleyball-icon-mini" alt="Serve">
+          <span>SERVİS</span>
+        </button>
+        <div class="timeouts-tracker">
+          <span>Mola:</span>
+          <div class="to-dot" id="left-to-dot-1"></div>
+          <div class="to-dot" id="left-to-dot-2"></div>
+        </div>
+      </div>
+
+      <div class="point-tap-area" id="left-point-area">
+        <div class="point-val" id="left-point-val">0</div>
+        <span class="point-tap-label">SAYI EKLE (+1)</span>
+      </div>
+
+      <div class="card-actions-row">
+        <button class="btn-sub-point" id="left-sub-point">-1 Sayı Düş</button>
+        <button class="btn-timeout" id="left-timeout-btn">⏱️ Mola Al</button>
+      </div>
+    </div>
+
+    <!-- Right Team Card -->
+    <div class="team-card" id="right-team-card">
+      <div class="team-card-header">
+        <div class="team-logo-title">
+          <img src="/assets/volleyball.svg" alt="Logo" class="team-logo-img" id="right-team-logo">
+          <div>
+            <div class="team-name-text" id="right-team-name">DEPLASMAN</div>
+            <div class="team-short-code" id="right-team-short">DEP</div>
+          </div>
+        </div>
+        <div class="sets-badge" id="right-sets-badge">0 Set</div>
+      </div>
+
+      <div class="sub-indicators">
+        <button class="serve-btn" id="right-serve-btn">
+          <img src="/assets/volleyball.svg" class="volleyball-icon-mini" alt="Serve">
+          <span>SERVİS</span>
+        </button>
+        <div class="timeouts-tracker">
+          <span>Mola:</span>
+          <div class="to-dot" id="right-to-dot-1"></div>
+          <div class="to-dot" id="right-to-dot-2"></div>
+        </div>
+      </div>
+
+      <div class="point-tap-area" id="right-point-area">
+        <div class="point-val" id="right-point-val">0</div>
+        <span class="point-tap-label">SAYI EKLE (+1)</span>
+      </div>
+
+      <div class="card-actions-row">
+        <button class="btn-sub-point" id="right-sub-point">-1 Sayı Düş</button>
+        <button class="btn-timeout" id="right-timeout-btn">⏱️ Mola Al</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Operator Action Bar (Undo, Swap Sides, Set Control) -->
+  <div class="control-actions-footer">
+    <button class="btn-footer-action btn-undo" id="btn-undo">
+      ↩️ Geri Al (Undo)
+    </button>
+    <button class="btn-footer-action" id="btn-swap-sides">
+      🔄 Sahayı Çevir
+    </button>
+    <button class="btn-footer-action" id="btn-end-set">
+      🏁 Seti Bitir
+    </button>
+    <button class="btn-footer-action" id="btn-new-set">
+      ▶️ Yeni Set Başlat
+    </button>
+  </div>
+</div>
+
+<!-- Toast Feedback Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="/js/operate.js"></script>
+</body>
+</html>

@@ -11,6 +11,9 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - DATA_DIR=/app/data
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - RESEND_FROM=${RESEND_FROM:-Voleybol Skorboard <onboarding@resend.dev>}
+      - APP_URL=${APP_URL:-http://localhost:3000}
     volumes:
       - scoreboard_data:/app/data
     healthcheck:

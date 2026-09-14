@@ -111,11 +111,10 @@
   // Action Dispatcher
   async function sendAction(action, payload = {}) {
     try {
-      const pin = localStorage.getItem('score_admin_pin') || '';
       const response = await fetch(`/api/board/${boardId}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, payload, pin })
+        body: JSON.stringify({ action, payload })
       });
       const data = await response.json();
       if (!response.ok || !data.success) {
@@ -590,10 +589,29 @@
     document.getElementById('setting-max-sets').value = currentBoard.rules.maxSets || 5;
     document.getElementById('setting-set-points').value = currentBoard.rules.setPoints || 25;
     document.getElementById('setting-final-points').value = currentBoard.rules.finalSetPoints || 15;
-    document.getElementById('setting-pin').value = currentBoard.adminPin || '1907';
+
+    // Operator Link
+    const opInput = document.getElementById('setting-operator-url');
+    if (opInput && currentBoard.operatorToken) {
+      opInput.value = `${window.location.origin}/operate/${currentBoard.operatorToken}`;
+    }
 
     modalSettings.classList.add('active');
   });
+
+  // Copy Operator Link
+  const btnCopyOp = document.getElementById('btn-copy-operator-link');
+  if (btnCopyOp) {
+    btnCopyOp.addEventListener('click', () => {
+      const opInput = document.getElementById('setting-operator-url');
+      if (!opInput || !opInput.value) return;
+      navigator.clipboard.writeText(opInput.value).then(() => {
+        showToast('Skorcu kumanda linki kopyalandı!');
+      }).catch(() => {
+        prompt('Link:', opInput.value);
+      });
+    });
+  }
 
   document.getElementById('btn-close-settings').addEventListener('click', () => {
     modalSettings.classList.remove('active');
@@ -601,8 +619,6 @@
 
   document.getElementById('form-settings').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const pin = document.getElementById('setting-pin').value.trim();
-    localStorage.setItem('score_admin_pin', pin);
 
     // Save Teams
     await sendAction('update_teams', {
@@ -635,8 +651,7 @@
 
     await sendAction('update_meta', {
       title: document.getElementById('setting-title').value.trim(),
-      subtitle: document.getElementById('setting-subtitle').value.trim(),
-      adminPin: pin
+      subtitle: document.getElementById('setting-subtitle').value.trim()
     });
 
     modalSettings.classList.remove('active');

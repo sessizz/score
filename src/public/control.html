@@ -22,6 +22,9 @@
         <div class="conn-dot" id="conn-dot"></div>
         <span id="conn-text">Bağlanıyor...</span>
       </div>
+      <a href="/" class="btn-action-main" style="padding: 6px 10px; font-size: 0.75rem; text-decoration: none;">
+        🏠 Panoya Dön
+      </a>
       <a href="/logos" target="_blank" class="btn-action-main" style="padding: 6px 10px; font-size: 0.75rem; text-decoration: none;">
         🖼️ Logolar
       </a>
@@ -305,9 +308,17 @@
           <label class="form-label">Karar (Netice) Seti Sayısı</label>
           <input type="number" class="form-input" id="setting-final-points" value="15">
         </div>
-        <div class="form-group">
-          <label class="form-label">Yönetici PIN Kodu</label>
-          <input type="password" class="form-input" id="setting-pin" placeholder="1907">
+      </div>
+
+      <!-- Operator Link -->
+      <div style="font-weight: 800; margin-bottom: 8px; font-size: 0.9rem; color: #6ee7b7;">📱 SKORCU / HAKEM KUMANDA LİNKİ</div>
+      <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+        <p style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 8px; line-height: 1.4;">
+          Bu linki salondaki hakem veya skor görevlisine gönderin. Şifresizdir; ayarları değiştiremez, sadece anlık skor ve mola girebilir.
+        </p>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" class="form-input" id="setting-operator-url" readonly style="font-size: 0.8rem; background: #0b1120; color: #6ee7b7; flex: 1;">
+          <button type="button" class="btn-action-sm btn-op" id="btn-copy-operator-link" style="height: 38px; padding: 0 14px; white-space: nowrap; cursor: pointer; border-radius: 6px;">📋 Kopyala</button>
         </div>
       </div>
 
