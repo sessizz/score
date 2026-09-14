@@ -414,9 +414,19 @@
         </select>
       </div>
 
+      <!-- 1. TAKIM (EV SAHİBİ) -->
+      <div style="margin-top: 14px; margin-bottom: 6px; font-weight: 800; font-size: 0.85rem; color: var(--fb-yellow, #ffed00);">
+        1. TAKIM (EV SAHİBİ)
+      </div>
+      <div class="modal-group">
+        <label class="modal-label" for="select-team-a">Kayıtlı Takımlardan Seç (İsteğe Bağlı)</label>
+        <select id="select-team-a" class="modal-select">
+          <option value="">-- Kayıtlı Takımlardan Seç (veya aşağıdan elle girin) --</option>
+        </select>
+      </div>
       <div class="modal-row">
         <div class="modal-group">
-          <label class="modal-label" for="team-a-name">Ev Sahibi Takım</label>
+          <label class="modal-label" for="team-a-name">Takım Adı</label>
           <input type="text" id="team-a-name" class="modal-input" placeholder="FENERBAHÇE" required>
         </div>
         <div class="modal-group">
@@ -425,9 +435,19 @@
         </div>
       </div>
 
+      <!-- 2. TAKIM (DEPLASMAN) -->
+      <div style="margin-top: 10px; margin-bottom: 6px; font-weight: 800; font-size: 0.85rem; color: #fca5a5;">
+        2. TAKIM (DEPLASMAN)
+      </div>
+      <div class="modal-group">
+        <label class="modal-label" for="select-team-b">Kayıtlı Takımlardan Seç (İsteğe Bağlı)</label>
+        <select id="select-team-b" class="modal-select">
+          <option value="">-- Kayıtlı Takımlardan Seç (veya aşağıdan elle girin) --</option>
+        </select>
+      </div>
       <div class="modal-row">
         <div class="modal-group">
-          <label class="modal-label" for="team-b-name">Deplasman Takım</label>
+          <label class="modal-label" for="team-b-name">Takım Adı</label>
           <input type="text" id="team-b-name" class="modal-input" placeholder="RAKİP TAKIM" required>
         </div>
         <div class="modal-group">
@@ -445,6 +465,9 @@
 
 <script>
   let currentUser = null;
+  let userTeams = [];
+  let selectedTeamA = null;
+  let selectedTeamB = null;
   const origin = window.location.origin;
 
   // Check Authentication
@@ -459,9 +482,36 @@
       currentUser = data.user;
       document.getElementById('user-email-pill').textContent = `👤 ${currentUser.email}`;
       loadBoards();
+      loadUserTeams();
     } catch (e) {
       window.location.href = '/login';
     }
+  }
+
+  // Load User Teams for dropdowns
+  async function loadUserTeams() {
+    try {
+      const res = await fetch('/api/teams');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.teams)) {
+        userTeams = data.teams;
+        populateTeamSelects();
+      }
+    } catch (err) {
+      console.error('Takımlar yüklenemedi:', err);
+    }
+  }
+
+  function populateTeamSelects() {
+    const selA = document.getElementById('select-team-a');
+    const selB = document.getElementById('select-team-b');
+    if (!selA || !selB) return;
+
+    const defaultOpt = '<option value="">-- Kayıtlı Takımlardan Seç (veya aşağıdan elle girin) --</option>';
+    const options = userTeams.map(t => `<option value="${t.id}">${escapeHtml(t.name)} ${t.shortName ? `(${escapeHtml(t.shortName)})` : ''}</option>`);
+
+    selA.innerHTML = defaultOpt + options.join('');
+    selB.innerHTML = defaultOpt + options.join('');
   }
 
   // Logout
@@ -652,9 +702,44 @@
     }
   }
 
+  // Team Selection Handlers in Modal
+  const selTeamA = document.getElementById('select-team-a');
+  const selTeamB = document.getElementById('select-team-b');
+
+  if (selTeamA) {
+    selTeamA.addEventListener('change', (e) => {
+      const id = e.target.value;
+      const team = userTeams.find(t => t.id === id);
+      if (team) {
+        selectedTeamA = team;
+        document.getElementById('team-a-name').value = team.name || '';
+        document.getElementById('team-a-short').value = team.shortName || '';
+      } else {
+        selectedTeamA = null;
+      }
+    });
+  }
+
+  if (selTeamB) {
+    selTeamB.addEventListener('change', (e) => {
+      const id = e.target.value;
+      const team = userTeams.find(t => t.id === id);
+      if (team) {
+        selectedTeamB = team;
+        document.getElementById('team-b-name').value = team.name || '';
+        document.getElementById('team-b-short').value = team.shortName || '';
+      } else {
+        selectedTeamB = null;
+      }
+    });
+  }
+
   // Modal handlers
   const modal = document.getElementById('modal-new-board');
   function openCreateModal() {
+    selectedTeamA = null;
+    selectedTeamB = null;
+    loadUserTeams();
     modal.style.display = 'flex';
     document.getElementById('board-title').focus();
   }
@@ -684,17 +769,33 @@
     const teamBName = document.getElementById('team-b-name').value.trim();
     const teamBShort = document.getElementById('team-b-short').value.trim() || teamBName.slice(0, 3).toUpperCase();
 
+    const payload = {
+      title,
+      subtitle,
+      preset,
+      teamA: {
+        name: teamAName,
+        shortName: teamAShort,
+        color: selectedTeamA ? selectedTeamA.color : undefined,
+        color2: selectedTeamA ? selectedTeamA.color2 : undefined,
+        accentColor: selectedTeamA ? selectedTeamA.color : undefined,
+        logo: selectedTeamA ? (selectedTeamA.logo || '') : undefined
+      },
+      teamB: {
+        name: teamBName,
+        shortName: teamBShort,
+        color: selectedTeamB ? selectedTeamB.color : undefined,
+        color2: selectedTeamB ? selectedTeamB.color2 : undefined,
+        accentColor: selectedTeamB ? selectedTeamB.color : undefined,
+        logo: selectedTeamB ? (selectedTeamB.logo || '') : undefined
+      }
+    };
+
     try {
       const res = await fetch('/api/boards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          subtitle,
-          preset,
-          teamA: { name: teamAName, shortName: teamAShort },
-          teamB: { name: teamBName, shortName: teamBShort }
-        })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
 
@@ -707,6 +808,8 @@
 
       closeModal();
       document.getElementById('form-create-board').reset();
+      selectedTeamA = null;
+      selectedTeamB = null;
       btn.disabled = false;
       btn.textContent = 'Skorboardu Oluştur';
       loadBoards();

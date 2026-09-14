@@ -422,6 +422,8 @@
 
   const selectLogoA = document.getElementById('control-select-logo-a');
   const selectLogoB = document.getElementById('control-select-logo-b');
+  const selectTeamA = document.getElementById('control-select-team-a');
+  const selectTeamB = document.getElementById('control-select-team-b');
   const previewImgA = document.getElementById('control-preview-img-a');
   const previewImgB = document.getElementById('control-preview-img-b');
 
@@ -431,11 +433,83 @@
       const data = await res.json();
       if (data.success && Array.isArray(data.logos)) {
         controlLogos = data.logos;
+        populateControlTeamSelects();
         populateControlLogoSelects();
       }
     } catch (err) {
-      console.error('Failed to load logos in control', err);
+      console.error('Failed to load teams/logos in control', err);
     }
+  }
+
+  function applyTeamToForm(target, team) {
+    if (!team) return;
+    const nameInput = document.getElementById(`setting-name-${target}`);
+    const shortInput = document.getElementById(`setting-short-${target}`);
+    const logoInput = document.getElementById(`setting-logo-${target}`);
+    const color1Input = document.getElementById(`setting-color-${target}`);
+    const color2Input = document.getElementById(`setting-color-${target}2`);
+    const selectLogo = target === 'a' ? selectLogoA : selectLogoB;
+    const selectTeam = target === 'a' ? selectTeamA : selectTeamB;
+    const previewImg = target === 'a' ? previewImgA : previewImgB;
+
+    if (nameInput && team.name) nameInput.value = team.name;
+    if (shortInput && team.shortName) shortInput.value = team.shortName;
+    if (color1Input && team.color) color1Input.value = team.color;
+    if (color2Input && team.color2) color2Input.value = team.color2;
+
+    const teamLogoUrl = team.logo || team.url || '';
+    if (logoInput) logoInput.value = teamLogoUrl;
+    if (selectLogo) selectLogo.value = teamLogoUrl;
+    if (selectTeam && team.id) selectTeam.value = team.id;
+
+    if (previewImg) {
+      if (teamLogoUrl) {
+        previewImg.src = teamLogoUrl;
+        previewImg.style.display = 'block';
+      } else {
+        previewImg.style.display = 'none';
+      }
+    }
+
+    showToast(`✓ "${team.name}" takımı ve renkleri seçildi!`);
+  }
+
+  function populateControlTeamSelects() {
+    if (!selectTeamA || !selectTeamB) return;
+    let teamOptions = [
+      '<option value="">-- Kayıtlı Takımlardan Seç (veya aşağıdan elle girin) --</option>',
+      ...controlLogos.map(t => `<option value="${t.id}">${escapeHtml(t.name)} ${t.shortName ? `(${escapeHtml(t.shortName)})` : ''}</option>`)
+    ];
+
+    selectTeamA.innerHTML = teamOptions.join('');
+    selectTeamB.innerHTML = teamOptions.join('');
+
+    if (currentBoard && currentBoard.teamA && currentBoard.teamA.name) {
+      const matchA = controlLogos.find(t => t.name.toLowerCase() === currentBoard.teamA.name.toLowerCase());
+      if (matchA) selectTeamA.value = matchA.id;
+    }
+    if (currentBoard && currentBoard.teamB && currentBoard.teamB.name) {
+      const matchB = controlLogos.find(t => t.name.toLowerCase() === currentBoard.teamB.name.toLowerCase());
+      if (matchB) selectTeamB.value = matchB.id;
+    }
+  }
+
+  if (selectTeamA) {
+    selectTeamA.addEventListener('change', (e) => {
+      const teamId = e.target.value;
+      if (!teamId) return;
+      const team = controlLogos.find(t => t.id === teamId);
+      if (team) applyTeamToForm('a', team);
+    });
+  }
+
+  if (selectTeamB) {
+    selectTeamB.addEventListener('change', (e) => {
+      const teamId = e.target.value;
+      if (!teamId) return;
+      const team = controlLogos.find(t => t.id === teamId);
+      if (team) applyTeamToForm('b', team);
+    });
   }
 
   function populateControlLogoSelects() {
@@ -447,13 +521,13 @@
       || (currentBoard && currentBoard.teamB && currentBoard.teamB.logo)
       || '';
 
-    let optionsA = controlLogos.map(l => `<option value="${l.url}" ${l.url === currentA ? 'selected' : ''}>${escapeHtml(l.name)}</option>`);
-    let optionsB = controlLogos.map(l => `<option value="${l.url}" ${l.url === currentB ? 'selected' : ''}>${escapeHtml(l.name)}</option>`);
+    let optionsA = controlLogos.map(l => `<option value="${l.url || l.logo || ''}" ${(l.url === currentA || l.logo === currentA) ? 'selected' : ''}>${escapeHtml(l.name)}</option>`);
+    let optionsB = controlLogos.map(l => `<option value="${l.url || l.logo || ''}" ${(l.url === currentB || l.logo === currentB) ? 'selected' : ''}>${escapeHtml(l.name)}</option>`);
 
-    if (currentA && !controlLogos.some(l => l.url === currentA)) {
+    if (currentA && !controlLogos.some(l => (l.url === currentA || l.logo === currentA))) {
       optionsA.unshift(`<option value="${currentA}" selected>Mevcut Logo (${currentA})</option>`);
     }
-    if (currentB && !controlLogos.some(l => l.url === currentB)) {
+    if (currentB && !controlLogos.some(l => (l.url === currentB || l.logo === currentB))) {
       optionsB.unshift(`<option value="${currentB}" selected>Mevcut Logo (${currentB})</option>`);
     }
 
@@ -531,33 +605,8 @@
         const selectedTeam = controlLogos.find(t => t.id === teamId) || controlLogos.find(t => (t.logo || t.url) === item.dataset.url);
         if (!selectedTeam) return;
 
-        const target = controlPickerTarget; // 'a' or 'b'
-        const nameInput = document.getElementById(`setting-name-${target}`);
-        const shortInput = document.getElementById(`setting-short-${target}`);
-        const logoInput = document.getElementById(`setting-logo-${target}`);
-        const color1Input = document.getElementById(`setting-color-${target}`);
-        const color2Input = document.getElementById(`setting-color-${target}2`);
-        const selectLogo = target === 'a' ? selectLogoA : selectLogoB;
-        const previewImg = target === 'a' ? previewImgA : previewImgB;
-
-        if (nameInput && selectedTeam.name) nameInput.value = selectedTeam.name;
-        if (shortInput && selectedTeam.shortName) shortInput.value = selectedTeam.shortName;
-        const teamLogoUrl = selectedTeam.logo || selectedTeam.url || '';
-        if (logoInput) logoInput.value = teamLogoUrl;
-        if (selectLogo) selectLogo.value = teamLogoUrl;
-        if (previewImg) {
-          if (teamLogoUrl) {
-            previewImg.src = teamLogoUrl;
-            previewImg.style.display = 'block';
-          } else {
-            previewImg.style.display = 'none';
-          }
-        }
-        if (color1Input && selectedTeam.color) color1Input.value = selectedTeam.color;
-        if (color2Input && selectedTeam.color2) color2Input.value = selectedTeam.color2;
-
+        applyTeamToForm(controlPickerTarget, selectedTeam);
         if (modalControlPicker) modalControlPicker.classList.remove('active');
-        showToast(`✓ "${selectedTeam.name}" takımı ve renkleri seçildi!`);
       });
     });
   }

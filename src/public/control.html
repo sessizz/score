@@ -200,7 +200,26 @@
       <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 16px 0;">
 
       <!-- Team A -->
-      <div style="font-weight: 800; color: var(--fb-yellow); margin-bottom: 8px; font-size: 0.9rem;">1. TAKIM (EV SAHİBİ)</div>
+      <div class="flex-between" style="margin-bottom: 8px;">
+        <div style="font-weight: 800; color: var(--fb-yellow); font-size: 0.95rem;">1. TAKIM (EV SAHİBİ)</div>
+        <a href="/teams" target="_blank" style="font-size: 0.75rem; color: var(--fb-yellow); text-decoration: none; font-weight: 700;">➕ Yeni Takım Ekle</a>
+      </div>
+
+      <!-- Quick Pick from Saved Teams A -->
+      <div class="form-group" style="margin-bottom: 12px; background: rgba(255, 237, 0, 0.05); border: 1px dashed rgba(255, 237, 0, 0.35); border-radius: 8px; padding: 10px;">
+        <label class="form-label" style="color: var(--fb-yellow); font-size: 0.78rem; margin-bottom: 6px;">
+          ⚡ Kayıtlı Takımlardan Seç (Adı, Rengi ve Logoyu Doldurur)
+        </label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <select class="form-select" id="control-select-team-a" style="flex: 1;">
+            <option value="">-- Kayıtlı Takımlardan Seç (veya aşağıdan elle girin) --</option>
+          </select>
+          <button type="button" class="btn-link btn-secondary btn-control-open-picker" data-target="a" style="padding: 0 12px; height: 38px; font-size: 0.8rem; white-space: nowrap; cursor: pointer; border-radius: 6px; font-weight: 700;">
+            🏐 Görsel Seç
+          </button>
+        </div>
+      </div>
+
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Takım Adı</label>
@@ -227,7 +246,6 @@
         <div class="form-group">
           <div class="flex-between">
             <label class="form-label">Logo Seçimi</label>
-            <a href="/teams" target="_blank" style="font-size: 0.75rem; color: var(--fb-yellow); text-decoration: none; font-weight: 700;">➕ Takım Ekle</a>
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
             <div class="logo-preview-thumb" id="control-preview-a" style="width: 42px; height: 42px; border-radius: 6px; border: 1px solid var(--border-color); background: repeating-conic-gradient(#1c2742 0% 25%, #151f36 0% 50%) 50% / 8px 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
@@ -236,9 +254,6 @@
             <select class="form-select" id="control-select-logo-a" style="flex: 1;">
               <!-- Populated via JS -->
             </select>
-            <button type="button" class="btn-link btn-secondary btn-control-open-picker" data-target="a" style="padding: 0 10px; height: 42px; font-size: 0.8rem; white-space: nowrap;">
-              🏐 Seç
-            </button>
           </div>
           <input type="hidden" id="setting-logo-a" value="/assets/fenerbahce.svg">
         </div>
@@ -247,7 +262,26 @@
       <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 16px 0;">
 
       <!-- Team B -->
-      <div style="font-weight: 800; color: var(--accent-red); margin-bottom: 8px; font-size: 0.9rem;">2. TAKIM (DEPLASMAN)</div>
+      <div class="flex-between" style="margin-bottom: 8px;">
+        <div style="font-weight: 800; color: var(--accent-red); font-size: 0.95rem;">2. TAKIM (DEPLASMAN)</div>
+        <a href="/teams" target="_blank" style="font-size: 0.75rem; color: var(--accent-red); text-decoration: none; font-weight: 700;">➕ Yeni Takım Ekle</a>
+      </div>
+
+      <!-- Quick Pick from Saved Teams B -->
+      <div class="form-group" style="margin-bottom: 12px; background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.35); border-radius: 8px; padding: 10px;">
+        <label class="form-label" style="color: #fca5a5; font-size: 0.78rem; margin-bottom: 6px;">
+          ⚡ Kayıtlı Takımlardan Seç (Adı, Rengi ve Logoyu Doldurur)
+        </label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <select class="form-select" id="control-select-team-b" style="flex: 1;">
+            <option value="">-- Kayıtlı Takımlardan Seç (veya aşağıdan elle girin) --</option>
+          </select>
+          <button type="button" class="btn-link btn-secondary btn-control-open-picker" data-target="b" style="padding: 0 12px; height: 38px; font-size: 0.8rem; white-space: nowrap; cursor: pointer; border-radius: 6px; font-weight: 700;">
+            🏐 Görsel Seç
+          </button>
+        </div>
+      </div>
+
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Takım Adı</label>
@@ -274,7 +308,6 @@
         <div class="form-group">
           <div class="flex-between">
             <label class="form-label">Logo Seçimi</label>
-            <a href="/teams" target="_blank" style="font-size: 0.75rem; color: var(--fb-yellow); text-decoration: none; font-weight: 700;">➕ Takım Ekle</a>
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
             <div class="logo-preview-thumb" id="control-preview-b" style="width: 42px; height: 42px; border-radius: 6px; border: 1px solid var(--border-color); background: repeating-conic-gradient(#1c2742 0% 25%, #151f36 0% 50%) 50% / 8px 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
@@ -283,9 +316,6 @@
             <select class="form-select" id="control-select-logo-b" style="flex: 1;">
               <!-- Populated via JS -->
             </select>
-            <button type="button" class="btn-link btn-secondary btn-control-open-picker" data-target="b" style="padding: 0 10px; height: 42px; font-size: 0.8rem; white-space: nowrap;">
-              🏐 Seç
-            </button>
           </div>
           <input type="hidden" id="setting-logo-b" value="/assets/opponent.svg">
         </div>
