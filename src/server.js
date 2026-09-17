@@ -410,9 +410,13 @@ const server = http.createServer(async (req, res) => {
     return serveStaticFile(res, path.join(PUBLIC_DIR, 'teams.html'));
   }
 
-  // Root / Index (Dashboard)
+  // Root / Index — Authenticated: Dashboard, Guest: Hero Landing Page
   if (pathname === '/' || pathname === '/index.html') {
-    return serveStaticFile(res, path.join(PUBLIC_DIR, 'index.html'));
+    const user = auth.getUserFromRequest(req);
+    if (user) {
+      return serveStaticFile(res, path.join(PUBLIC_DIR, 'index.html'));
+    }
+    return serveStaticFile(res, path.join(PUBLIC_DIR, 'hero.html'));
   }
 
   // Static Assets (CSS, JS, Images)
