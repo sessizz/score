@@ -1,32 +1,178 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root {
+  /* === Brand Colors === */
   --fb-navy: #1a2846;
   --fb-navy-mid: #22345c;
   --fb-navy-light: #2c4173;
   --fb-yellow: #ffed00;
+  --fb-yellow-hover: #fff033;
   --crimson-dark: #a80d23;
   --crimson-light: #d61c35;
   --points-bg-top: #f6f6f3;
   --points-bg-bot: #dcdcd6;
   --points-text: #17244a;
+
+  /* === Backgrounds === */
   --bg-dark: #080c18;
   --bg-card: #121a2f;
   --bg-card-alt: #18223c;
+  --bg-input: #0f172a;
+  --bg-surface: #0d1322;
+  --bg-topbar: #0a0f1e;
+
+  /* === Borders === */
   --border-color: #243256;
+
+  /* === Text === */
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
+  --text-heading: #ffffff;
+  --text-secondary: #e2e8f0;
+  --text-tertiary: #cbd5e1;
+  --text-quaternary: #64748b;
+  --btn-primary-text: #002d72;
+
+  /* === Overlays (white on dark) === */
+  --overlay-subtle: rgba(255, 255, 255, 0.03);
+  --overlay-light: rgba(255, 255, 255, 0.06);
+  --overlay-bg: rgba(255, 255, 255, 0.08);
+  --overlay-hover: rgba(255, 255, 255, 0.12);
+  --overlay-active: rgba(255, 255, 255, 0.18);
+  --overlay-border: rgba(255, 255, 255, 0.15);
+  --overlay-border-strong: rgba(255, 255, 255, 0.3);
+
+  /* === Accent Backgrounds === */
+  --accent-yellow-bg: rgba(255, 237, 0, 0.12);
+  --accent-yellow-border: rgba(255, 237, 0, 0.4);
+  --accent-yellow-hover-bg: rgba(255, 237, 0, 0.25);
+
+  /* === Status Colors === */
+  --error-bg: rgba(220, 38, 38, 0.15);
+  --error-border: rgba(220, 38, 38, 0.4);
+  --error-text: #fca5a5;
+  --success-bg: rgba(16, 185, 129, 0.15);
+  --success-border: rgba(16, 185, 129, 0.4);
+  --success-text: #6ee7b7;
+  --accent-green: #22c55e;
+  --accent-green-text: #86efac;
+  --accent-red: #ef4444;
+  --accent-red-text: #fca5a5;
+  --accent-blue: #3b82f6;
+  --accent-blue-text: #93c5fd;
+  --accent-purple-text: #c4b5fd;
+  --accent-amber-text: #fcd34d;
+
+  /* === Patterns === */
+  --checker-dark: #1c2742;
+  --checker-light: #151f36;
+
+  /* === Modal === */
+  --modal-backdrop: rgba(0, 0, 0, 0.75);
+  --modal-bg: #162447;
+
+  /* === Auth Pages === */
+  --auth-gradient-from: #162447;
+  --auth-gradient-to: #0a0e1a;
+  --auth-card-bg: rgba(22, 33, 62, 0.85);
+
+  /* === Typography === */
   --font-barlow: 'Barlow Condensed', Arial Narrow, sans-serif;
   --font-main: 'Inter', system-ui, -apple-system, sans-serif;
   --font-score: 'Barlow Condensed', 'Chakra Petch', monospace;
+
+  /* === Radii === */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-full: 9999px;
+
+  /* === Shadows === */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
+/* ============================================
+   LIGHT THEME
+   ============================================ */
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg-dark: #f5f7fa;
+  --bg-card: #ffffff;
+  --bg-card-alt: #f1f5f9;
+  --bg-input: #ffffff;
+  --bg-surface: #f8fafc;
+  --bg-topbar: #ffffff;
+
+  /* Borders */
+  --border-color: #e2e8f0;
+
+  /* Text */
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --text-heading: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #475569;
+  --text-quaternary: #64748b;
+
+  /* Brand — darker gold for readability on white */
+  --fb-yellow: #d4a800;
+  --fb-yellow-hover: #c49b00;
+  --fb-navy: #002d72;
+  --fb-navy-mid: #1a3a6c;
+  --fb-navy-light: #2c4f8a;
+
+  /* Overlays (dark on light) */
+  --overlay-subtle: rgba(0, 0, 0, 0.02);
+  --overlay-light: rgba(0, 0, 0, 0.04);
+  --overlay-bg: rgba(0, 0, 0, 0.05);
+  --overlay-hover: rgba(0, 0, 0, 0.08);
+  --overlay-active: rgba(0, 0, 0, 0.12);
+  --overlay-border: rgba(0, 0, 0, 0.1);
+  --overlay-border-strong: rgba(0, 0, 0, 0.2);
+
+  /* Accent Backgrounds */
+  --accent-yellow-bg: rgba(212, 168, 0, 0.1);
+  --accent-yellow-border: rgba(212, 168, 0, 0.35);
+  --accent-yellow-hover-bg: rgba(212, 168, 0, 0.18);
+
+  /* Status Colors — darker for readability on light */
+  --error-bg: rgba(220, 38, 38, 0.08);
+  --error-border: rgba(220, 38, 38, 0.25);
+  --error-text: #dc2626;
+  --success-bg: rgba(16, 185, 129, 0.08);
+  --success-border: rgba(16, 185, 129, 0.25);
+  --success-text: #059669;
+  --accent-green: #16a34a;
+  --accent-green-text: #15803d;
+  --accent-red: #dc2626;
+  --accent-red-text: #dc2626;
+  --accent-blue: #2563eb;
+  --accent-blue-text: #1d4ed8;
+  --accent-purple-text: #7c3aed;
+  --accent-amber-text: #b45309;
+
+  /* Patterns */
+  --checker-dark: #e2e8f0;
+  --checker-light: #f1f5f9;
+
+  /* Modal */
+  --modal-backdrop: rgba(0, 0, 0, 0.4);
+  --modal-bg: #ffffff;
+
+  /* Auth */
+  --auth-gradient-from: #e8ecf4;
+  --auth-gradient-to: #f5f7fa;
+  --auth-card-bg: rgba(255, 255, 255, 0.92);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -42,7 +188,42 @@ body {
   overflow-x: hidden;
 }
 
-/* Animations */
+/* ============================================
+   THEME TOGGLE
+   ============================================ */
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--overlay-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+}
+
+.theme-toggle:hover {
+  background: var(--overlay-hover);
+  border-color: var(--overlay-border-strong);
+  transform: translateY(-1px);
+}
+
+/* Show correct icon based on theme */
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: inline; }
+[data-theme="light"] .theme-toggle .icon-sun { display: inline; }
+[data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
 @keyframes fbspin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -53,7 +234,9 @@ body {
   50% { opacity: 0.85; transform: scale(0.97); }
 }
 
-/* Common Utility Classes */
+/* ============================================
+   COMMON UTILITIES
+   ============================================ */
 .flex-center {
   display: flex;
   align-items: center;
@@ -80,21 +263,23 @@ body {
 
 .badge-live {
   background: var(--crimson-light);
-  color: white;
+  color: var(--text-heading);
   animation: pulse-live 1.5s infinite;
 }
 
 .badge-set {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--overlay-border);
+  color: var(--text-heading);
+  border: 1px solid var(--overlay-border-strong);
 }
 
-/* Modal System */
+/* ============================================
+   MODAL SYSTEM
+   ============================================ */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: var(--modal-backdrop);
   backdrop-filter: blur(4px);
   display: none;
   align-items: center;
@@ -120,7 +305,9 @@ body {
   padding: 24px;
 }
 
-/* Toast Notifications */
+/* ============================================
+   TOAST NOTIFICATIONS
+   ============================================ */
 #toast-container {
   position: fixed;
   bottom: 20px;
@@ -135,8 +322,8 @@ body {
 }
 
 .toast {
-  background: rgba(18, 26, 47, 0.95);
-  color: white;
+  background: var(--bg-card);
+  color: var(--text-heading);
   border: 1px solid var(--border-color);
   padding: 10px 18px;
   border-radius: var(--radius-full);
@@ -146,7 +333,9 @@ body {
   backdrop-filter: blur(8px);
 }
 
-/* Logo Picker Modal & Selector Components */
+/* ============================================
+   LOGO PICKER MODAL & SELECTOR
+   ============================================ */
 .logo-picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -174,14 +363,14 @@ body {
 
 .logo-picker-item:hover {
   border-color: var(--fb-yellow);
-  background: rgba(255, 237, 0, 0.08);
+  background: var(--accent-yellow-bg);
   transform: translateY(-2px);
 }
 
 .logo-picker-item.selected {
   border-color: var(--fb-yellow);
-  box-shadow: 0 0 0 2px rgba(255, 237, 0, 0.4);
-  background: rgba(255, 237, 0, 0.15);
+  box-shadow: 0 0 0 2px var(--accent-yellow-border);
+  background: var(--accent-yellow-hover-bg);
 }
 
 .logo-picker-thumb {
@@ -190,7 +379,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: repeating-conic-gradient(#1c2742 0% 25%, #151f36 0% 50%) 50% / 10px 10px;
+  background: repeating-conic-gradient(var(--checker-dark) 0% 25%, var(--checker-light) 0% 50%) 50% / 10px 10px;
   border-radius: var(--radius-sm);
   padding: 4px;
 }
@@ -211,10 +400,12 @@ body {
   max-width: 110px;
 }
 
-/* Eyedropper (Damlalık) Buttons & Modal */
+/* ============================================
+   EYEDROPPER (DAMLACIK) COMPONENTS
+   ============================================ */
 .btn-eyedropper {
-  background: rgba(255, 237, 0, 0.12);
-  border: 1px solid rgba(255, 237, 0, 0.35);
+  background: var(--accent-yellow-bg);
+  border: 1px solid var(--accent-yellow-border);
   color: var(--fb-yellow);
   font-size: 0.75rem;
   font-weight: 700;
@@ -229,15 +420,15 @@ body {
 }
 
 .btn-eyedropper:hover {
-  background: rgba(255, 237, 0, 0.25);
+  background: var(--accent-yellow-hover-bg);
   border-color: var(--fb-yellow);
   transform: translateY(-1px);
 }
 
 .btn-eyedropper-mini {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--overlay-bg);
   border: 1px solid var(--border-color);
-  color: #fff;
+  color: var(--text-heading);
   width: 34px;
   height: 34px;
   border-radius: var(--radius-sm);
@@ -252,7 +443,7 @@ body {
 }
 
 .btn-eyedropper-mini:hover {
-  background: rgba(255, 237, 0, 0.2);
+  background: var(--accent-yellow-hover-bg);
   border-color: var(--fb-yellow);
   transform: translateY(-1px);
 }
@@ -289,7 +480,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--overlay-subtle);
   border: 2px solid var(--border-color);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -298,13 +489,13 @@ body {
 }
 
 .eyedropper-slot-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--overlay-bg);
+  border-color: var(--overlay-border-strong);
 }
 
 .eyedropper-slot-btn.active {
   border-color: var(--fb-yellow);
-  background: rgba(255, 237, 0, 0.12);
+  background: var(--accent-yellow-bg);
   box-shadow: 0 0 0 1px var(--fb-yellow);
 }
 
@@ -312,9 +503,9 @@ body {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-sm);
-  border: 2px solid rgba(255, 255, 255, 0.7);
+  border: 2px solid var(--overlay-border-strong);
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 .eyedropper-slot-info {
@@ -347,9 +538,9 @@ body {
   justify-content: space-between;
   margin-bottom: 12px;
   padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--overlay-bg);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--overlay-light);
 }
 
 .eyedropper-stripe-preview {
@@ -358,8 +549,8 @@ body {
   height: 16px;
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--overlay-border-strong);
+  box-shadow: var(--shadow-sm);
 }
 
 .eyedropper-stripe-part-1,
@@ -370,7 +561,7 @@ body {
 }
 
 .eyedropper-canvas-card {
-  background: repeating-conic-gradient(#1a243b 0% 25%, #131c30 0% 50%) 50% / 12px 12px;
+  background: repeating-conic-gradient(var(--checker-dark) 0% 25%, var(--checker-light) 0% 50%) 50% / 12px 12px;
   border: 2px dashed var(--border-color);
   border-radius: var(--radius-md);
   padding: 12px;
@@ -407,17 +598,16 @@ body {
   width: 34px;
   height: 34px;
   border-radius: var(--radius-sm);
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  border: 2px solid var(--overlay-border-strong);
   cursor: pointer;
   transition: all 0.15s ease;
   position: relative;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 .palette-swatch:hover {
   transform: scale(1.15);
-  border-color: #fff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  border-color: var(--text-heading);
+  box-shadow: var(--shadow-md);
   z-index: 2;
 }
-

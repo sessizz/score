@@ -3,9 +3,13 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at center, #111a33 0%, #060913 100%);
+  background: var(--bg-dark);
   padding: 24px;
   justify-content: space-between;
+}
+
+[data-theme="dark"] .live-container {
+  background: radial-gradient(circle at center, #111a33 0%, #060913 100%);
 }
 
 .live-top-bar {
@@ -29,10 +33,10 @@
   font-size: 1.8rem;
   font-weight: 800;
   color: var(--fb-yellow);
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--overlay-bg);
   padding: 6px 20px;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(255, 229, 0, 0.3);
+  border: 1px solid var(--accent-yellow-border);
 }
 
 .live-main-court {
@@ -66,7 +70,7 @@
 
 .live-team-panel.serving {
   border-color: var(--fb-yellow);
-  box-shadow: 0 0 30px rgba(255, 229, 0, 0.25);
+  box-shadow: 0 0 30px var(--accent-yellow-border);
 }
 
 .live-team-logo {
@@ -80,10 +84,13 @@
   font-weight: 900;
   text-align: center;
   letter-spacing: 1px;
+  color: var(--text-heading);
 }
 
 .live-sets-box {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--overlay-hover);
+  border: 1px solid var(--overlay-border);
+  color: var(--text-main);
   padding: 6px 24px;
   border-radius: var(--radius-full);
   font-size: 1.2rem;
@@ -95,8 +102,7 @@
   font-size: 8rem;
   font-weight: 900;
   line-height: 1;
-  color: #fff;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  color: var(--text-heading);
 }
 
 .live-middle-divider {
@@ -129,10 +135,11 @@
   font-family: var(--font-score);
   font-size: 1.1rem;
   font-weight: 700;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--overlay-bg);
   padding: 8px 16px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
 }
 
 /* Salon Canlı Saat & Mola Stilleri */
@@ -140,11 +147,11 @@
   font-family: var(--font-score);
   font-size: 1.8rem;
   font-weight: 800;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.5);
+  color: var(--text-heading);
+  background: var(--overlay-bg);
   padding: 6px 20px;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--border-color);
   letter-spacing: 1px;
 }
 
@@ -168,13 +175,13 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.45);
-  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--overlay-border-strong);
+  background: var(--overlay-bg);
   transition: all 0.25s ease;
 }
 
 .live-to-dot.is-used {
-  background: #d61c35;
+  background: var(--crimson-light);
   border-color: #ffffff;
   box-shadow: 0 0 10px rgba(214, 28, 53, 0.9);
 }
@@ -203,4 +210,3 @@
   border-radius: 50%;
   box-shadow: 0 0 6px #ffffff;
 }
-

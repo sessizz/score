@@ -6,6 +6,9 @@
   <title>VoleybolSkor — Canlı Skorboard & Yayın Sistemi</title>
   <link rel="stylesheet" href="/css/common.css">
   <link rel="icon" href="/assets/volleyball.svg">
+  <script>
+  (function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}else{var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',d?'dark':'light')}})();
+  </script>
   <style>
     /* ========== HERO PAGE STYLES ========== */
 
@@ -14,6 +17,8 @@
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
+      background: var(--bg-dark);
+      color: var(--text-main);
     }
 
     /* --- Navbar --- */
@@ -42,7 +47,7 @@
     .hero-nav-brand span {
       font-size: 1.35rem;
       font-weight: 900;
-      color: #ffffff;
+      color: var(--text-heading);
       letter-spacing: -0.5px;
     }
 
@@ -63,15 +68,15 @@
       font-size: 0.9rem;
       text-decoration: none;
       background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
       cursor: pointer;
       transition: all 0.2s;
     }
 
     .btn-ghost:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.3);
+      background: var(--overlay-hover);
+      border-color: var(--overlay-border-strong);
     }
 
     .btn-cta {
@@ -81,16 +86,16 @@
       font-size: 0.9rem;
       text-decoration: none;
       background: var(--fb-yellow);
-      color: #002d72;
+      color: var(--btn-primary-text);
       border: none;
       cursor: pointer;
       transition: all 0.2s;
     }
 
     .btn-cta:hover {
-      background: #fff033;
+      background: var(--fb-yellow-hover);
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(255, 237, 0, 0.25);
+      box-shadow: 0 6px 20px var(--accent-yellow-border);
     }
 
     /* --- Hero Section --- */
@@ -113,7 +118,7 @@
       transform: translateX(-50%);
       width: 700px;
       height: 700px;
-      background: radial-gradient(circle, rgba(255, 237, 0, 0.06) 0%, transparent 70%);
+      background: radial-gradient(circle, var(--accent-yellow-bg) 0%, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
@@ -123,8 +128,8 @@
       align-items: center;
       gap: 6px;
       padding: 6px 16px;
-      background: rgba(255, 237, 0, 0.1);
-      border: 1px solid rgba(255, 237, 0, 0.25);
+      background: var(--accent-yellow-bg);
+      border: 1px solid var(--accent-yellow-border);
       border-radius: 9999px;
       font-size: 0.82rem;
       font-weight: 700;
@@ -145,7 +150,7 @@
     .hero-heading {
       font-size: clamp(2.4rem, 6vw, 3.8rem);
       font-weight: 900;
-      color: #ffffff;
+      color: var(--text-heading);
       line-height: 1.1;
       margin-bottom: 18px;
       position: relative;
@@ -187,7 +192,7 @@
       font-size: 1.05rem;
       text-decoration: none;
       background: var(--fb-yellow);
-      color: #002d72;
+      color: var(--btn-primary-text);
       border: none;
       cursor: pointer;
       transition: all 0.25s;
@@ -197,9 +202,9 @@
     }
 
     .btn-cta-lg:hover {
-      background: #fff033;
+      background: var(--fb-yellow-hover);
       transform: translateY(-2px);
-      box-shadow: 0 8px 28px rgba(255, 237, 0, 0.3);
+      box-shadow: 0 8px 28px var(--accent-yellow-border);
     }
 
     .btn-ghost-lg {
@@ -209,8 +214,8 @@
       font-size: 1.05rem;
       text-decoration: none;
       background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-heading);
       cursor: pointer;
       transition: all 0.25s;
       display: inline-flex;
@@ -219,8 +224,8 @@
     }
 
     .btn-ghost-lg:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.35);
+      background: var(--overlay-hover);
+      border-color: var(--overlay-border-strong);
       transform: translateY(-1px);
     }
 
@@ -234,11 +239,11 @@
     }
 
     .preview-window {
-      background: #0f172a;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(255, 237, 0, 0.04);
+      box-shadow: var(--shadow-md);
     }
 
     .preview-titlebar {
@@ -246,8 +251,8 @@
       align-items: center;
       gap: 7px;
       padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.03);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: var(--overlay-subtle);
+      border-bottom: 1px solid var(--border-color);
     }
 
     .preview-dot {
@@ -295,13 +300,13 @@
       object-fit: contain;
     }
 
-    .preview-team-logo.home { background: rgba(0, 45, 114, 0.5); border: 1px solid rgba(255, 237, 0, 0.3); }
-    .preview-team-logo.away { background: rgba(168, 13, 35, 0.3); border: 1px solid rgba(214, 28, 53, 0.3); }
+    .preview-team-logo.home { background: rgba(0, 45, 114, 0.2); border: 1px solid rgba(255, 237, 0, 0.3); }
+    .preview-team-logo.away { background: rgba(168, 13, 35, 0.15); border: 1px solid rgba(214, 28, 53, 0.3); }
 
     .preview-team-name {
       font-weight: 800;
       font-size: 0.95rem;
-      color: #e2e8f0;
+      color: var(--text-main);
     }
 
     .preview-score-block {
@@ -314,7 +319,7 @@
     .preview-sets {
       font-size: 2.6rem;
       font-weight: 900;
-      color: #ffffff;
+      color: var(--text-heading);
       letter-spacing: 2px;
       font-family: var(--font-score);
     }
@@ -325,7 +330,7 @@
       font-size: 0.85rem;
       font-weight: 700;
       color: var(--fb-yellow);
-      background: rgba(255, 237, 0, 0.1);
+      background: var(--accent-yellow-bg);
       padding: 3px 12px;
       border-radius: 6px;
     }
@@ -357,7 +362,7 @@
       text-align: center;
       font-size: 1.6rem;
       font-weight: 900;
-      color: #ffffff;
+      color: var(--text-heading);
       margin-bottom: 8px;
     }
 
@@ -385,7 +390,7 @@
 
     .feature-card:hover {
       transform: translateY(-3px);
-      border-color: rgba(255, 237, 0, 0.3);
+      border-color: var(--accent-yellow-border);
     }
 
     .feature-icon {
@@ -399,17 +404,17 @@
       margin-bottom: 16px;
     }
 
-    .feature-icon.yellow { background: rgba(255, 237, 0, 0.12); }
+    .feature-icon.yellow { background: var(--accent-yellow-bg); }
     .feature-icon.blue { background: rgba(59, 130, 246, 0.15); }
-    .feature-icon.green { background: rgba(16, 185, 129, 0.15); }
-    .feature-icon.red { background: rgba(239, 68, 68, 0.12); }
+    .feature-icon.green { background: var(--success-bg); }
+    .feature-icon.red { background: var(--error-bg); }
     .feature-icon.purple { background: rgba(139, 92, 246, 0.15); }
     .feature-icon.cyan { background: rgba(6, 182, 212, 0.15); }
 
     .feature-title {
       font-size: 1.1rem;
       font-weight: 800;
-      color: #ffffff;
+      color: var(--text-heading);
       margin-bottom: 6px;
     }
 
@@ -485,6 +490,10 @@
       <span>Voleybol<span>Skor</span></span>
     </a>
     <div class="hero-nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir" aria-label="Tema Değiştir">
+        <span class="icon-moon">🌙</span>
+        <span class="icon-sun">☀️</span>
+      </button>
       <a href="/login" class="btn-ghost">Giriş Yap</a>
       <a href="/register" class="btn-cta">Ücretsiz Kayıt Ol</a>
     </div>
@@ -619,7 +628,6 @@
 
 </div>
 
-
-
+<script src="/js/theme.js"></script>
 </body>
 </html>

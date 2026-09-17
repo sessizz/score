@@ -77,7 +77,7 @@
   align-items: center;
   gap: 6px;
   padding: 3px 6px 3px 10px;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--overlay-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-full);
 }
@@ -118,7 +118,7 @@
 }
 
 .clock-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--overlay-hover);
 }
 
 .clock-btn:active:not(:disabled) {
@@ -131,19 +131,19 @@
 }
 
 #btn-clock-play {
-  color: #86efac;
-  border-color: rgba(34, 197, 94, 0.4);
+  color: var(--accent-green-text);
+  border-color: var(--accent-green);
 }
 
 #btn-clock-toggle {
-  color: #fde047;
-  border-color: rgba(250, 204, 21, 0.4);
+  color: var(--fb-yellow);
+  border-color: var(--accent-yellow-border);
 }
 
 /* Duraklatıldığında pause ikonu stop'a döner */
 #btn-clock-toggle.is-stop {
-  color: #fca5a5;
-  border-color: rgba(239, 68, 68, 0.45);
+  color: var(--error-text);
+  border-color: var(--error-border);
 }
 
 .clock-btn .ic-stop,
@@ -162,12 +162,13 @@
 }
 
 .history-item {
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--overlay-bg);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
 }
 
 /* Timeout Alert Banner */
@@ -223,7 +224,7 @@
 
 .team-card.serving-active {
   border-color: var(--fb-yellow);
-  box-shadow: 0 0 16px rgba(255, 229, 0, 0.2);
+  box-shadow: 0 0 16px var(--accent-yellow-border);
 }
 
 .team-card-header {
@@ -245,7 +246,7 @@
   height: 38px;
   object-fit: contain;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--overlay-bg);
   padding: 2px;
   flex-shrink: 0;
 }
@@ -257,6 +258,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.2;
+  color: var(--text-main);
 }
 
 .team-short-code {
@@ -266,8 +268,9 @@
 }
 
 .sets-badge {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--overlay-hover);
+  border: 1px solid var(--overlay-border-strong);
+  color: var(--text-main);
   padding: 4px 10px;
   border-radius: var(--radius-full);
   font-size: 0.85rem;
@@ -280,14 +283,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--overlay-bg);
   padding: 6px 10px;
   border-radius: var(--radius-sm);
 }
 
 .serve-btn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-color);
   color: var(--text-muted);
   padding: 4px 10px;
   border-radius: var(--radius-full);
@@ -302,9 +305,9 @@
 
 .serve-btn.is-serving {
   background: var(--fb-yellow);
-  color: #000;
+  color: var(--btn-primary-text);
   border-color: var(--fb-yellow);
-  box-shadow: 0 0 10px rgba(255, 229, 0, 0.5);
+  box-shadow: 0 0 10px var(--accent-yellow-border);
 }
 
 .volleyball-icon-mini {
@@ -360,8 +363,8 @@
 
 /* Giant Point Area */
 .point-tap-area {
-  background: rgba(0, 0, 0, 0.35);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: var(--overlay-bg);
+  border: 2px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 24px 12px;
   text-align: center;
@@ -376,7 +379,7 @@
 
 .point-tap-area:active {
   transform: scale(0.97);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--overlay-hover);
 }
 
 .point-display {
@@ -384,8 +387,7 @@
   font-size: 4.5rem;
   font-weight: 900;
   line-height: 1;
-  color: #fff;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  color: var(--text-heading);
 }
 
 .point-tap-label {
@@ -405,9 +407,9 @@
 }
 
 .btn-sub-point {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #fca5a5;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
   padding: 10px;
   border-radius: var(--radius-sm);
   font-weight: 700;
@@ -416,13 +418,13 @@
 }
 
 .btn-sub-point:active {
-  background: rgba(239, 68, 68, 0.3);
+  background: var(--error-border);
 }
 
 .btn-timeout-call {
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  color: #fcd34d;
+  background: var(--accent-yellow-bg);
+  border: 1px solid var(--accent-yellow-border);
+  color: var(--accent-amber-text);
   padding: 10px;
   border-radius: var(--radius-sm);
   font-weight: 700;
@@ -431,7 +433,7 @@
 }
 
 .btn-timeout-call:active {
-  background: rgba(245, 158, 11, 0.3);
+  background: var(--accent-yellow-hover-bg);
 }
 
 /* Bottom Global Control Bar */
@@ -466,7 +468,7 @@
 }
 
 .btn-action-main:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--overlay-hover);
 }
 
 .btn-action-main:active {
@@ -474,13 +476,13 @@
 }
 
 .btn-undo {
-  color: #93c5fd;
-  border-color: rgba(59, 130, 246, 0.4);
+  color: var(--accent-blue-text);
+  border-color: var(--accent-blue);
 }
 
 .btn-swap {
-  color: #fde047;
-  border-color: rgba(250, 204, 21, 0.4);
+  color: var(--fb-yellow);
+  border-color: var(--accent-yellow-border);
 }
 
 .btn-end-set {
@@ -509,9 +511,9 @@
 
 .form-input, .form-select {
   width: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--bg-input);
   border: 1px solid var(--border-color);
-  color: #fff;
+  color: var(--text-main);
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
@@ -524,8 +526,8 @@
 }
 
 .form-select option {
-  background-color: #121a2f;
-  color: #ffffff;
+  background-color: var(--bg-card);
+  color: var(--text-main);
   padding: 8px 12px;
 }
 
@@ -538,7 +540,7 @@
 .btn-modal-save {
   width: 100%;
   background: var(--fb-yellow);
-  color: #002d72;
+  color: var(--btn-primary-text);
   border: none;
   padding: 12px;
   border-radius: var(--radius-md);
@@ -557,7 +559,7 @@
 }
 
 .obs-link-box {
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay-bg);
   border: 1px solid var(--border-color);
   padding: 12px;
   border-radius: var(--radius-sm);
@@ -578,7 +580,7 @@
 
 .btn-copy-link {
   background: var(--accent-blue);
-  color: white;
+  color: #ffffff;
   border: none;
   padding: 6px 14px;
   border-radius: var(--radius-sm);

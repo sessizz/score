@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="/css/common.css">
   <link rel="stylesheet" href="/css/live.css">
   <link rel="icon" href="/assets/volleyball.svg">
+  <script>
+  (function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}else{var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',d?'dark':'light')}})();
+  </script>
 </head>
 <body>
 
@@ -15,6 +18,10 @@
     <header class="live-top-bar">
       <div class="live-match-title" id="live-title">FENERBAHÇE KÜÇÜK ERKEK VOLEYBOL LİGİ</div>
       <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir" aria-label="Tema Değiştir">
+          <span class="icon-moon">🌙</span>
+          <span class="icon-sun">☀️</span>
+        </button>
         <div class="live-clock-indicator" id="live-clock">00:00</div>
         <div class="live-set-indicator" id="live-set">1. SET</div>
       </div>
@@ -68,5 +75,6 @@
   </div>
 
   <script src="/js/live.js"></script>
+  <script src="/js/theme.js"></script>
 </body>
 </html>

@@ -23,8 +23,12 @@
   gap: 10px;
   font-weight: 900;
   font-size: 1.25rem;
-  color: var(--text-main);
+  color: var(--text-heading);
   text-decoration: none;
+}
+
+.teams-nav-brand span span {
+  color: var(--fb-yellow);
 }
 
 .teams-nav-links {
@@ -50,12 +54,12 @@
 }
 
 .nav-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--overlay-hover);
+  border-color: var(--overlay-border-strong);
 }
 
 .nav-btn.active {
-  background: rgba(255, 229, 0, 0.15);
+  background: var(--accent-yellow-bg);
   border-color: var(--fb-yellow);
   color: var(--fb-yellow);
 }
@@ -69,9 +73,7 @@
   font-size: 2rem;
   font-weight: 900;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #ffffff 0%, var(--fb-yellow) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-heading);
   margin-bottom: 8px;
 }
 
@@ -102,7 +104,7 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 22px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .team-form-card h2 {
@@ -112,7 +114,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-main);
+  color: var(--text-heading);
 }
 
 .form-group {
@@ -130,7 +132,7 @@
 .form-input {
   width: 100%;
   padding: 10px 14px;
-  background: var(--bg-input, #0b1120);
+  background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-main);
@@ -193,7 +195,7 @@
   height: 32px;
   min-width: 32px;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   background: none;
   cursor: pointer;
@@ -219,10 +221,10 @@
   font-weight: 600;
   text-transform: uppercase;
   text-align: center;
-  background: #0b1120;
+  background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  color: #ffffff;
+  color: var(--text-main);
 }
 
 .color-hex-text:focus {
@@ -239,9 +241,9 @@
   gap: 8px;
   padding: 9px 14px;
   border-radius: var(--radius-md);
-  background: rgba(14, 165, 233, 0.15);
-  border: 1px solid rgba(14, 165, 233, 0.4);
-  color: #38bdf8;
+  background: var(--accent-yellow-bg);
+  border: 1px solid var(--accent-yellow-border);
+  color: var(--fb-yellow);
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
@@ -250,25 +252,25 @@
 }
 
 .btn-eyedropper:hover {
-  background: rgba(14, 165, 233, 0.25);
-  border-color: #38bdf8;
+  background: var(--accent-yellow-hover-bg);
+  border-color: var(--fb-yellow);
 }
 
 /* Dropzone */
 .team-dropzone {
-  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border: 2px dashed var(--overlay-border-strong);
   border-radius: var(--radius-md);
   padding: 16px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--overlay-bg);
 }
 
 .team-dropzone:hover, .team-dropzone.dragover {
   border-color: var(--fb-yellow);
-  background: rgba(255, 229, 0, 0.05);
+  background: var(--accent-yellow-bg);
 }
 
 .team-dropzone input[type="file"] {
@@ -291,7 +293,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--overlay-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 10px 14px;
@@ -302,15 +304,15 @@
   width: 44px;
   height: 44px;
   object-fit: contain;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--overlay-hover);
   border-radius: 6px;
   padding: 2px;
 }
 
 .btn-clear-logo {
-  background: rgba(214, 28, 53, 0.15);
-  border: 1px solid rgba(214, 28, 53, 0.4);
-  color: #f87171;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 0.78rem;
@@ -320,7 +322,7 @@
 }
 
 .btn-clear-logo:hover {
-  background: rgba(214, 28, 53, 0.3);
+  background: var(--error-border);
 }
 
 /* Live Preview Card */
@@ -340,14 +342,14 @@
 }
 
 .live-team-badge {
-  background: #0f172a;
-  border: 2px solid #ffed00;
+  background: var(--bg-card);
+  border: 2px solid var(--fb-yellow);
   border-radius: var(--radius-md);
   padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
 }
 
@@ -362,13 +364,13 @@
   height: 42px;
   border-radius: 8px;
   object-fit: contain;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--overlay-hover);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
   font-size: 1.1rem;
-  color: #ffffff;
+  color: var(--text-heading);
 }
 
 .live-badge-logo img {
@@ -380,7 +382,7 @@
 .live-badge-name {
   font-size: 1rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text-heading);
 }
 
 .live-badge-short {
@@ -389,8 +391,8 @@
   font-weight: 800;
   padding: 2px 8px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  background: var(--overlay-hover);
+  color: var(--text-main);
   margin-top: 2px;
 }
 
@@ -398,8 +400,8 @@
   font-family: var(--font-score, monospace);
   font-size: 1.6rem;
   font-weight: 900;
-  color: #ffffff;
-  background: rgba(0, 0, 0, 0.4);
+  color: var(--text-heading);
+  background: var(--overlay-bg);
   padding: 4px 10px;
   border-radius: 6px;
 }
@@ -410,7 +412,7 @@
   padding: 12px;
   margin-top: 18px;
   background: var(--fb-yellow);
-  color: #002d72;
+  color: var(--btn-primary-text);
   border: none;
   border-radius: var(--radius-md);
   font-size: 0.95rem;
@@ -420,7 +422,7 @@
 }
 
 .btn-save-team:hover {
-  background: #facc15;
+  background: var(--fb-yellow-hover);
   transform: translateY(-1px);
 }
 
@@ -459,7 +461,7 @@
 .search-input {
   width: 100%;
   padding: 10px 14px 10px 36px;
-  background: var(--bg-card-alt);
+  background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-main);
@@ -489,9 +491,9 @@
 }
 
 .team-card:hover {
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--overlay-border-strong);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 .team-card-banner {
@@ -511,15 +513,15 @@
   width: 52px;
   height: 52px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   font-weight: 900;
   font-size: 1.2rem;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-heading);
+  border: 1px solid var(--border-color);
   overflow: hidden;
 }
 
@@ -538,7 +540,7 @@
 .team-card-name {
   font-weight: 800;
   font-size: 0.95rem;
-  color: var(--text-main);
+  color: var(--text-heading);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -553,7 +555,7 @@
 }
 
 .team-short-badge {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--overlay-hover);
   padding: 2px 7px;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -571,13 +573,13 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--border-color);
 }
 
 .team-card-footer {
   padding: 10px 16px;
   border-top: 1px solid var(--border-color);
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--overlay-subtle);
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -596,23 +598,23 @@
 }
 
 .btn-card-action:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--overlay-hover);
 }
 
 .btn-card-action.danger {
-  color: #f87171;
-  border-color: rgba(248, 113, 113, 0.3);
+  color: var(--error-text);
+  border-color: var(--error-border);
 }
 
 .btn-card-action.danger:hover {
-  background: rgba(248, 113, 113, 0.15);
+  background: var(--error-bg);
 }
 
 /* Modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--modal-backdrop);
   backdrop-filter: blur(4px);
   display: none;
   align-items: center;
@@ -634,7 +636,7 @@
   max-height: 90vh;
   overflow-y: auto;
   padding: 24px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-modal-close {
@@ -647,7 +649,7 @@
 }
 
 .btn-modal-close:hover {
-  color: #ffffff;
+  color: var(--text-heading);
 }
 
 .modal-footer {
@@ -673,22 +675,22 @@
 }
 
 .btn-modal-cancel:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--overlay-hover);
   color: var(--text-main);
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: var(--overlay-border-strong);
 }
 
 .btn-modal-save {
   padding: 10px 22px;
   border-radius: var(--radius-md);
   border: none;
-  background: linear-gradient(135deg, var(--fb-yellow) 0%, #e6d200 100%);
-  color: #0b1120;
+  background: var(--fb-yellow);
+  color: var(--btn-primary-text);
   font-weight: 800;
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 4px 12px rgba(255, 237, 0, 0.25);
+  box-shadow: var(--shadow-sm);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -696,8 +698,8 @@
 
 .btn-modal-save:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(255, 237, 0, 0.35);
-  filter: brightness(1.05);
+  background: var(--fb-yellow-hover);
+  box-shadow: var(--shadow-md);
 }
 
 .empty-state {

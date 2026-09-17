@@ -7,14 +7,17 @@
   <link rel="stylesheet" href="/css/common.css?v=1.2.0">
   <link rel="stylesheet" href="/css/control.css?v=1.2.0">
   <link rel="icon" href="/assets/volleyball.svg">
+  <script>
+  (function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}else{var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',d?'dark':'light')}})();
+  </script>
   <style>
     .op-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(16, 185, 129, 0.2);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      color: #6ee7b7;
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      color: var(--success-text);
       padding: 5px 12px;
       border-radius: 20px;
       font-size: 0.78rem;
@@ -34,6 +37,10 @@
     </div>
     <div class="flex-center" style="gap: 10px;">
       <span class="op-badge">📱 SKORCU EKRANI</span>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir" aria-label="Tema Değiştir">
+        <span class="icon-moon">🌙</span>
+        <span class="icon-sun">☀️</span>
+      </button>
       <div class="conn-indicator">
         <div class="conn-dot" id="conn-dot"></div>
         <span id="conn-text">Bağlanıyor...</span>
@@ -63,105 +70,113 @@
     </div>
   </div>
 
-  <!-- Timeout Active Banner -->
+  <!-- Timeout Alert Banner -->
   <div class="timeout-banner" id="timeout-banner">
-    <div>
-      <span style="font-size: 0.85rem; opacity: 0.9;">⏳ MOLA DEVAM EDİYOR</span>
-      <div id="timeout-team-name" style="font-size: 1.1rem; font-weight: 800;">Mola</div>
+    <div class="flex-center" style="gap: 10px;">
+      <span style="font-size: 1.5rem;">⏱️</span>
+      <span id="timeout-banner-text">MOLA KULLANILIYOR</span>
     </div>
     <div class="flex-center" style="gap: 12px;">
-      <div class="timeout-timer-val" id="timeout-timer">30s</div>
-      <button id="btn-end-timeout" style="background: rgba(0,0,0,0.4); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 4px; font-weight: 700; cursor: pointer;">
-        Molayı Bitir
+      <span class="timeout-timer-val" id="timeout-val">30</span>
+      <button class="btn-action-main" id="btn-end-timeout" style="padding: 4px 10px; font-size: 0.75rem; background: rgba(0,0,0,0.4); color: white; border: 1px solid rgba(255,255,255,0.4);">
+        Bitir
       </button>
     </div>
   </div>
 
-  <!-- Main Teams Scoreboard Cards Grid -->
+  <!-- Main Teams Grid -->
   <div class="teams-grid">
-    <!-- Left Team Card -->
-    <div class="team-card" id="left-team-card">
+    <!-- TEAM A (HOME) -->
+    <div class="team-card" id="team-card-a">
       <div class="team-card-header">
         <div class="team-logo-title">
-          <img src="/assets/volleyball.svg" alt="Logo" class="team-logo-img" id="left-team-logo">
+          <img src="/assets/fenerbahce.svg" class="team-logo-img" id="team-a-logo" alt="Logo">
           <div>
-            <div class="team-name-text" id="left-team-name">EV SAHİBİ</div>
-            <div class="team-short-code" id="left-team-short">EV</div>
+            <div class="team-name-text" id="team-a-name">FENERBAHÇE</div>
+            <div class="team-short-code" id="team-a-short">FB</div>
           </div>
         </div>
-        <div class="sets-badge" id="left-sets-badge">0 Set</div>
+        <div class="sets-badge" id="team-a-sets">0 SET</div>
       </div>
 
+      <!-- Service & Timeouts Row -->
       <div class="sub-indicators">
-        <button class="serve-btn is-serving" id="left-serve-btn">
-          <img src="/assets/volleyball.svg" class="volleyball-icon-mini" alt="Serve">
+        <button class="serve-btn" id="btn-serve-a">
+          <img src="/assets/volleyball.svg" class="volleyball-icon-mini" alt="Top">
           <span>SERVİS</span>
         </button>
+
         <div class="timeouts-tracker-col">
-          <span class="to-countdown-badge" id="left-to-badge" style="display: none;">30s</span>
+          <div class="to-countdown-badge" id="to-countdown-a" style="display: none;">30s</div>
           <div class="timeouts-tracker">
-            <span>Mola:</span>
-            <div class="to-dot" id="left-to-dot-1"></div>
-            <div class="to-dot" id="left-to-dot-2"></div>
+            <span>MOLA:</span>
+            <div class="to-dot" id="to-a-1"></div>
+            <div class="to-dot" id="to-a-2"></div>
           </div>
         </div>
       </div>
 
-      <div class="point-tap-area" id="left-point-area">
-        <div class="point-display" id="left-point-val">0</div>
-        <div class="point-tap-label">+1 SAYI</div>
+      <!-- GIANT POINT TAP AREA (+1) -->
+      <div class="point-tap-area" id="btn-point-a">
+        <div class="point-display" id="team-a-points">0</div>
+        <div class="point-tap-label">SAYI EKLE (+1)</div>
       </div>
 
+      <!-- Quick Actions: -1 Point & Call Timeout -->
       <div class="team-action-row">
-        <button class="btn-sub-point" id="left-sub-point">-1 Sayı</button>
-        <button class="btn-timeout-call" id="left-timeout-btn">⏱️ Mola Al</button>
+        <button class="btn-sub-point" id="btn-sub-a">-1 Sayı Düş</button>
+        <button class="btn-timeout-call" id="btn-timeout-a">⏱️ Mola Al</button>
       </div>
     </div>
 
-    <!-- Right Team Card -->
-    <div class="team-card" id="right-team-card">
+    <!-- TEAM B (AWAY) -->
+    <div class="team-card" id="team-card-b">
       <div class="team-card-header">
         <div class="team-logo-title">
-          <img src="/assets/volleyball.svg" alt="Logo" class="team-logo-img" id="right-team-logo">
+          <img src="/assets/opponent.svg" class="team-logo-img" id="team-b-logo" alt="Logo">
           <div>
-            <div class="team-name-text" id="right-team-name">DEPLASMAN</div>
-            <div class="team-short-code" id="right-team-short">DEP</div>
+            <div class="team-name-text" id="team-b-name">RAKİP TAKIM</div>
+            <div class="team-short-code" id="team-b-short">RAK</div>
           </div>
         </div>
-        <div class="sets-badge" id="right-sets-badge">0 Set</div>
+        <div class="sets-badge" id="team-b-sets">0 SET</div>
       </div>
 
+      <!-- Service & Timeouts Row -->
       <div class="sub-indicators">
-        <button class="serve-btn" id="right-serve-btn">
-          <img src="/assets/volleyball.svg" class="volleyball-icon-mini" alt="Serve">
+        <button class="serve-btn" id="btn-serve-b">
+          <img src="/assets/volleyball.svg" class="volleyball-icon-mini" alt="Top">
           <span>SERVİS</span>
         </button>
+
         <div class="timeouts-tracker-col">
-          <span class="to-countdown-badge" id="right-to-badge" style="display: none;">30s</span>
+          <div class="to-countdown-badge" id="to-countdown-b" style="display: none;">30s</div>
           <div class="timeouts-tracker">
-            <span>Mola:</span>
-            <div class="to-dot" id="right-to-dot-1"></div>
-            <div class="to-dot" id="right-to-dot-2"></div>
+            <span>MOLA:</span>
+            <div class="to-dot" id="to-b-1"></div>
+            <div class="to-dot" id="to-b-2"></div>
           </div>
         </div>
       </div>
 
-      <div class="point-tap-area" id="right-point-area">
-        <div class="point-display" id="right-point-val">0</div>
-        <div class="point-tap-label">+1 SAYI</div>
+      <!-- GIANT POINT TAP AREA (+1) -->
+      <div class="point-tap-area" id="btn-point-b">
+        <div class="point-display" id="team-b-points">0</div>
+        <div class="point-tap-label">SAYI EKLE (+1)</div>
       </div>
 
+      <!-- Quick Actions: -1 Point & Call Timeout -->
       <div class="team-action-row">
-        <button class="btn-sub-point" id="right-sub-point">-1 Sayı</button>
-        <button class="btn-timeout-call" id="right-timeout-btn">⏱️ Mola Al</button>
+        <button class="btn-sub-point" id="btn-sub-b">-1 Sayı Düş</button>
+        <button class="btn-timeout-call" id="btn-timeout-b">⏱️ Mola Al</button>
       </div>
     </div>
   </div>
 
-  <!-- Bottom Global Controls Bar -->
+  <!-- Bottom Global Controls -->
   <div class="bottom-controls">
     <button class="btn-action-main btn-undo" id="btn-undo">
-      <span style="font-size: 1.2rem;">↩</span>
+      <span style="font-size: 1.2rem;">↩️</span>
       <span>Geri Al (Undo)</span>
     </button>
     <button class="btn-action-main btn-swap" id="btn-swap">
@@ -183,5 +198,6 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script src="/js/operate.js?v=1.2.0"></script>
+<script src="/js/theme.js"></script>
 </body>
 </html>

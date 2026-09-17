@@ -6,24 +6,34 @@
   <title>E-posta Doğrulama - Voleybol Skorboard</title>
   <link rel="stylesheet" href="/css/common.css">
   <link rel="icon" href="/assets/volleyball.svg">
+  <script>
+  (function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}else{var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',d?'dark':'light')}})();
+  </script>
   <style>
     .auth-wrapper {
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 24px;
-      background: radial-gradient(circle at top, #162447 0%, #0a0e1a 100%);
+      background: radial-gradient(circle at top, var(--auth-gradient-from) 0%, var(--auth-gradient-to) 100%);
+      position: relative;
+    }
+    .auth-top-bar {
+      position: absolute;
+      top: 20px;
+      right: 20px;
     }
     .auth-card {
       width: 100%;
       max-width: 440px;
-      background: rgba(22, 33, 62, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--auth-card-bg);
+      border: 1px solid var(--border-color);
       backdrop-filter: blur(12px);
       border-radius: 16px;
       padding: 36px 32px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+      box-shadow: var(--shadow-md);
       text-align: center;
     }
     .auth-brand {
@@ -40,17 +50,17 @@
     .auth-brand span {
       font-size: 1.4rem;
       font-weight: 900;
-      color: #ffffff;
+      color: var(--text-heading);
       letter-spacing: -0.5px;
     }
     .auth-brand span span {
-      color: var(--fb-yellow, #ffed00);
+      color: var(--fb-yellow);
     }
     .auth-title {
       font-size: 1.3rem;
       font-weight: 800;
       margin-bottom: 8px;
-      color: #ffffff;
+      color: var(--text-heading);
     }
     .auth-desc {
       font-size: 0.92rem;
@@ -60,9 +70,9 @@
     }
     .user-email-badge {
       display: inline-block;
-      background: rgba(255, 237, 0, 0.12);
-      color: var(--fb-yellow, #ffed00);
-      border: 1px solid rgba(255, 237, 0, 0.3);
+      background: var(--accent-yellow-bg);
+      color: var(--fb-yellow);
+      border: 1px solid var(--accent-yellow-border);
       padding: 4px 12px;
       border-radius: 20px;
       font-weight: 700;
@@ -76,10 +86,10 @@
       width: 100%;
       max-width: 280px;
       padding: 14px 16px;
-      background: #0f172a;
-      border: 2px solid rgba(255, 237, 0, 0.4);
+      background: var(--bg-input);
+      border: 2px solid var(--accent-yellow-border);
       border-radius: 10px;
-      color: var(--fb-yellow, #ffed00);
+      color: var(--fb-yellow);
       font-size: 1.8rem;
       font-weight: 900;
       text-align: center;
@@ -89,14 +99,14 @@
       transition: all 0.2s;
     }
     .code-input:focus {
-      border-color: var(--fb-yellow, #ffed00);
-      box-shadow: 0 0 16px rgba(255, 237, 0, 0.25);
+      border-color: var(--fb-yellow);
+      box-shadow: 0 0 16px var(--accent-yellow-border);
     }
     .btn-submit {
       width: 100%;
       padding: 13px;
-      background: var(--fb-yellow, #ffed00);
-      color: #002d72;
+      background: var(--fb-yellow);
+      color: var(--btn-primary-text);
       border: none;
       border-radius: 8px;
       font-size: 1rem;
@@ -106,7 +116,7 @@
       transition: all 0.2s;
     }
     .btn-submit:hover {
-      background: #fff033;
+      background: var(--fb-yellow-hover);
       transform: translateY(-1px);
     }
     .btn-submit:disabled {
@@ -122,7 +132,7 @@
     .btn-resend {
       background: transparent;
       border: none;
-      color: var(--fb-yellow, #ffed00);
+      color: var(--fb-yellow);
       font-weight: 700;
       cursor: pointer;
       text-decoration: underline;
@@ -142,20 +152,27 @@
       text-align: left;
     }
     .alert-error {
-      background: rgba(220, 38, 38, 0.15);
-      border: 1px solid rgba(220, 38, 38, 0.4);
-      color: #fca5a5;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
     }
     .alert-success {
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      color: #6ee7b7;
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      color: var(--success-text);
     }
   </style>
 </head>
 <body>
 
 <div class="auth-wrapper">
+  <div class="auth-top-bar">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir" aria-label="Tema Değiştir">
+      <span class="icon-moon">🌙</span>
+      <span class="icon-sun">☀️</span>
+    </button>
+  </div>
+
   <div class="auth-card">
     <a href="/" class="auth-brand">
       <img src="/assets/volleyball.svg" alt="Logo">
@@ -186,6 +203,7 @@
   </div>
 </div>
 
+<script src="/js/theme.js"></script>
 <script>
   const urlParams = new URLSearchParams(window.location.search);
   const emailParam = urlParams.get('email') || '';
