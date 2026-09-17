@@ -187,6 +187,7 @@
     leftName.textContent = leftData.name;
     leftShort.textContent = leftData.shortName;
     leftSets.textContent = `${leftData.setsWon} Set`;
+    leftPointVal.textContent = leftData.points;
     if (leftData.logo) {
       leftLogo.src = leftData.logo;
       leftLogo.style.display = 'block';
