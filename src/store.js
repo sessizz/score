@@ -678,6 +678,20 @@ function clearTimeoutState(board) {
   }
 }
 
+function serializeBoard(board) {
+  if (!board) return null;
+  const now = Date.now();
+  let timeoutRemaining = 0;
+  if (board.timeoutState && board.timeoutState.active && board.timeoutState.endsAt) {
+    timeoutRemaining = Math.max(0, Math.ceil((board.timeoutState.endsAt - now) / 1000));
+  }
+  return {
+    ...board,
+    serverTime: now,
+    timeoutRemaining
+  };
+}
+
 function addSseClient(boardId, res) {
   if (!sseClients.has(boardId)) {
     sseClients.set(boardId, new Set());
@@ -687,7 +701,7 @@ function addSseClient(boardId, res) {
 
   const currentBoard = getBoard(boardId);
   if (currentBoard) {
-    res.write(`event: state\ndata: ${JSON.stringify(currentBoard)}\n\n`);
+    res.write(`event: state\ndata: ${JSON.stringify(serializeBoard(currentBoard))}\n\n`);
   }
 
   res.on('close', () => {
@@ -702,7 +716,7 @@ function broadcastBoard(boardId) {
   const currentBoard = getBoard(boardId);
   if (!currentBoard) return;
 
-  const data = `event: state\ndata: ${JSON.stringify(currentBoard)}\n\n`;
+  const data = `event: state\ndata: ${JSON.stringify(serializeBoard(currentBoard))}\n\n`;
   for (const client of clientSet) {
     try {
       client.write(data);
@@ -711,6 +725,22 @@ function broadcastBoard(boardId) {
     }
   }
 }
+
+// Heartbeat every 15s to keep SSE connection alive and sync server clock
+const pingTimer = setInterval(() => {
+  const now = Date.now();
+  const pingData = `event: ping\ndata: ${now}\n\n`;
+  for (const clientSet of sseClients.values()) {
+    for (const client of clientSet) {
+      try {
+        client.write(pingData);
+      } catch (e) {
+        clientSet.delete(client);
+      }
+    }
+  }
+}, 15000);
+if (pingTimer.unref) pingTimer.unref();
 
 module.exports = {
   PRESETS,
@@ -724,5 +754,6 @@ module.exports = {
   addSseClient,
   broadcastBoard,
   checkSetStatus,
-  OPERATOR_ALLOWED_ACTIONS
+  OPERATOR_ALLOWED_ACTIONS,
+  serializeBoard
 };

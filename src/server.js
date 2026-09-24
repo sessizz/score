@@ -298,7 +298,7 @@ const server = http.createServer(async (req, res) => {
     if (!board) {
       return sendJson(res, 404, { success: false, error: 'Skorboard bulunamadı.' });
     }
-    return sendJson(res, 200, board);
+    return sendJson(res, 200, store.serializeBoard(board));
   }
 
   // Get specific board by Operator Token (Used by operator screen)
@@ -309,7 +309,7 @@ const server = http.createServer(async (req, res) => {
     if (!board) {
       return sendJson(res, 404, { success: false, error: 'Geçersiz veya süresi dolmuş operatör bağlantısı.' });
     }
-    return sendJson(res, 200, { success: true, boardId: board.id, board });
+    return sendJson(res, 200, { success: true, boardId: board.id, board: store.serializeBoard(board) });
   }
 
   // Action on board (Unified handler: checks Owner Session vs Operator permissions)
@@ -332,7 +332,11 @@ const server = http.createServer(async (req, res) => {
 
     // Non-owners act as operators (only allowed scoring, timeouts, serves, undo, clock, set transitions)
     const result = store.executeAction(boardId, action, payload, { isOwner, isOperator: !isOwner });
-    return sendJson(res, result.success ? 200 : 400, result);
+    const updatedBoard = store.getBoard(boardId);
+    return sendJson(res, result.success ? 200 : 400, {
+      ...result,
+      board: updatedBoard ? store.serializeBoard(updatedBoard) : undefined
+    });
   }
 
   // SSE Stream (Real-time live scores for OBS, live spectator, and controllers)

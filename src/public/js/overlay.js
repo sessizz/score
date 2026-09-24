@@ -18,6 +18,19 @@
   const root = document.getElementById('overlay-root');
   root.className = `theme-${theme}`;
 
+  // Server time synchronization (immune to client device clock skew)
+  let serverTimeOffset = 0; // serverTime - Date.now()
+
+  function syncServerTime(serverTime) {
+    if (typeof serverTime === 'number' && serverTime > 0) {
+      serverTimeOffset = serverTime - Date.now();
+    }
+  }
+
+  function getServerNow() {
+    return Date.now() + serverTimeOffset;
+  }
+
   function formatClockMs(ms) {
     const total = Math.floor(Math.max(0, ms) / 1000);
     const m = Math.floor(total / 60);
@@ -32,7 +45,7 @@
     const clock = latestBoard.setClock || { running: false, startedAt: null, elapsedMs: 0 };
     let ms = clock.elapsedMs || 0;
     if (clock.running && clock.startedAt) {
-      ms += Math.max(0, Date.now() - clock.startedAt);
+      ms += Math.max(0, getServerNow() - clock.startedAt);
     }
     const clockEl = document.getElementById('dc-overlay-clock');
     if (clockEl) {
@@ -47,7 +60,7 @@
 
     if (latestBoard.status === 'timeout' || (latestBoard.timeoutState && latestBoard.timeoutState.active)) {
       if (latestBoard.timeoutState && latestBoard.timeoutState.endsAt) {
-        remainSec = Math.max(0, Math.ceil((latestBoard.timeoutState.endsAt - Date.now()) / 1000));
+        remainSec = Math.max(0, Math.ceil((latestBoard.timeoutState.endsAt - getServerNow()) / 1000));
         isTimeoutActive = remainSec > 0;
         rawTeam = String(latestBoard.timeoutState.team || '').toLowerCase();
       }
@@ -84,10 +97,15 @@
     eventSource.addEventListener('state', (e) => {
       try {
         const board = JSON.parse(e.data);
+        if (board.serverTime) syncServerTime(board.serverTime);
         renderOverlay(board);
       } catch (err) {
         console.error('Failed to parse SSE state in overlay', err);
       }
+    });
+
+    eventSource.addEventListener('ping', (e) => {
+      if (e.data) syncServerTime(Number(e.data));
     });
 
     eventSource.onerror = () => {
@@ -101,6 +119,7 @@
 
   function renderOverlay(board) {
     latestBoard = board;
+    if (board && board.serverTime) syncServerTime(board.serverTime);
     const isSwapped = Boolean(board.courtSwapped);
     const leftData = isSwapped ? board.teamB : board.teamA;
     const rightData = isSwapped ? board.teamA : board.teamB;

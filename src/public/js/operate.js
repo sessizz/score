@@ -125,6 +125,19 @@
     }
   }
 
+  // Server time synchronization (immune to client device clock skew)
+  let serverTimeOffset = 0; // serverTime - Date.now()
+
+  function syncServerTime(serverTime) {
+    if (typeof serverTime === 'number' && serverTime > 0) {
+      serverTimeOffset = serverTime - Date.now();
+    }
+  }
+
+  function getServerNow() {
+    return Date.now() + serverTimeOffset;
+  }
+
   // Set Clock Logic
   function renderSetClock(state) {
     clockState = state || { running: false, startedAt: null, elapsedMs: 0 };
@@ -142,7 +155,7 @@
   function clockElapsedMs() {
     const base = clockState.elapsedMs || 0;
     if (!clockState.running || !clockState.startedAt) return base;
-    return base + Math.max(0, Date.now() - clockState.startedAt);
+    return base + Math.max(0, getServerNow() - clockState.startedAt);
   }
 
   function updateClockDisplay() {
@@ -184,7 +197,7 @@
     timeoutInterval = null;
 
     function update() {
-      const remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+      const remaining = Math.max(0, Math.ceil((endsAt - getServerNow()) / 1000));
       if (elTimeoutTimer) elTimeoutTimer.textContent = `${remaining}s`;
 
       if (currentBoard && currentBoard.timeoutState) {
@@ -218,6 +231,7 @@
   // Render State
   function renderBoard(board) {
     if (!board) return;
+    if (board.serverTime) syncServerTime(board.serverTime);
     currentBoard = board;
 
     if (elMatchTitle) elMatchTitle.textContent = board.title || 'Voleybol Müsabakası';
@@ -502,6 +516,7 @@
     eventSource.addEventListener('state', (e) => {
       try {
         const board = JSON.parse(e.data);
+        if (board.serverTime) syncServerTime(board.serverTime);
         renderBoard(board);
         if (elConnDot) elConnDot.className = 'conn-dot';
         if (elConnText) elConnText.textContent = 'Canlı (SSE)';
@@ -510,7 +525,8 @@
       }
     });
 
-    eventSource.addEventListener('ping', () => {
+    eventSource.addEventListener('ping', (e) => {
+      if (e.data) syncServerTime(Number(e.data));
       if (elConnDot) elConnDot.className = 'conn-dot';
     });
 

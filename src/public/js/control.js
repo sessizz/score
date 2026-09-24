@@ -142,6 +142,7 @@
     eventSource.addEventListener('state', (e) => {
       try {
         const board = JSON.parse(e.data);
+        if (board.serverTime) syncServerTime(board.serverTime);
         currentBoard = board;
         renderBoard(board);
         elConnDot.className = 'conn-dot';
@@ -151,7 +152,8 @@
       }
     });
 
-    eventSource.addEventListener('ping', () => {
+    eventSource.addEventListener('ping', (e) => {
+      if (e.data) syncServerTime(Number(e.data));
       elConnDot.className = 'conn-dot';
     });
 
@@ -161,8 +163,22 @@
     };
   }
 
+  // Server time synchronization (immune to client device clock skew)
+  let serverTimeOffset = 0; // serverTime - Date.now()
+
+  function syncServerTime(serverTime) {
+    if (typeof serverTime === 'number' && serverTime > 0) {
+      serverTimeOffset = serverTime - Date.now();
+    }
+  }
+
+  function getServerNow() {
+    return Date.now() + serverTimeOffset;
+  }
+
   // Render State
   function renderBoard(board) {
+    if (board && board.serverTime) syncServerTime(board.serverTime);
     elMatchTitle.textContent = board.title || 'Fenerbahçe Küçük Erkek Voleybol Ligi';
     elMatchSub.textContent = board.subtitle || 'Canlı Yayın';
     elSetPill.textContent = `${board.currentSet}. SET`;
@@ -246,7 +262,7 @@
   function clockElapsedMs() {
     const base = clockState.elapsedMs || 0;
     if (!clockState.running || !clockState.startedAt) return base;
-    return base + Math.max(0, Date.now() - clockState.startedAt);
+    return base + Math.max(0, getServerNow() - clockState.startedAt);
   }
 
   function updateClockDisplay() {
@@ -289,7 +305,7 @@
     timeoutInterval = null;
 
     function update() {
-      const remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+      const remaining = Math.max(0, Math.ceil((endsAt - getServerNow()) / 1000));
       elTimeoutTimer.textContent = `${remaining}s`;
 
       if (currentBoard && currentBoard.timeoutState) {
