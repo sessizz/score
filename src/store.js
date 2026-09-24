@@ -318,7 +318,24 @@ function deleteBoard(boardId, userId) {
 
 function getAllBoardsSummary(userId = null) {
   if (userId) {
-    return db.getBoardsByUser(userId);
+    const list = db.getBoardsByUser(userId);
+    return list.map(item => {
+      const live = boards.get(item.id);
+      if (live) {
+        return {
+          ...item,
+          title: live.title || item.title,
+          subtitle: live.subtitle || item.subtitle,
+          teamA: live.teamA ? { ...item.teamA, ...live.teamA } : item.teamA,
+          teamB: live.teamB ? { ...item.teamB, ...live.teamB } : item.teamB,
+          currentSet: live.currentSet !== undefined ? live.currentSet : item.currentSet,
+          status: live.status || item.status,
+          createdAt: item.createdAt || live.createdAt || 0,
+          updatedAt: live.updatedAt || item.updatedAt || 0
+        };
+      }
+      return item;
+    }).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }
   const list = [];
   for (const [id, b] of boards.entries()) {
@@ -328,13 +345,15 @@ function getAllBoardsSummary(userId = null) {
       operatorToken: b.operatorToken,
       title: b.title,
       subtitle: b.subtitle,
-      teamA: { name: b.teamA.name, shortName: b.teamA.shortName, setsWon: b.teamA.setsWon, points: b.teamA.points },
-      teamB: { name: b.teamB.name, shortName: b.teamB.shortName, setsWon: b.teamB.setsWon, points: b.teamB.points },
+      teamA: { name: b.teamA.name, shortName: b.teamA.shortName, setsWon: b.teamA.setsWon, points: b.teamA.points, logo: b.teamA.logo },
+      teamB: { name: b.teamB.name, shortName: b.teamB.shortName, setsWon: b.teamB.setsWon, points: b.teamB.points, logo: b.teamB.logo },
       currentSet: b.currentSet,
       status: b.status,
-      updatedAt: b.updatedAt
+      createdAt: b.createdAt || 0,
+      updatedAt: b.updatedAt || 0
     });
   }
+  list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   return list;
 }
 

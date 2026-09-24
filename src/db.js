@@ -189,7 +189,7 @@ function saveBoardToDb(board) {
       INSERT INTO boards (id, user_id, name, operator_token, state_json, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(board.id, board.userId || null, name, opToken, JSON.stringify(board), now, now);
+    stmt.run(board.id, board.userId || null, name, opToken, JSON.stringify(board), board.createdAt || now, now);
   }
 }
 
@@ -228,7 +228,7 @@ function getBoardByOperatorToken(token) {
 }
 
 function getBoardsByUser(userId) {
-  const stmt = db.prepare('SELECT id, user_id, name, operator_token, state_json, updated_at FROM boards WHERE user_id = ? ORDER BY updated_at DESC');
+  const stmt = db.prepare('SELECT id, user_id, name, operator_token, state_json, created_at, updated_at FROM boards WHERE user_id = ? ORDER BY created_at DESC');
   const rows = stmt.all(userId);
   return rows.map(r => {
     try {
@@ -243,10 +243,12 @@ function getBoardsByUser(userId) {
         teamB: parsed.teamB,
         currentSet: parsed.currentSet,
         status: parsed.status,
-        updatedAt: r.updated_at
+        rules: parsed.rules,
+        createdAt: r.created_at || (parsed && parsed.createdAt) || 0,
+        updatedAt: r.updated_at || (parsed && parsed.updatedAt) || 0
       };
     } catch (e) {
-      return { id: r.id, name: r.name, operatorToken: r.operator_token };
+      return { id: r.id, name: r.name, operatorToken: r.operator_token, createdAt: r.created_at || 0, updatedAt: r.updated_at || 0 };
     }
   });
 }
