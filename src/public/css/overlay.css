@@ -155,12 +155,12 @@ html, body {
   display: block;
 }
 
-/* Center Cluster (Sets A | Points A | Logo | Points B | Sets B) */
+/* Center Cluster (Sets A | Points A | Points B | Sets B) */
 .dc-center-cluster {
   grid-column: 3;
   display: flex;
   align-items: stretch;
-  gap: .16em;
+  gap: .18em;
   height: 2.2em;
 }
 
@@ -185,7 +185,7 @@ html, body {
 
 .dc-points-box {
   min-width: 1.75em;
-  padding: 0 .1em;
+  padding: 0 .15em;
   border-radius: .1em;
   background: linear-gradient(180deg, #f6f6f3, #dcdcd6);
   display: flex;
@@ -199,27 +199,6 @@ html, body {
   font-size: 1.62em;
   color: #17244a;
   font-variant-numeric: tabular-nums;
-}
-
-.dc-logo-box {
-  width: 2.4em;
-  height: 2.42em;
-  align-self: center;
-  border-radius: .11em;
-  background: linear-gradient(180deg, #d61c35, #a80d23);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  box-shadow: inset 0 .04em 0 rgba(255, 255, 255, .25), 0 .03em .1em rgba(0, 0, 0, .3);
-}
-
-.dc-logo-inner {
-  width: 88%;
-  height: 82%;
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
 }
 
 /* Team B Column (Right) */
@@ -253,6 +232,7 @@ html, body {
   transition: left .7s cubic-bezier(.65, 0, .35, 1);
   z-index: 2;
   filter: drop-shadow(0 .05em .1em rgba(0, 0, 0, .45));
+  will-change: left;
 }
 
 /* Ball sits at the outer end of the serving team's side */
@@ -270,6 +250,8 @@ html, body {
   width: 100%;
   height: 100%;
   animation: fbspin 14s linear infinite;
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 /* Üst Satır (Zaman ve Set Kapsülü) */

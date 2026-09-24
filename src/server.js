@@ -70,12 +70,11 @@ function serveStaticFile(res, filePath) {
 
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    const isImageOrFont = /\.(png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf|eot)$/i.test(ext);
 
     res.writeHead(200, {
       'Content-Type': contentType,
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
+      'Cache-Control': isImageOrFont ? 'public, max-age=86400' : 'no-cache, must-revalidate',
       'Access-Control-Allow-Origin': '*'
     });
 
