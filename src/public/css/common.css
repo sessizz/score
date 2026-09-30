@@ -754,3 +754,19 @@ body {
 .cd-btn:focus-visible { outline: 2px solid var(--fb-yellow); outline-offset: 2px; }
 .cd-btn.cd-confirm.cd-primary { flex: 1.4; background: var(--fb-yellow); border-color: var(--fb-yellow); color: #1a2846; }
 .cd-btn.cd-confirm.cd-danger { flex: 1.4; background: #dc2626; border-color: #dc2626; color: #fff; }
+
+.cd-label { display: block; margin: 14px 0 6px; font-size: .75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.cd-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-main);
+  font: 700 1.1rem var(--font-main);
+  letter-spacing: .04em;
+}
+.cd-input:focus { outline: 2px solid var(--fb-yellow); outline-offset: 1px; }
+.cd-error { min-height: 1.2em; margin-top: 8px; color: var(--accent-red-text); font-size: .85rem; font-weight: 600; }
+.cd-btn:disabled { opacity: .6; cursor: default; }

@@ -1,0 +1,182 @@
+/* Skorcu ekranı: telefonda tam ekran, scroll'suz yerleşim (sadece operate.html) */
+
+.code-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card-alt);
+  color: var(--text-main);
+  font: 700 .78rem var(--font-main);
+  cursor: pointer;
+  max-width: 120px;
+}
+.code-switch-btn #code-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+body.operate-page {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@media (max-width: 700px), (max-height: 500px) {
+  html, body.operate-page {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .operate-page .control-container {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    max-width: none;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    gap: 6px;
+    overflow: hidden;
+  }
+
+  /* --- Üst bar: tek satır --- */
+  .operate-page .control-header {
+    flex: none;
+    padding: 6px 10px;
+    gap: 8px;
+  }
+
+  .operate-page .control-header > div:first-child { min-width: 0; flex: 1; }
+  .operate-page .match-info-title {
+    font-size: .9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .operate-page .match-info-sub,
+  .operate-page .op-badge,
+  .operate-page #conn-text { display: none; }
+  .operate-page .control-header .flex-center { gap: 8px !important; flex: none; }
+
+  /* --- Set / sayaç şeridi: tek satır --- */
+  .operate-page .status-ribbon {
+    flex: none;
+    padding: 4px 8px;
+    gap: 8px;
+    margin: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .operate-page .status-ribbon .flex-center { gap: 8px !important; flex: none; }
+  .operate-page .set-history-pills {
+    min-width: 0;
+    flex: 1;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    gap: 4px;
+  }
+  .operate-page .history-item { font-size: .7rem; padding: 2px 6px; white-space: nowrap; }
+
+  /* Mola: büyük şerit yok, geri sayım mola alan takımın kartında (dokununca molayı bitirir) */
+  .operate-page .timeout-banner,
+  .operate-page .timeout-banner.active { display: none !important; }
+
+  .operate-page .team-card.timeout-active {
+    border-color: #f59e0b;
+    box-shadow: 0 0 14px rgba(245, 158, 11, .45);
+  }
+
+  .operate-page .team-card { position: relative; }
+  .operate-page .to-countdown-badge {
+    position: absolute;
+    top: 92px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    font-size: .85rem;
+    padding: 4px 12px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .operate-page .to-countdown-badge::after { content: ' ✕'; font-weight: 600; }
+
+  /* --- Takım kartları: yan yana, kalan yüksekliği doldurur --- */
+  .operate-page .teams-grid {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin: 0;
+  }
+
+  .operate-page .team-card {
+    min-height: 0;
+    padding: 8px;
+    gap: 6px;
+    border-radius: 14px;
+  }
+
+  .operate-page .team-card-header { gap: 4px; flex: none; }
+  .operate-page .team-logo-title { gap: 6px; min-width: 0; }
+  .operate-page .team-logo-img { width: 28px; height: 28px; }
+  .operate-page .team-name-text { font-size: .85rem; }
+  .operate-page .team-short-code { display: none; }
+  .operate-page .sets-badge { font-size: .7rem; padding: 2px 7px; flex: none; }
+
+  .operate-page .sub-indicators { flex: none; gap: 4px; }
+  .operate-page .serve-btn { padding: 4px 8px; font-size: .7rem; }
+  .operate-page .timeouts-tracker { font-size: .7rem; gap: 4px; }
+
+  .operate-page .point-tap-area {
+    flex: 1;
+    min-height: 0;
+    padding: 4px;
+  }
+  .operate-page .point-display {
+    font-size: clamp(3.4rem, min(17vw, 13dvh), 7rem);
+  }
+  .operate-page .point-tap-label { font-size: .65rem; margin-top: 2px; }
+
+  .operate-page .team-action-row { flex: none; gap: 6px; }
+  .operate-page .btn-sub-point,
+  .operate-page .btn-timeout-call {
+    padding: 0;
+    height: 44px;
+    font-size: .8rem;
+    white-space: nowrap;
+  }
+
+  /* --- Alt eylem çubuğu: tek satır, 5 buton --- */
+  .operate-page .bottom-controls {
+    flex: none;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    margin: 0;
+  }
+  .operate-page .btn-action-main {
+    padding: 6px 2px;
+    gap: 2px;
+    font-size: .64rem;
+    line-height: 1.1;
+    text-align: center;
+    min-height: 52px;
+  }
+  .operate-page .btn-action-main span:first-child { font-size: 1.15rem !important; }
+}
+
+/* Yatay telefon: alçak ekran, kartlar ve butonlar daha kompakt */
+@media (max-height: 500px) and (orientation: landscape) {
+  .operate-page .control-header { padding: 3px 8px; }
+  .operate-page .status-ribbon { padding: 2px 8px; }
+  .operate-page .sub-indicators { display: none; }
+  .operate-page .to-countdown-badge { top: 44px; }
+  .operate-page .team-logo-img { width: 22px; height: 22px; }
+  .operate-page .point-tap-area { overflow: hidden; }
+  .operate-page .point-display { font-size: clamp(2rem, 13dvh, 5rem); }
+  .operate-page .point-tap-label { display: none; }
+  .operate-page .btn-sub-point,
+  .operate-page .btn-timeout-call { height: 34px; }
+  .operate-page .btn-action-main { min-height: 38px; flex-direction: row; gap: 4px; font-size: .62rem; }
+  .operate-page .btn-action-main span:first-child { font-size: .95rem !important; }
+}

@@ -55,6 +55,78 @@
     });
   }
 
+
+  // Metin girişli pencere. opts: { icon, title, bodyHtml, label, placeholder, value, confirmText, validate }
+  // validate(value) -> Promise<string> : boş string = geçerli, dolu string = hata mesajı
+  // Sonuç: girilen metin ya da iptalde null
+  function appPrompt(opts) {
+    return new Promise((resolve) => {
+      const backdrop = document.createElement('div');
+      backdrop.className = 'cd-backdrop';
+      backdrop.innerHTML = `
+        <form class="cd-box" role="dialog" aria-modal="true" autocomplete="off">
+          <div class="cd-head">
+            <span class="cd-icon cd-primary">${opts.icon || '✏️'}</span>
+            <h3 class="cd-title">${esc(opts.title)}</h3>
+          </div>
+          <div class="cd-body">${opts.bodyHtml || ''}</div>
+          <label class="cd-label">${esc(opts.label || '')}</label>
+          <input class="cd-input" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false"
+                 placeholder="${esc(opts.placeholder || '')}" value="${esc(opts.value || '')}" maxlength="64">
+          <div class="cd-error" aria-live="polite"></div>
+          <div class="cd-actions">
+            <button type="button" class="cd-btn cd-cancel">Vazgeç</button>
+            <button type="submit" class="cd-btn cd-confirm cd-primary">${esc(opts.confirmText || 'Tamam')}</button>
+          </div>
+        </form>`;
+      document.body.appendChild(backdrop);
+      requestAnimationFrame(() => backdrop.classList.add('cd-open'));
+
+      const form = backdrop.querySelector('form');
+      const input = backdrop.querySelector('.cd-input');
+      const errEl = backdrop.querySelector('.cd-error');
+      const btnOk = backdrop.querySelector('.cd-confirm');
+      const btnNo = backdrop.querySelector('.cd-cancel');
+      let busy = false;
+      setTimeout(() => { input.focus(); input.select(); }, 60);
+
+      function close(result) {
+        document.removeEventListener('keydown', onKey, true);
+        backdrop.classList.remove('cd-open');
+        setTimeout(() => backdrop.remove(), 160);
+        resolve(result);
+      }
+      function onKey(e) {
+        if (e.key === 'Escape' && opts.dismissible !== false) { e.preventDefault(); close(null); }
+      }
+      document.addEventListener('keydown', onKey, true);
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (busy) return;
+        const value = input.value.trim();
+        if (!value) { errEl.textContent = 'Bir kod girin.'; return; }
+        busy = true;
+        btnOk.disabled = true;
+        btnOk.textContent = 'Kontrol ediliyor...';
+        errEl.textContent = '';
+        let err = '';
+        try {
+          err = opts.validate ? await opts.validate(value) : '';
+        } catch (ex) {
+          err = 'Bağlantı hatası, tekrar deneyin.';
+        }
+        busy = false;
+        btnOk.disabled = false;
+        btnOk.textContent = opts.confirmText || 'Tamam';
+        if (err) { errEl.textContent = err; input.focus(); return; }
+        close(value);
+      });
+      btnNo.addEventListener('click', () => close(null));
+      backdrop.addEventListener('click', (e) => { if (e.target === backdrop && opts.dismissible !== false) close(null); });
+    });
+  }
+
   // Set bitirme onayı: iki takımın skoru, kazanan vurgulu
   function confirmEndSet(board) {
     const a = board.teamA;
@@ -86,5 +158,6 @@
   }
 
   window.appConfirm = appConfirm;
+  window.appPrompt = appPrompt;
   window.confirmEndSet = confirmEndSet;
 })();

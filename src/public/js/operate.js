@@ -18,8 +18,61 @@
       return decodeURIComponent(pathParts[1]).trim();
     }
     const params = new URLSearchParams(window.location.search);
-    return params.get('id') || params.get('board') || params.get('token') || (pathParts.length === 1 && pathParts[0] !== 'operate' ? pathParts[0] : 'fenerbahce');
+    const fromUrl = params.get('id') || params.get('board') || params.get('token') ||
+      (pathParts.length === 1 && pathParts[0] !== 'operate' && pathParts[0] !== 'operate.html' ? pathParts[0] : '');
+    if (fromUrl) return fromUrl;
+    // Ana ekrandan açılınca adres çubuğu yok: son kullanılan maç kodunu hatırla
+    const saved = readSavedCode();
+    if (saved) {
+      try { history.replaceState(null, '', `/operate/${encodeURIComponent(saved)}`); } catch (e) {}
+      return saved;
+    }
+    return '';
   }
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  const CODE_STORAGE_KEY = 'operate:lastCode';
+
+  function readSavedCode() {
+    try { return (localStorage.getItem(CODE_STORAGE_KEY) || '').trim(); } catch (e) { return ''; }
+  }
+
+  function saveCode(code) {
+    try { localStorage.setItem(CODE_STORAGE_KEY, code); } catch (e) {}
+  }
+
+  // Kodla maç var mı? Varsa { code } döner, yoksa hata metni
+  async function checkBoardCode(code) {
+    const enc = encodeURIComponent(code);
+    let res = await fetch(`/api/board/${enc}`);
+    if (!res.ok) res = await fetch(`/api/board/by-operator/${enc}`);
+    return res.ok;
+  }
+
+  async function changeBoardCode() {
+    const current = (window.__operateCode || '').trim();
+    const title = currentBoard && currentBoard.title ? currentBoard.title : '';
+    const code = await window.appPrompt({
+      icon: '🔁',
+      title: 'Maç kodunu değiştir',
+      bodyHtml: title ? `Şu an: <b>${escapeHtml(title)}</b>` : 'Skorunu gireceğin maçın kodunu yaz.',
+      label: 'Maç kodu',
+      placeholder: 'Örn: p9kq',
+      value: '',
+      confirmText: 'Maça geç',
+      dismissible: Boolean(current),
+      validate: async (v) => ((await checkBoardCode(v.trim())) ? '' : 'Bu kodla maç bulunamadı.')
+    });
+    if (!code) return;
+    saveCode(code.trim());
+    window.location.href = `/operate/${encodeURIComponent(code.trim())}`;
+  }
+
+  const btnChangeCode = document.getElementById('btn-change-code');
+  if (btnChangeCode) btnChangeCode.addEventListener('click', changeBoardCode);
 
   // DOM Elements
   const elConnDot = document.getElementById('conn-dot');
@@ -109,7 +162,7 @@
   let queueBusy = false;
   let displayBase = null;      // kuyruk başladığında sunucudaki sayılar { teamA, teamB }
   let slowBarTimer = null;
-  const REQUEST_TIMEOUT_MS = 10000;
+  const REQUEST_TIMEOUT_MS = 6000;
   // Sayıyı öngörülemez şekilde değiştiren eylemler: sonrasındaki iyimser artışlar uygulanmaz
   const POINT_RESET_ACTIONS = ['end_set', 'undo', 'reset_current_set', 'reset_match', 'set_points'];
 
@@ -208,38 +261,77 @@
     }
   }
 
+  // Bağlantı kopukken kuyruktaki her basışın tek tek zaman aşımına girmesini beklemeyiz:
+  // ağ hatasında bekleyen tüm basışlar geri alınır.
+  function failPendingActions() {
+    const dropped = actionQueue.splice(0, actionQueue.length);
+    dropped.forEach((it) => it.resolve(false));
+    return dropped.length;
+  }
+
   async function processQueue() {
     if (queueBusy) return;
     queueBusy = true;
-    while (actionQueue.length > 0) {
-      const item = actionQueue[0];
-      let ok = false;
-      let board = null;
+    try {
+      while (actionQueue.length > 0) {
+        const item = actionQueue[0];
+        let ok = false;
+        let board = null;
+        let networkFailed = false;
+        try {
+          const res = await postAction(item.action, item.payload);
+          ok = res.ok;
+          board = res.data && res.data.board;
+          if (!ok) showToast((res.data && res.data.error) || 'İşlem gerçekleştirilemedi', true);
+        } catch (err) {
+          networkFailed = true;
+        }
+
+        if (networkFailed) {
+          const n = failPendingActions();
+          showToast(n > 1 ? `Bağlantı hatası! ${n} işlem gönderilemedi.` : 'Bağlantı hatası! İşlem gönderilemedi.', true);
+          haptic([60, 40, 60]);
+        } else {
+          actionQueue.shift();
+          if (!ok) haptic([60, 40, 60]);
+        }
+
+        try {
+          if (!networkFailed && board && board.teamA && board.teamB) {
+            displayBase = { teamA: board.teamA.points, teamB: board.teamB.points };
+            renderBoard(board);
+          } else if (currentBoard) {
+            renderBoard(currentBoard);
+          }
+          if (ok && item.team) flashConfirmed(item.team);
+        } catch (err) {
+          console.error('Operate render error', err);
+        }
+        updatePendingUi();
+        if (!networkFailed) item.resolve(ok);
+      }
+    } finally {
+      queueBusy = false;
+      displayBase = null;
       try {
-        const res = await postAction(item.action, item.payload);
-        ok = res.ok;
-        board = res.data && res.data.board;
-        if (!ok) showToast((res.data && res.data.error) || 'İşlem gerçekleştirilemedi', true);
+        if (currentBoard) renderBoard(currentBoard);
       } catch (err) {
-        showToast(err && err.name === 'AbortError' ? 'Sunucu yanıt vermedi, işlem doğrulanamadı!' : 'Bağlantı hatası!', true);
+        console.error('Operate render error', err);
       }
-      actionQueue.shift();
-      if (!ok && navigator.vibrate) navigator.vibrate([60, 40, 60]);
-      if (board && board.teamA && board.teamB) {
-        displayBase = { teamA: board.teamA.points, teamB: board.teamB.points };
-        renderBoard(board);
-      } else if (currentBoard) {
-        renderBoard(currentBoard);
-      }
-      if (ok && item.team) flashConfirmed(item.team);
       updatePendingUi();
-      item.resolve(ok);
+      if (actionQueue.length > 0) processQueue();
     }
-    queueBusy = false;
-    displayBase = null;
-    if (currentBoard) renderBoard(currentBoard);
-    updatePendingUi();
   }
+
+  // Emniyet: kuyruk boşken turuncu uyarı veya bekliyor işareti asla kalmasın
+  function refreshPendingUi() {
+    if (actionQueue.length === 0) updatePendingUi();
+  }
+  setInterval(refreshPendingUi, 1500);
+  window.addEventListener('online', refreshPendingUi);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshPendingUi();
+  });
 
   // Action Dispatcher for Operator
   function sendAction(action, payload = {}) {
@@ -256,7 +348,39 @@
     });
   }
 
-  // Basılınca anında görsel + titreşim geri bildirimi (ağdan bağımsız)
+  // ---- Titreşim (haptic) ----
+  // Android: navigator.vibrate. iOS Safari'de vibrate yok; iOS 17.4+ için gizli "switch" kutusu hilesi.
+  const hasVibrate = typeof navigator.vibrate === 'function';
+  let iosHapticLabel = null;
+
+  function haptic(pattern) {
+    if (hasVibrate) {
+      navigator.vibrate(pattern);
+      return;
+    }
+    // Sadece kullanıcı dokunuşu (click) içinde çalışır
+    try {
+      if (!iosHapticLabel) {
+        iosHapticLabel = document.createElement('label');
+        iosHapticLabel.setAttribute('aria-hidden', 'true');
+        iosHapticLabel.style.cssText = 'position:fixed;left:-100px;top:-100px;opacity:0;pointer-events:none;';
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.setAttribute('switch', '');
+        iosHapticLabel.appendChild(box);
+        document.body.appendChild(iosHapticLabel);
+      }
+      iosHapticLabel.click();
+    } catch (e) {}
+  }
+
+  // Sayı verildiğinde belirgin, diğer butonlarda hafif titreşim
+  function hapticFor(target) {
+    if (target.classList.contains('point-tap-area')) haptic(45);
+    else haptic(15);
+  }
+
+  // Basılınca anında görsel geri bildirim (ağdan bağımsız)
   document.addEventListener('pointerdown', (e) => {
     const target = e.target.closest && e.target.closest('button, .point-tap-area');
     if (!target || target.disabled) return;
@@ -264,8 +388,14 @@
     void target.offsetWidth;
     target.classList.add('is-pressed');
     setTimeout(() => target.classList.remove('is-pressed'), 260);
-    if (navigator.vibrate) navigator.vibrate(target.classList.contains('point-tap-area') ? 25 : 12);
+    if (hasVibrate) hapticFor(target);
   }, { passive: true });
+
+  document.addEventListener('click', (e) => {
+    if (hasVibrate) return;
+    const target = e.target.closest && e.target.closest('button, .point-tap-area');
+    if (target && !target.disabled) hapticFor(target);
+  }, true);
 
   // Server time synchronization (immune to client device clock skew)
   let serverTimeOffset = 0; // serverTime - Date.now()
@@ -328,6 +458,8 @@
     if (elTimeoutBanner) elTimeoutBanner.classList.remove('active');
     if (elLeftBadge) elLeftBadge.style.display = 'none';
     if (elRightBadge) elRightBadge.style.display = 'none';
+    if (leftCard) leftCard.classList.remove('timeout-active');
+    if (rightCard) rightCard.classList.remove('timeout-active');
     if (timeoutInterval) {
       clearInterval(timeoutInterval);
       timeoutInterval = null;
@@ -346,6 +478,8 @@
         const teamKey = currentBoard.timeoutState.team;
         const isSwapped = Boolean(currentBoard.courtSwapped);
         const isLeftTimeout = (teamKey === 'teamA' && !isSwapped) || (teamKey === 'teamB' && isSwapped);
+        if (leftCard) leftCard.classList.toggle('timeout-active', isLeftTimeout);
+        if (rightCard) rightCard.classList.toggle('timeout-active', !isLeftTimeout);
         if (elLeftBadge) {
           elLeftBadge.style.display = isLeftTimeout ? 'inline-block' : 'none';
           if (isLeftTimeout) elLeftBadge.textContent = `${remaining}s`;
@@ -555,6 +689,12 @@
     });
   }
 
+  [elLeftBadge, elRightBadge].forEach((badge) => {
+    if (!badge) return;
+    badge.title = 'Molayı bitir';
+    badge.addEventListener('click', () => sendAction('end_timeout'));
+  });
+
   const btnUndo = document.getElementById('btn-undo');
   if (btnUndo) {
     btnUndo.addEventListener('click', () => {
@@ -690,12 +830,17 @@
   async function initOperator() {
     boardId = extractBoardId();
     if (!boardId) {
-      if (elMatchTitle) elMatchTitle.textContent = 'Skorboard Kodu Bulunamadı';
-      if (elMatchSub) elMatchSub.textContent = 'URL adresinde geçerli bir skorboard kodu bulunamadı (Örn: /operate/abcd)';
+      if (elMatchTitle) elMatchTitle.textContent = 'Maç kodu girilmedi';
+      if (elMatchSub) elMatchSub.textContent = 'Skorunu gireceğin maçın kodunu yaz.';
       if (elConnDot) elConnDot.className = 'conn-dot disconnected';
       if (elConnText) elConnText.textContent = 'Bağlantı Yok';
+      changeBoardCode();
       return;
     }
+    const enteredCode = boardId;
+    window.__operateCode = enteredCode;
+    const codeLabel = document.getElementById('code-label');
+    if (codeLabel) codeLabel.textContent = enteredCode.length > 10 ? enteredCode.slice(0, 10) + '…' : enteredCode;
 
     if (elConnText) elConnText.textContent = 'Bağlanıyor...';
 
@@ -718,10 +863,12 @@
         if (elMatchSub) elMatchSub.textContent = (board && board.error) ? board.error : 'Skorboard bulunamadı.';
         if (elConnDot) elConnDot.className = 'conn-dot disconnected';
         if (elConnText) elConnText.textContent = 'Bulunamadı';
+        if (enteredCode === readSavedCode()) { try { localStorage.removeItem(CODE_STORAGE_KEY); } catch (e) {} }
         return;
       }
 
       boardId = board.id || boardId;
+      saveCode(enteredCode);
       renderBoard(board);
       connectSSE();
     } catch (e) {
