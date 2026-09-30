@@ -413,17 +413,25 @@
     showToast('Saha yönü değiştirildi');
   });
 
-  document.getElementById('btn-end-set').addEventListener('click', () => {
+  document.getElementById('btn-end-set').addEventListener('click', async () => {
     if (!currentBoard) return;
-    const pA = currentBoard.teamA.points;
-    const pB = currentBoard.teamB.points;
-    const winnerName = pA > pB ? currentBoard.teamA.name : currentBoard.teamB.name;
-    if (confirm(`Mevcut seti bitirmek istiyor musunuz?\nKazanan: ${winnerName} (${pA} - ${pB})`)) {
+    const setNo = currentBoard.currentSet;
+    if (await window.confirmEndSet(currentBoard)) {
       playWhistle();
       sendAction('end_set');
-      showToast(`${currentBoard.currentSet}. Set tamamlandı!`);
+      showToast(`${setNo}. Set tamamlandı!`);
     }
   });
+
+  function confirmResetMatch() {
+    return window.appConfirm({
+      icon: '🗑️',
+      tone: 'danger',
+      title: 'Maçı sıfırla',
+      bodyHtml: 'Tüm setler, skorlar ve sayı geçmişi silinecek. Bu işlem geri alınamaz.',
+      confirmText: 'Evet, sıfırla'
+    });
+  }
 
   // Settings Modal & OBS Links Modal
   const modalSettings = document.getElementById('modal-settings');
@@ -778,8 +786,8 @@
     showToast('Ayarlar kaydedildi!');
   });
 
-  document.getElementById('btn-reset-match').addEventListener('click', () => {
-    if (confirm('DİKKAT: Tüm maç sıfırlanacak (Setler ve skorlar silinecek). Emin misiniz?')) {
+  document.getElementById('btn-reset-match').addEventListener('click', async () => {
+    if (await confirmResetMatch()) {
       sendAction('reset_match');
       modalSettings.classList.remove('active');
       showToast('Maç sıfırlandı!');
@@ -910,7 +918,7 @@
     // R: New Set
     else if (k === 'r' && !e.ctrlKey && !e.metaKey) {
       if (e.shiftKey) {
-        if (confirm('Maçı sıfırlamak istiyor musunuz?')) sendAction('reset_match');
+        confirmResetMatch().then((ok) => { if (ok) sendAction('reset_match'); });
       } else {
         sendAction('end_set');
       }
