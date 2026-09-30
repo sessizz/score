@@ -103,27 +103,169 @@
     }, 2200);
   }
 
-  // Action Dispatcher for Operator
-  async function sendAction(action, payload = {}) {
-    if (!boardId) return false;
+  // ---- Action kuyruğu + iyimser (optimistic) sayı güncellemesi ----
+  // Basışlar sırayla sunucuya gider. Sayı ekranda anında değişir, sunucu onaylayınca kesinleşir.
+  const actionQueue = [];      // { action, payload, team, delta, resolve }
+  let queueBusy = false;
+  let displayBase = null;      // kuyruk başladığında sunucudaki sayılar { teamA, teamB }
+  let slowBarTimer = null;
+  const REQUEST_TIMEOUT_MS = 10000;
+  // Sayıyı öngörülemez şekilde değiştiren eylemler: sonrasındaki iyimser artışlar uygulanmaz
+  const POINT_RESET_ACTIONS = ['end_set', 'undo', 'reset_current_set', 'reset_match', 'set_points'];
+
+  function pointDelta(action, payload) {
+    const amount = Number(payload && payload.amount) || 1;
+    switch (action) {
+      case 'point_a': return { team: 'teamA', delta: amount };
+      case 'point_b': return { team: 'teamB', delta: amount };
+      case 'sub_point_a': return { team: 'teamA', delta: -amount };
+      case 'sub_point_b': return { team: 'teamB', delta: -amount };
+      default: return null;
+    }
+  }
+
+  function hasPending(teamKey) {
+    return actionQueue.some((it) => it.team === teamKey);
+  }
+
+  function areaFor(teamKey) {
+    const isSwapped = Boolean(currentBoard && currentBoard.courtSwapped);
+    const isLeft = (teamKey === 'teamA') !== isSwapped;
+    return isLeft ? leftPointArea : rightPointArea;
+  }
+
+  // Ekranda gösterilecek sayı: kuyruk boşsa sunucu değeri, değilse taban + bekleyen basışlar
+  function displayPoints(teamKey, serverPoints) {
+    if (actionQueue.length === 0 || !displayBase) return serverPoints || 0;
+    let v = displayBase[teamKey];
+    for (const it of actionQueue) {
+      if (POINT_RESET_ACTIONS.includes(it.action)) break;
+      if (it.team === teamKey) v = Math.max(0, v + it.delta);
+    }
+    return v;
+  }
+
+  function showNetBar() {
+    let bar = document.getElementById('net-pending-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'net-pending-bar';
+      bar.className = 'net-pending-bar';
+      document.body.appendChild(bar);
+    }
+    bar.textContent = `⏳ Bağlantı yavaş: ${actionQueue.length} işlem gönderiliyor...`;
+    bar.classList.add('visible');
+  }
+
+  function hideNetBar() {
+    const bar = document.getElementById('net-pending-bar');
+    if (bar) bar.classList.remove('visible');
+  }
+
+  function updatePendingUi() {
+    ['teamA', 'teamB'].forEach((key) => {
+      const area = areaFor(key);
+      if (area) area.classList.toggle('is-pending', hasPending(key));
+    });
+    const bar = document.getElementById('net-pending-bar');
+    if (actionQueue.length === 0) {
+      clearTimeout(slowBarTimer);
+      slowBarTimer = null;
+      hideNetBar();
+    } else if (bar && bar.classList.contains('visible')) {
+      showNetBar();
+    } else if (!slowBarTimer) {
+      slowBarTimer = setTimeout(() => {
+        slowBarTimer = null;
+        if (actionQueue.length > 0) showNetBar();
+      }, 1000);
+    }
+  }
+
+  function flashConfirmed(teamKey) {
+    const area = areaFor(teamKey);
+    if (!area) return;
+    area.classList.remove('is-confirmed');
+    void area.offsetWidth;
+    area.classList.add('is-confirmed');
+    setTimeout(() => area.classList.remove('is-confirmed'), 500);
+  }
+
+  async function postAction(action, payload) {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS) : null;
     try {
       const response = await fetch(`/api/board/${encodeURIComponent(boardId)}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, payload })
+        body: JSON.stringify({ action, payload }),
+        signal: ctrl ? ctrl.signal : undefined
       });
       const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        showToast(data.error || 'İşlem gerçekleştirilemedi', true);
-        return false;
-      }
-      return true;
-    } catch (err) {
-      showToast('Bağlantı hatası!', true);
-      return false;
+      return { ok: response.ok && data.success, data };
+    } finally {
+      if (timer) clearTimeout(timer);
     }
   }
+
+  async function processQueue() {
+    if (queueBusy) return;
+    queueBusy = true;
+    while (actionQueue.length > 0) {
+      const item = actionQueue[0];
+      let ok = false;
+      let board = null;
+      try {
+        const res = await postAction(item.action, item.payload);
+        ok = res.ok;
+        board = res.data && res.data.board;
+        if (!ok) showToast((res.data && res.data.error) || 'İşlem gerçekleştirilemedi', true);
+      } catch (err) {
+        showToast(err && err.name === 'AbortError' ? 'Sunucu yanıt vermedi, işlem doğrulanamadı!' : 'Bağlantı hatası!', true);
+      }
+      actionQueue.shift();
+      if (!ok && navigator.vibrate) navigator.vibrate([60, 40, 60]);
+      if (board && board.teamA && board.teamB) {
+        displayBase = { teamA: board.teamA.points, teamB: board.teamB.points };
+        renderBoard(board);
+      } else if (currentBoard) {
+        renderBoard(currentBoard);
+      }
+      if (ok && item.team) flashConfirmed(item.team);
+      updatePendingUi();
+      item.resolve(ok);
+    }
+    queueBusy = false;
+    displayBase = null;
+    if (currentBoard) renderBoard(currentBoard);
+    updatePendingUi();
+  }
+
+  // Action Dispatcher for Operator
+  function sendAction(action, payload = {}) {
+    if (!boardId) return Promise.resolve(false);
+    return new Promise((resolve) => {
+      const pd = pointDelta(action, payload);
+      if (actionQueue.length === 0 && currentBoard) {
+        displayBase = { teamA: currentBoard.teamA.points, teamB: currentBoard.teamB.points };
+      }
+      actionQueue.push({ action, payload, team: pd ? pd.team : null, delta: pd ? pd.delta : 0, resolve });
+      if (currentBoard) renderBoard(currentBoard);
+      updatePendingUi();
+      processQueue();
+    });
+  }
+
+  // Basılınca anında görsel + titreşim geri bildirimi (ağdan bağımsız)
+  document.addEventListener('pointerdown', (e) => {
+    const target = e.target.closest && e.target.closest('button, .point-tap-area');
+    if (!target || target.disabled) return;
+    target.classList.remove('is-pressed');
+    void target.offsetWidth;
+    target.classList.add('is-pressed');
+    setTimeout(() => target.classList.remove('is-pressed'), 260);
+    if (navigator.vibrate) navigator.vibrate(target.classList.contains('point-tap-area') ? 25 : 12);
+  }, { passive: true });
 
   // Server time synchronization (immune to client device clock skew)
   let serverTimeOffset = 0; // serverTime - Date.now()
@@ -232,6 +374,8 @@
   function renderBoard(board) {
     if (!board) return;
     if (board.serverTime) syncServerTime(board.serverTime);
+    // Eski (geç gelen) durum yeniyi ezmesin
+    if (board !== currentBoard && currentBoard && board.updatedAt && currentBoard.updatedAt && board.updatedAt < currentBoard.updatedAt) return;
     currentBoard = board;
 
     if (elMatchTitle) elMatchTitle.textContent = board.title || 'Voleybol Müsabakası';
@@ -262,7 +406,7 @@
     if (leftName) leftName.textContent = leftData.name || 'EV SAHİBİ';
     if (leftShort) leftShort.textContent = leftData.shortName || '';
     if (leftSets) leftSets.textContent = `${leftData.setsWon || 0} Set`;
-    if (leftPointVal) leftPointVal.textContent = leftData.points || 0;
+    if (leftPointVal) leftPointVal.textContent = displayPoints(isSwapped ? 'teamB' : 'teamA', leftData.points);
 
     if (leftLogo) {
       if (leftData.logo) {
@@ -288,7 +432,7 @@
     if (rightName) rightName.textContent = rightData.name || 'DEPLASMAN';
     if (rightShort) rightShort.textContent = rightData.shortName || '';
     if (rightSets) rightSets.textContent = `${rightData.setsWon || 0} Set`;
-    if (rightPointVal) rightPointVal.textContent = rightData.points || 0;
+    if (rightPointVal) rightPointVal.textContent = displayPoints(isSwapped ? 'teamA' : 'teamB', rightData.points);
 
     if (rightLogo) {
       if (rightData.logo) {
