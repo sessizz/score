@@ -577,6 +577,13 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
       const setsToWin = board.rules.setsToWin || Math.ceil(board.rules.maxSets / 2);
       if (board.teamA.setsWon >= setsToWin || board.teamB.setsWon >= setsToWin) {
         board.status = 'finished';
+        // Maç bitti: sayacı durdur (süre son değerde kalır)
+        const clock = ensureSetClock(board);
+        if (clock.running) {
+          clock.elapsedMs = getClockElapsed(clock);
+          clock.running = false;
+          clock.startedAt = null;
+        }
       } else {
         board.status = 'set_break';
         board.currentSet += 1;
