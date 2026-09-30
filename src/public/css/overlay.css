@@ -352,3 +352,83 @@ html, body {
   line-height: 1.1;
 }
 
+/* Sayı Geçmişi Şeridi */
+.dc-hist-grid {
+  grid-template-columns: 2.3em minmax(0, 1fr) 2.3em;
+}
+
+.dc-hist {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: .14em;
+  min-width: 0;
+}
+
+.dc-hist-row {
+  display: flex;
+  align-items: stretch;
+  gap: .14em;
+  height: 1.55em;
+}
+
+.dc-hist-name.dc-team-name-box {
+  width: 7.6em;
+  flex: none;
+  height: auto;
+}
+
+.dc-hist-name .dc-team-name-logo {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+.dc-hist-name .dc-team-name-text {
+  font-size: .9em;
+}
+
+.dc-hist-track {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: .1em;
+  padding: .1em;
+  background: linear-gradient(180deg, #1c2a4a 0%, #121c33 100%);
+}
+
+.dc-hist-cell {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: .08em;
+  background: rgba(255, 255, 255, .028);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: var(--fs, .72em);
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.dc-hist-cell.on {
+  box-shadow: inset 0 .04em 0 rgba(255, 255, 255, .3), 0 .03em .08em rgba(0, 0, 0, .5);
+  text-shadow: 0 .04em .06em rgba(0, 0, 0, .4);
+}
+
+.dc-hist-cell.last {
+  outline: .06em solid #fff;
+  box-shadow: 0 0 .35em currentColor;
+}
+
+.dc-hist-end.dc-points-box {
+  flex: none;
+  width: 1.75em;
+  min-width: 0;
+  padding: 0;
+}
+
+.dc-hist-end .dc-points-num {
+  font-size: 1.2em;
+}
