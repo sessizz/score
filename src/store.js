@@ -385,7 +385,32 @@ function checkSetStatus(board) {
   };
 }
 
-const NO_UNDO_ACTIONS = ['undo', 'clock_start', 'clock_pause', 'clock_reset'];
+const NO_UNDO_ACTIONS = ['undo', 'clock_start', 'clock_pause', 'clock_reset', 'show_history'];
+
+const HISTORY_SHOW_MS = 5000;
+const POINT_ACTIONS = ['point_a', 'point_b', 'sub_point_a', 'sub_point_b', 'set_points'];
+
+// Sayı geçmişi: mevcut setin log'unu takım puanlarıyla eşitler (fazlayı sondan siler, eksiği sona ekler)
+function reconcilePointLog(board) {
+  if (!Array.isArray(board.pointLog)) board.pointLog = [];
+  const log = board.pointLog;
+  const set = board.currentSet;
+  ['teamA', 'teamB'].forEach((team) => {
+    const target = Math.max(0, board[team].points || 0);
+    let count = 0;
+    for (const e of log) if (e.set === set && e.team === team) count++;
+    while (count > target) {
+      for (let i = log.length - 1; i >= 0; i--) {
+        if (log[i].set === set && log[i].team === team) { log.splice(i, 1); break; }
+      }
+      count--;
+    }
+    while (count < target) {
+      log.push({ set, team, t: Date.now() });
+      count++;
+    }
+  });
+}
 
 const OPERATOR_ALLOWED_ACTIONS = [
   'point_a',
@@ -404,6 +429,7 @@ const OPERATOR_ALLOWED_ACTIONS = [
   'swap_sides',
   'end_set',
   'new_set',
+  'show_history',
   'undo'
 ];
 
@@ -423,6 +449,10 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
       return { success: false, error: 'Bu işlem için yönetici yetkisi gereklidir.' };
     }
   }
+
+  if (!Array.isArray(board.pointLog)) board.pointLog = [];
+  // Eski (log'suz) süren set için skor değişmeden önce log'u mevcut skora hizala
+  if (POINT_ACTIONS.includes(action)) reconcilePointLog(board);
 
   // Save to undo stack
   if (!NO_UNDO_ACTIONS.includes(action)) {
@@ -457,6 +487,10 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
     case 'set_points': {
       if (typeof payload.pointsA === 'number') board.teamA.points = Math.max(0, payload.pointsA);
       if (typeof payload.pointsB === 'number') board.teamB.points = Math.max(0, payload.pointsB);
+      break;
+    }
+    case 'show_history': {
+      board.historyUntil = Date.now() + (Number(payload.duration) > 0 ? Math.min(Number(payload.duration), 30000) : HISTORY_SHOW_MS);
       break;
     }
     case 'set_serve': {
@@ -562,6 +596,7 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
       break;
     }
     case 'reset_current_set': {
+      board.pointLog = board.pointLog.filter((e) => e.set !== board.currentSet);
       board.teamA.points = 0;
       board.teamB.points = 0;
       board.teamA.timeouts = 0;
@@ -573,6 +608,8 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
       break;
     }
     case 'reset_match': {
+      board.pointLog = [];
+      board.historyUntil = 0;
       board.currentSet = 1;
       board.setHistory = [];
       board.teamA.setsWon = 0;
@@ -619,6 +656,7 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
       if (stack && stack.length > 0) {
         const previousState = stack.pop();
         previousState.setClock = board.setClock;
+        previousState.historyUntil = board.historyUntil;
         boards.set(boardId, previousState);
         modified = true;
       } else {
@@ -630,6 +668,8 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
       return { success: false, error: `Bilinmeyen eylem: ${action}` };
     }
   }
+
+  if (POINT_ACTIONS.includes(action)) reconcilePointLog(boards.get(boardId));
 
   if (modified) {
     saveBoard(boards.get(boardId));

@@ -127,6 +127,11 @@
             </div>
 
           </div>
+
+          <!-- Sayı Geçmişi Şeridi (5 sn boyunca scoreboard yerine gösterilir) -->
+          <div class="dc-grid dc-hist-grid" id="dc-hist-grid" style="display: none;">
+            <div class="dc-hist" id="dc-hist"></div>
+          </div>
         </div>
       </div>
     `;
@@ -157,12 +162,89 @@
       toRight: document.getElementById('dc-to-inline-right'),
       dotsBoxRight: document.getElementById('dc-dots-right'),
 
-      ballAnchor: document.getElementById('dc-ball-anchor')
+      ballAnchor: document.getElementById('dc-ball-anchor'),
+      gridMain: document.getElementById('dc-grid-main'),
+      histGrid: document.getElementById('dc-hist-grid'),
+      hist: document.getElementById('dc-hist')
     };
+  }
+
+  // ---- Sayı Geçmişi ----
+  const HIST_MAX_COLS = 30;
+  const HIST_MIN_COLS = 26;
+  let histSig = '';
+
+  function isHistoryActive() {
+    return Boolean(latestBoard && latestBoard.historyUntil && getServerNow() < latestBoard.historyUntil);
+  }
+
+  function readableTextColor(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+    if (!m) return '#ffffff';
+    const n = parseInt(m[1], 16);
+    const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+    return lum > 0.6 ? '#0b1a3a' : '#ffffff';
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function historyRowHtml(team, key, entries, start, cols, pts) {
+    let n = 0;
+    for (let i = 0; i < start; i++) if (entries[i] === key) n++;
+    const fs = (0.72 * Math.min(1, HIST_MIN_COLS / cols)).toFixed(3);
+    let cells = '';
+    for (let k = 0; k < cols; k++) {
+      const i = start + k;
+      if (i < entries.length && entries[i] === key) {
+        n++;
+        const color = team.color || team.accentColor || '#ffed00';
+        cells += `<div class="dc-hist-cell on${i === entries.length - 1 ? ' last' : ''}" style="background:${escHtml(color)};color:${readableTextColor(color)}">${n}</div>`;
+      } else {
+        cells += '<div class="dc-hist-cell"></div>';
+      }
+    }
+    const logo = team.logo ? `<img class="dc-team-name-logo" src="${escHtml(team.logo)}" alt="" />` : '';
+    return `<div class="dc-hist-row">
+      <div class="dc-hist-name dc-team-name-box">${logo}<span class="dc-team-name-text">${escHtml(team.name || '')}</span></div>
+      <div class="dc-hist-track" style="--fs:${fs}em">${cells}</div>
+      <div class="dc-hist-end dc-points-box"><span class="dc-points-num">${Number(team.points) || 0}</span></div>
+    </div>`;
+  }
+
+  function renderHistory(board) {
+    if (!el || !el.hist) return;
+    const isSwapped = Boolean(board.courtSwapped);
+    const leftKey = isSwapped ? 'teamB' : 'teamA';
+    const rightKey = isSwapped ? 'teamA' : 'teamB';
+    const entries = (board.pointLog || []).filter((e) => e.set === board.currentSet).map((e) => e.team);
+
+    const sig = JSON.stringify([entries.join(''), leftKey, board.teamA, board.teamB]);
+    if (sig === histSig) return;
+    histSig = sig;
+
+    const start = Math.max(0, entries.length - HIST_MAX_COLS);
+    const cols = Math.max(entries.length - start, HIST_MIN_COLS);
+    el.hist.innerHTML =
+      historyRowHtml(board[leftKey], leftKey, entries, start, cols, board[leftKey].points) +
+      historyRowHtml(board[rightKey], rightKey, entries, start, cols, board[rightKey].points);
+  }
+
+  function applyHistoryVisibility() {
+    if (!el || !el.gridMain || !el.histGrid) return;
+    const active = isHistoryActive();
+    el.gridMain.style.display = active ? 'none' : '';
+    el.histGrid.style.display = active ? '' : 'none';
+    if (latestBoard && el.capsuleSet) {
+      const label = `${latestBoard.currentSet || 1}. SET${active ? ' • SAYI GEÇMİŞİ' : ''}`;
+      if (el.capsuleSet.textContent !== label) el.capsuleSet.textContent = label;
+    }
   }
 
   function updateClockDisplay() {
     if (!latestBoard || !el) return;
+    applyHistoryVisibility();
 
     // Set match timer
     const clock = latestBoard.setClock || { running: false, startedAt: null, elapsedMs: 0 };
@@ -222,7 +304,7 @@
 
     // 1. Current Set
     if (el.capsuleSet) {
-      el.capsuleSet.textContent = `${board.currentSet || 1}. SET`;
+      el.capsuleSet.textContent = `${board.currentSet || 1}. SET${isHistoryActive() ? ' • SAYI GEÇMİŞİ' : ''}`;
     }
 
     // 2. Left Team (Name, Logo, Stripes, Timeouts)
@@ -307,7 +389,10 @@
       }
     }
 
-    // 6. Update Clocks & Timeouts
+    // 6. Sayı geçmişi
+    renderHistory(board);
+
+    // 7. Update Clocks & Timeouts
     updateClockDisplay();
   }
 

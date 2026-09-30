@@ -786,6 +786,54 @@
     }
   });
 
+  // Point History Modal
+  const modalHistory = document.getElementById('modal-history');
+  const elHistoryLog = document.getElementById('history-log');
+
+  function renderHistoryLog() {
+    if (!currentBoard) return;
+    const log = currentBoard.pointLog || [];
+    const bySet = new Map();
+    log.forEach((e) => {
+      if (!bySet.has(e.set)) bySet.set(e.set, []);
+      bySet.get(e.set).push(e);
+    });
+    if (bySet.size === 0) {
+      elHistoryLog.innerHTML = '<div style="opacity:.7;">Henüz kayıtlı sayı yok.</div>';
+      return;
+    }
+    let html = '';
+    [...bySet.keys()].sort((a, b) => b - a).forEach((setNo) => {
+      let a = 0;
+      let b = 0;
+      const rows = bySet.get(setNo).map((e, i) => {
+        if (e.team === 'teamA') a++; else b++;
+        const team = currentBoard[e.team];
+        const time = e.t ? new Date(e.t).toLocaleTimeString('tr-TR') : '';
+        return `<div style="display:flex;gap:10px;padding:3px 0;border-bottom:1px solid var(--border-color);">
+          <span style="width:2em;opacity:.6;">${i + 1}</span>
+          <span style="flex:1;font-weight:700;color:${escapeHtml(team.color || '#fff')};">${escapeHtml(team.name)}</span>
+          <span style="width:4.5em;text-align:right;">${a} - ${b}</span>
+          <span style="width:6em;text-align:right;opacity:.6;">${time}</span>
+        </div>`;
+      });
+      html += `<h4 style="margin:12px 0 4px;font-weight:800;">${setNo}. Set (${a} - ${b})</h4>${rows.reverse().join('')}`;
+    });
+    elHistoryLog.innerHTML = html;
+  }
+
+  document.getElementById('btn-history').addEventListener('click', () => {
+    renderHistoryLog();
+    modalHistory.classList.add('active');
+  });
+  document.getElementById('btn-close-history').addEventListener('click', () => {
+    modalHistory.classList.remove('active');
+  });
+  document.getElementById('btn-show-history-overlay').addEventListener('click', () => {
+    sendAction('show_history');
+    showToast('Sayı geçmişi overlay üzerinde gösteriliyor');
+  });
+
   // OBS Modal Links
   document.getElementById('btn-open-obs').addEventListener('click', () => {
     const origin = window.location.origin;

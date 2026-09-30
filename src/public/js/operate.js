@@ -452,6 +452,14 @@
     });
   }
 
+  const btnShowHistory = document.getElementById('btn-show-history');
+  if (btnShowHistory) {
+    btnShowHistory.addEventListener('click', () => {
+      sendAction('show_history');
+      showToast('Sayı geçmişi gösteriliyor (5 sn)');
+    });
+  }
+
   // Keyboard Shortcuts
   window.addEventListener('keydown', (e) => {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
