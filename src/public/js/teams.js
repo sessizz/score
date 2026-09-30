@@ -526,9 +526,14 @@
     const team = allTeams.find(t => t.id === id);
     const teamName = team ? team.name : 'Bu takım';
 
-    if (!confirm(`"${teamName}" takımını silmek istediğinizden emin misiniz?`)) {
-      return;
-    }
+    const ok = await window.appConfirm({
+      icon: '🗑️',
+      tone: 'danger',
+      title: 'Takımı sil',
+      bodyHtml: `<b>${window.cdEscape(teamName)}</b> takımı silinecek. Bu işlem geri alınamaz.`,
+      confirmText: 'Sil'
+    });
+    if (!ok) return;
 
     try {
       const res = await fetch(`/api/teams/${id}`, { method: 'DELETE' });

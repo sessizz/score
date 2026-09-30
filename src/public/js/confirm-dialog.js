@@ -157,6 +157,7 @@
     });
   }
 
+  window.cdEscape = esc;
   window.appConfirm = appConfirm;
   window.appPrompt = appPrompt;
   window.confirmEndSet = confirmEndSet;
