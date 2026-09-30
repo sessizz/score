@@ -5,6 +5,7 @@ const store = require('./store');
 const logos = require('./logos');
 const teams = require('./teams');
 const auth = require('./auth');
+const backup = require('./backup');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -182,6 +183,31 @@ const server = http.createServer(async (req, res) => {
       authenticated: true,
       user: { id: user.id, email: user.email, isVerified: user.is_verified }
     });
+  }
+
+  // --- Yedek (giriş gerekli): /api/backup/info özet, /api/backup zip indirir ---
+  if (pathname === '/api/backup/info' && method === 'GET') {
+    const user = auth.getUserFromRequest(req);
+    if (!user) return sendJson(res, 401, { success: false, error: 'Giriş yapmalısınız.' });
+    return sendJson(res, 200, { success: true, ...backup.summary(user) });
+  }
+
+  if (pathname === '/api/backup' && method === 'GET') {
+    const user = auth.getUserFromRequest(req);
+    if (!user) return sendJson(res, 401, { success: false, error: 'Giriş yapmalısınız.' });
+    try {
+      const result = backup.createBackup(user);
+      res.writeHead(200, {
+        'Content-Type': 'application/zip',
+        'Content-Disposition': `attachment; filename="${result.filename}"`,
+        'Content-Length': result.buffer.length,
+        'Cache-Control': 'no-store'
+      });
+      return res.end(result.buffer);
+    } catch (err) {
+      console.error('Yedek hatası:', err);
+      return sendJson(res, 500, { success: false, error: 'Yedek hazırlanamadı.' });
+    }
   }
 
   // --- Logo & Team Static Assets ---
