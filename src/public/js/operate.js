@@ -726,14 +726,6 @@
     });
   }
 
-  const btnNewSet = document.getElementById('btn-new-set');
-  if (btnNewSet) {
-    btnNewSet.addEventListener('click', () => {
-      sendAction('new_set');
-      showToast('Yeni set başlatıldı');
-    });
-  }
-
   const btnShowHistory = document.getElementById('btn-show-history');
   if (btnShowHistory) {
     btnShowHistory.addEventListener('click', () => {

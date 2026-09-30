@@ -150,7 +150,7 @@ body.operate-page {
   /* --- Alt eylem çubuğu: tek satır, 5 buton --- */
   .operate-page .bottom-controls {
     flex: none;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 5px;
     margin: 0;
   }
