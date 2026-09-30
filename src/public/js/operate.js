@@ -405,6 +405,8 @@
     if (elTimeoutBanner) elTimeoutBanner.classList.remove('active');
     if (elLeftBadge) elLeftBadge.style.display = 'none';
     if (elRightBadge) elRightBadge.style.display = 'none';
+    if (leftCard) leftCard.classList.remove('timeout-active');
+    if (rightCard) rightCard.classList.remove('timeout-active');
     if (timeoutInterval) {
       clearInterval(timeoutInterval);
       timeoutInterval = null;
@@ -423,6 +425,8 @@
         const teamKey = currentBoard.timeoutState.team;
         const isSwapped = Boolean(currentBoard.courtSwapped);
         const isLeftTimeout = (teamKey === 'teamA' && !isSwapped) || (teamKey === 'teamB' && isSwapped);
+        if (leftCard) leftCard.classList.toggle('timeout-active', isLeftTimeout);
+        if (rightCard) rightCard.classList.toggle('timeout-active', !isLeftTimeout);
         if (elLeftBadge) {
           elLeftBadge.style.display = isLeftTimeout ? 'inline-block' : 'none';
           if (isLeftTimeout) elLeftBadge.textContent = `${remaining}s`;
@@ -631,6 +635,12 @@
       sendAction('end_timeout');
     });
   }
+
+  [elLeftBadge, elRightBadge].forEach((badge) => {
+    if (!badge) return;
+    badge.title = 'Molayı bitir';
+    badge.addEventListener('click', () => sendAction('end_timeout'));
+  });
 
   const btnUndo = document.getElementById('btn-undo');
   if (btnUndo) {
