@@ -18,8 +18,61 @@
       return decodeURIComponent(pathParts[1]).trim();
     }
     const params = new URLSearchParams(window.location.search);
-    return params.get('id') || params.get('board') || params.get('token') || (pathParts.length === 1 && pathParts[0] !== 'operate' ? pathParts[0] : 'fenerbahce');
+    const fromUrl = params.get('id') || params.get('board') || params.get('token') ||
+      (pathParts.length === 1 && pathParts[0] !== 'operate' && pathParts[0] !== 'operate.html' ? pathParts[0] : '');
+    if (fromUrl) return fromUrl;
+    // Ana ekrandan açılınca adres çubuğu yok: son kullanılan maç kodunu hatırla
+    const saved = readSavedCode();
+    if (saved) {
+      try { history.replaceState(null, '', `/operate/${encodeURIComponent(saved)}`); } catch (e) {}
+      return saved;
+    }
+    return '';
   }
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  const CODE_STORAGE_KEY = 'operate:lastCode';
+
+  function readSavedCode() {
+    try { return (localStorage.getItem(CODE_STORAGE_KEY) || '').trim(); } catch (e) { return ''; }
+  }
+
+  function saveCode(code) {
+    try { localStorage.setItem(CODE_STORAGE_KEY, code); } catch (e) {}
+  }
+
+  // Kodla maç var mı? Varsa { code } döner, yoksa hata metni
+  async function checkBoardCode(code) {
+    const enc = encodeURIComponent(code);
+    let res = await fetch(`/api/board/${enc}`);
+    if (!res.ok) res = await fetch(`/api/board/by-operator/${enc}`);
+    return res.ok;
+  }
+
+  async function changeBoardCode() {
+    const current = (window.__operateCode || '').trim();
+    const title = currentBoard && currentBoard.title ? currentBoard.title : '';
+    const code = await window.appPrompt({
+      icon: '🔁',
+      title: 'Maç kodunu değiştir',
+      bodyHtml: title ? `Şu an: <b>${escapeHtml(title)}</b>` : 'Skorunu gireceğin maçın kodunu yaz.',
+      label: 'Maç kodu',
+      placeholder: 'Örn: p9kq',
+      value: '',
+      confirmText: 'Maça geç',
+      dismissible: Boolean(current),
+      validate: async (v) => ((await checkBoardCode(v.trim())) ? '' : 'Bu kodla maç bulunamadı.')
+    });
+    if (!code) return;
+    saveCode(code.trim());
+    window.location.href = `/operate/${encodeURIComponent(code.trim())}`;
+  }
+
+  const btnChangeCode = document.getElementById('btn-change-code');
+  if (btnChangeCode) btnChangeCode.addEventListener('click', changeBoardCode);
 
   // DOM Elements
   const elConnDot = document.getElementById('conn-dot');
@@ -777,12 +830,17 @@
   async function initOperator() {
     boardId = extractBoardId();
     if (!boardId) {
-      if (elMatchTitle) elMatchTitle.textContent = 'Skorboard Kodu Bulunamadı';
-      if (elMatchSub) elMatchSub.textContent = 'URL adresinde geçerli bir skorboard kodu bulunamadı (Örn: /operate/abcd)';
+      if (elMatchTitle) elMatchTitle.textContent = 'Maç kodu girilmedi';
+      if (elMatchSub) elMatchSub.textContent = 'Skorunu gireceğin maçın kodunu yaz.';
       if (elConnDot) elConnDot.className = 'conn-dot disconnected';
       if (elConnText) elConnText.textContent = 'Bağlantı Yok';
+      changeBoardCode();
       return;
     }
+    const enteredCode = boardId;
+    window.__operateCode = enteredCode;
+    const codeLabel = document.getElementById('code-label');
+    if (codeLabel) codeLabel.textContent = enteredCode.length > 10 ? enteredCode.slice(0, 10) + '…' : enteredCode;
 
     if (elConnText) elConnText.textContent = 'Bağlanıyor...';
 
@@ -805,10 +863,12 @@
         if (elMatchSub) elMatchSub.textContent = (board && board.error) ? board.error : 'Skorboard bulunamadı.';
         if (elConnDot) elConnDot.className = 'conn-dot disconnected';
         if (elConnText) elConnText.textContent = 'Bulunamadı';
+        if (enteredCode === readSavedCode()) { try { localStorage.removeItem(CODE_STORAGE_KEY); } catch (e) {} }
         return;
       }
 
       boardId = board.id || boardId;
+      saveCode(enteredCode);
       renderBoard(board);
       connectSSE();
     } catch (e) {

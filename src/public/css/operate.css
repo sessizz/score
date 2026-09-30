@@ -1,5 +1,20 @@
 /* Skorcu ekranı: telefonda tam ekran, scroll'suz yerleşim (sadece operate.html) */
 
+.code-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card-alt);
+  color: var(--text-main);
+  font: 700 .78rem var(--font-main);
+  cursor: pointer;
+  max-width: 120px;
+}
+.code-switch-btn #code-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 body.operate-page {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
