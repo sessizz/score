@@ -589,3 +589,56 @@
   cursor: pointer;
   white-space: nowrap;
 }
+
+/* ---- Basış geri bildirimi ve bekleyen işlem göstergesi ---- */
+@keyframes press-flash {
+  0% { box-shadow: 0 0 0 0 rgba(255, 237, 0, .7); }
+  100% { box-shadow: 0 0 0 14px rgba(255, 237, 0, 0); }
+}
+
+@keyframes confirm-flash {
+  0% { border-color: var(--accent-green); box-shadow: 0 0 14px rgba(34, 197, 94, .55); }
+  100% { box-shadow: 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+@keyframes pending-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .35; transform: scale(.7); }
+}
+
+.is-pressed { animation: press-flash .26s ease-out; }
+.is-confirmed { animation: confirm-flash .5s ease-out; }
+
+.point-tap-area { position: relative; }
+
+.point-tap-area.is-pending .point-display { opacity: .65; }
+
+.point-tap-area.is-pending::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--fb-yellow);
+  animation: pending-pulse .8s infinite ease-in-out;
+}
+
+.net-pending-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  padding: 8px 12px;
+  text-align: center;
+  font-weight: 700;
+  font-size: .9rem;
+  background: #b45309;
+  color: #fff;
+  transform: translateY(-100%);
+  transition: transform .2s ease;
+}
+
+.net-pending-bar.visible { transform: none; }
