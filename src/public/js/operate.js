@@ -90,7 +90,34 @@
   }
 
   const btnChangeCode = document.getElementById('btn-change-code');
-  if (btnChangeCode) btnChangeCode.addEventListener('click', changeBoardCode);
+  const modalOpSettings = document.getElementById('modal-op-settings');
+  function setSettingsOpen(open) {
+    if (modalOpSettings) modalOpSettings.classList.toggle('active', open);
+  }
+  const btnOpSettings = document.getElementById('btn-op-settings');
+  if (btnOpSettings) btnOpSettings.addEventListener('click', () => setSettingsOpen(true));
+  const btnCloseOpSettings = document.getElementById('btn-close-op-settings');
+  if (btnCloseOpSettings) btnCloseOpSettings.addEventListener('click', () => setSettingsOpen(false));
+  if (modalOpSettings) {
+    modalOpSettings.addEventListener('click', (e) => { if (e.target === modalOpSettings) setSettingsOpen(false); });
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setSettingsOpen(false); });
+
+  if (btnChangeCode) {
+    btnChangeCode.addEventListener('click', () => {
+      setSettingsOpen(false);
+      changeBoardCode();
+    });
+  }
+
+  // Dişli üzerindeki nokta bağlantı durumunu yansıtır
+  const gearDot = document.getElementById('gear-dot');
+  const connDotForGear = document.getElementById('conn-dot');
+  if (connDotForGear && gearDot) {
+    const syncGearDot = () => gearDot.classList.toggle('disconnected', connDotForGear.classList.contains('disconnected'));
+    new MutationObserver(syncGearDot).observe(connDotForGear, { attributes: true, attributeFilter: ['class'] });
+    syncGearDot();
+  }
 
   // DOM Elements
   const elConnDot = document.getElementById('conn-dot');

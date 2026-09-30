@@ -55,25 +55,6 @@ body.operate-page {
     overflow: hidden;
   }
 
-  /* --- Üst bar: tek satır --- */
-  .operate-page .control-header {
-    flex: none;
-    padding: 6px 10px;
-    gap: 8px;
-  }
-
-  .operate-page .control-header > div:first-child { min-width: 0; flex: 1; }
-  .operate-page .match-info-title {
-    font-size: .9rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .operate-page .match-info-sub,
-  .operate-page .op-badge,
-  .operate-page #conn-text { display: none; }
-  .operate-page .control-header .flex-center { gap: 8px !important; flex: none; }
-
   /* --- Set / sayaç şeridi: tek satır --- */
   .operate-page .status-ribbon {
     flex: none;
@@ -187,8 +168,6 @@ body.operate-page {
     padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
     gap: 4px;
   }
-  .operate-page .control-header { padding: 2px 8px; }
-  .operate-page .match-info-title { font-size: .8rem; }
   .operate-page .status-ribbon { padding: 2px 8px; }
   .operate-page .set-pill { font-size: .9rem; }
   .operate-page .set-clock { transform: scale(.85); transform-origin: left center; margin: -4px 0; }
@@ -220,6 +199,52 @@ body.operate-page {
   .operate-page .btn-timeout-call { flex: 1; height: auto; min-height: 0; }
   .operate-page .to-countdown-badge { top: 34px; }
 
-  .operate-page .btn-action-main { min-height: 34px; padding: 3px 2px; flex-direction: row; gap: 4px; font-size: .62rem; }
-  .operate-page .btn-action-main span:first-child { font-size: .95rem !important; }
+  .operate-page .btn-action-main { min-height: 48px; padding: 3px 2px; flex-direction: row; gap: 5px; font-size: .72rem; }
+  .operate-page .btn-action-main span:first-child { font-size: 1.05rem !important; }
+}
+
+/* ---- Ayarlar dişlisi ve paneli ---- */
+.op-gear {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.gear-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+}
+.gear-dot.disconnected { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
+
+.op-settings-box { max-width: 380px; }
+
+.op-set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border-color);
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 700px), (max-height: 500px) {
+  .operate-page .op-gear { width: 34px; height: 34px; }
 }
