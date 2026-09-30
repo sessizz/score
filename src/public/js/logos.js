@@ -330,9 +330,14 @@
     const logo = allLogos.find(l => l.id === id);
     if (!logo) return;
 
-    if (!confirm(`"${logo.name}" logosunu silmek istediğinize emin misiniz?`)) {
-      return;
-    }
+    const ok = await window.appConfirm({
+      icon: '🗑️',
+      tone: 'danger',
+      title: 'Logoyu sil',
+      bodyHtml: `<b>${window.cdEscape(logo.name)}</b> logosu silinecek. Bu işlem geri alınamaz.`,
+      confirmText: 'Sil'
+    });
+    if (!ok) return;
 
     try {
       const res = await fetch(`/api/logos/${id}`, {

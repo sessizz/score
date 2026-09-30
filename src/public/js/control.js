@@ -108,25 +108,245 @@
     }, 2200);
   }
 
-  // Action Dispatcher
-  async function sendAction(action, payload = {}) {
-    try {
-      const response = await fetch(`/api/board/${boardId}/action`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, payload })
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        showToast(data.error || 'İşlem başarısız!', true);
-        return false;
-      }
-      return true;
-    } catch (err) {
-      showToast('Sunucu bağlantı hatası!', true);
-      return false;
+  // ---- Action kuyruğu + iyimser (optimistic) sayı güncellemesi ----
+  // Basışlar sırayla sunucuya gider. Sayı ekranda anında değişir, sunucu onaylayınca kesinleşir.
+  const actionQueue = [];      // { action, payload, team, delta, resolve }
+  let queueBusy = false;
+  let displayBase = null;      // kuyruk başladığında sunucudaki sayılar { teamA, teamB }
+  let slowBarTimer = null;
+  const REQUEST_TIMEOUT_MS = 6000;
+  // Sayıyı öngörülemez şekilde değiştiren eylemler: sonrasındaki iyimser artışlar uygulanmaz
+  const POINT_RESET_ACTIONS = ['end_set', 'undo', 'reset_current_set', 'reset_match', 'set_points'];
+
+  function pointDelta(action, payload) {
+    const amount = Number(payload && payload.amount) || 1;
+    switch (action) {
+      case 'point_a': return { team: 'teamA', delta: amount };
+      case 'point_b': return { team: 'teamB', delta: amount };
+      case 'sub_point_a': return { team: 'teamA', delta: -amount };
+      case 'sub_point_b': return { team: 'teamB', delta: -amount };
+      default: return null;
     }
   }
+
+  function hasPending(teamKey) {
+    return actionQueue.some((it) => it.team === teamKey);
+  }
+
+  function areaFor(teamKey) {
+    const isSwapped = Boolean(currentBoard && currentBoard.courtSwapped);
+    const isLeft = (teamKey === 'teamA') !== isSwapped;
+    return isLeft ? leftPointArea : rightPointArea;
+  }
+
+  function displayPoints(teamKey, serverPoints) {
+    if (actionQueue.length === 0 || !displayBase) return serverPoints || 0;
+    let v = displayBase[teamKey];
+    for (const it of actionQueue) {
+      if (POINT_RESET_ACTIONS.includes(it.action)) break;
+      if (it.team === teamKey) v = Math.max(0, v + it.delta);
+    }
+    return v;
+  }
+
+  function showNetBar() {
+    let bar = document.getElementById('net-pending-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'net-pending-bar';
+      bar.className = 'net-pending-bar';
+      document.body.appendChild(bar);
+    }
+    bar.textContent = `⏳ Bağlantı yavaş: ${actionQueue.length} işlem gönderiliyor...`;
+    bar.classList.add('visible');
+  }
+
+  function hideNetBar() {
+    const bar = document.getElementById('net-pending-bar');
+    if (bar) bar.classList.remove('visible');
+  }
+
+  function updatePendingUi() {
+    ['teamA', 'teamB'].forEach((key) => {
+      const area = areaFor(key);
+      if (area) area.classList.toggle('is-pending', hasPending(key));
+    });
+    const bar = document.getElementById('net-pending-bar');
+    if (actionQueue.length === 0) {
+      clearTimeout(slowBarTimer);
+      slowBarTimer = null;
+      hideNetBar();
+    } else if (bar && bar.classList.contains('visible')) {
+      showNetBar();
+    } else if (!slowBarTimer) {
+      slowBarTimer = setTimeout(() => {
+        slowBarTimer = null;
+        if (actionQueue.length > 0) showNetBar();
+      }, 1000);
+    }
+  }
+
+  function flashConfirmed(teamKey) {
+    const area = areaFor(teamKey);
+    if (!area) return;
+    area.classList.remove('is-confirmed');
+    void area.offsetWidth;
+    area.classList.add('is-confirmed');
+    setTimeout(() => area.classList.remove('is-confirmed'), 500);
+  }
+
+  async function postAction(action, payload) {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS) : null;
+    try {
+      const response = await fetch(`/api/board/${encodeURIComponent(boardId)}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, payload }),
+        signal: ctrl ? ctrl.signal : undefined
+      });
+      const data = await response.json();
+      return { ok: response.ok && data.success, data };
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  // Bağlantı kopukken her basışın tek tek zaman aşımına girmesini beklemeyiz
+  function failPendingActions() {
+    const dropped = actionQueue.splice(0, actionQueue.length);
+    dropped.forEach((it) => it.resolve(false));
+    return dropped.length;
+  }
+
+  function applyResponseBoard(board) {
+    if (!board || !board.teamA || !board.teamB) return;
+    if (currentBoard && board.updatedAt && currentBoard.updatedAt && board.updatedAt < currentBoard.updatedAt) return;
+    currentBoard = board;
+    renderBoard(board);
+  }
+
+  async function processQueue() {
+    if (queueBusy) return;
+    queueBusy = true;
+    try {
+      while (actionQueue.length > 0) {
+        const item = actionQueue[0];
+        let ok = false;
+        let board = null;
+        let networkFailed = false;
+        try {
+          const res = await postAction(item.action, item.payload);
+          ok = res.ok;
+          board = res.data && res.data.board;
+          if (!ok) showToast((res.data && res.data.error) || 'İşlem başarısız!', true);
+        } catch (err) {
+          networkFailed = true;
+        }
+
+        if (networkFailed) {
+          const n = failPendingActions();
+          showToast(n > 1 ? `Bağlantı hatası! ${n} işlem gönderilemedi.` : 'Bağlantı hatası! İşlem gönderilemedi.', true);
+          if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+        } else {
+          actionQueue.shift();
+          if (!ok && navigator.vibrate) navigator.vibrate([60, 40, 60]);
+        }
+
+        try {
+          if (!networkFailed && board && board.teamA && board.teamB) {
+            displayBase = { teamA: board.teamA.points, teamB: board.teamB.points };
+            applyResponseBoard(board);
+          } else if (currentBoard) {
+            renderBoard(currentBoard);
+          }
+          if (ok && item.team) flashConfirmed(item.team);
+        } catch (err) {
+          console.error('Control render error', err);
+        }
+        updatePendingUi();
+        if (!networkFailed) item.resolve(ok);
+      }
+    } finally {
+      queueBusy = false;
+      displayBase = null;
+      try {
+        if (currentBoard) renderBoard(currentBoard);
+      } catch (err) {
+        console.error('Control render error', err);
+      }
+      updatePendingUi();
+      if (actionQueue.length > 0) processQueue();
+    }
+  }
+
+  // Emniyet: kuyruk boşken turuncu uyarı veya bekliyor işareti asla kalmasın
+  function refreshPendingUi() {
+    if (actionQueue.length === 0) updatePendingUi();
+  }
+  setInterval(refreshPendingUi, 1500);
+  window.addEventListener('online', refreshPendingUi);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshPendingUi();
+  });
+
+  // Action Dispatcher
+  function sendAction(action, payload = {}) {
+    return new Promise((resolve) => {
+      const pd = pointDelta(action, payload);
+      if (actionQueue.length === 0 && currentBoard) {
+        displayBase = { teamA: currentBoard.teamA.points, teamB: currentBoard.teamB.points };
+      }
+      actionQueue.push({ action, payload, team: pd ? pd.team : null, delta: pd ? pd.delta : 0, resolve });
+      if (currentBoard) renderBoard(currentBoard);
+      updatePendingUi();
+      processQueue();
+    });
+  }
+
+  // ---- Titreşim (haptic) + basış efekti ----
+  const hasVibrate = typeof navigator.vibrate === 'function';
+  let iosHapticLabel = null;
+
+  function haptic(pattern) {
+    if (hasVibrate) {
+      navigator.vibrate(pattern);
+      return;
+    }
+    try {
+      if (!iosHapticLabel) {
+        iosHapticLabel = document.createElement('label');
+        iosHapticLabel.setAttribute('aria-hidden', 'true');
+        iosHapticLabel.style.cssText = 'position:fixed;left:-100px;top:-100px;opacity:0;pointer-events:none;';
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.setAttribute('switch', '');
+        iosHapticLabel.appendChild(box);
+        document.body.appendChild(iosHapticLabel);
+      }
+      iosHapticLabel.click();
+    } catch (e) {}
+  }
+
+  function hapticFor(target) {
+    haptic(target.classList.contains('point-tap-area') ? 45 : 15);
+  }
+
+  document.addEventListener('pointerdown', (e) => {
+    const target = e.target.closest && e.target.closest('button, .point-tap-area');
+    if (!target || target.disabled) return;
+    target.classList.remove('is-pressed');
+    void target.offsetWidth;
+    target.classList.add('is-pressed');
+    setTimeout(() => target.classList.remove('is-pressed'), 260);
+    if (hasVibrate) hapticFor(target);
+  }, { passive: true });
+
+  document.addEventListener('click', (e) => {
+    if (hasVibrate) return;
+    const target = e.target.closest && e.target.closest('button, .point-tap-area');
+    if (target && !target.disabled) hapticFor(target);
+  }, true);
 
   // Connect SSE
   function connectSSE() {
@@ -203,7 +423,7 @@
     leftName.textContent = leftData.name;
     leftShort.textContent = leftData.shortName;
     leftSets.textContent = `${leftData.setsWon} Set`;
-    leftPointVal.textContent = leftData.points;
+    leftPointVal.textContent = displayPoints(isSwapped ? 'teamB' : 'teamA', leftData.points);
     if (leftData.logo) {
       leftLogo.src = leftData.logo;
       leftLogo.style.display = 'block';
@@ -219,7 +439,7 @@
     rightName.textContent = rightData.name;
     rightShort.textContent = rightData.shortName;
     rightSets.textContent = `${rightData.setsWon} Set`;
-    rightPointVal.textContent = rightData.points;
+    rightPointVal.textContent = displayPoints(isSwapped ? 'teamA' : 'teamB', rightData.points);
     if (rightData.logo) {
       rightLogo.src = rightData.logo;
       rightLogo.style.display = 'block';
