@@ -287,6 +287,29 @@
     }
   }
 
+  // Skor metnini günceller. İlk çizimde ve azalışta animasyon yok, sadece artışta.
+  function setScoreText(numEl, value) {
+    if (!numEl) return;
+    const next = String(value);
+    const prev = numEl.textContent;
+    const firstPaint = numEl.dataset.ready !== '1';
+    numEl.dataset.ready = '1';
+    if (prev === next) return;
+    numEl.textContent = next;
+    if (firstPaint || !(Number(next) > Number(prev))) return;
+    const box = numEl.parentElement;
+    [numEl, box].forEach((node) => {
+      if (!node) return;
+      node.classList.remove('dc-pop');
+      void node.offsetWidth;
+      node.classList.add('dc-pop');
+    });
+    setTimeout(() => {
+      numEl.classList.remove('dc-pop');
+      if (box) box.classList.remove('dc-pop');
+    }, 600);
+  }
+
   function renderOverlay(board) {
     if (!board) return;
     latestBoard = board;
@@ -365,11 +388,11 @@
     if (el.rightDot2) el.rightDot2.className = 'dc-to-dot' + (rightTimeouts >= 2 ? ' is-used' : '');
     if (el.dotsBoxRight) el.dotsBoxRight.title = `Mola: ${rightTimeouts}/2`;
 
-    // 4. Sets and Points
-    if (el.setsA) el.setsA.textContent = String(leftData.setsWon || 0);
-    if (el.pointsA) el.pointsA.textContent = String(leftData.points || 0);
-    if (el.pointsB) el.pointsB.textContent = String(rightData.points || 0);
-    if (el.setsB) el.setsB.textContent = String(rightData.setsWon || 0);
+    // 4. Sets and Points (artınca kısa "pop" animasyonu)
+    setScoreText(el.setsA, leftData.setsWon || 0);
+    setScoreText(el.pointsA, leftData.points || 0);
+    setScoreText(el.pointsB, rightData.points || 0);
+    setScoreText(el.setsB, rightData.setsWon || 0);
 
     // 5. Serving Ball Anchor (Never recreated, smooth glide & persistent spin)
     if (el.ballAnchor) {

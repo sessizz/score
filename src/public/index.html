@@ -599,6 +599,7 @@
         <span class="icon-sun">☀️</span>
       </button>
       <a href="/teams" class="btn-nav">🏐 Takımlar</a>
+      <button class="btn-nav" id="btn-backup">💾 Yedek</button>
       <button class="btn-nav btn-nav-primary" id="btn-new-board">+ Yeni Skorboard</button>
       <button class="btn-nav btn-logout" id="btn-logout">Çıkış Yap</button>
     </div>
@@ -619,6 +620,23 @@
   <!-- Boards List -->
   <div class="boards-list" id="boards-list">
     <!-- Populated by JS -->
+  </div>
+</div>
+
+<!-- Backup Modal -->
+<div class="modal-backdrop" id="modal-backup">
+  <div class="modal-card">
+    <div class="modal-title">
+      <span>💾 Yedek Al</span>
+      <button class="modal-close" id="btn-close-backup">&times;</button>
+    </div>
+    <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 14px;" id="backup-desc">Yükleniyor...</p>
+    <div id="backup-counts" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px;"></div>
+    <a href="/api/backup" class="btn-nav btn-nav-primary" id="btn-backup-download" download
+       style="width: 100%; justify-content: center; padding: 12px; text-decoration: none;">⬇️ Yedeği İndir (.zip)</a>
+    <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 12px; line-height: 1.4;">
+      Dosyayı güvenli bir yerde sakla. Şu an yedekten otomatik geri yükleme yok, dosya maçlarının ve logolarının kopyasıdır.
+    </p>
   </div>
 </div>
 
@@ -1113,6 +1131,31 @@
   function closeModal() {
     modal.style.display = 'none';
   }
+
+  // Yedek penceresi
+  const modalBackup = document.getElementById('modal-backup');
+  async function openBackupModal() {
+    modalBackup.style.display = 'flex';
+    const desc = document.getElementById('backup-desc');
+    const counts = document.getElementById('backup-counts');
+    desc.textContent = 'Yükleniyor...';
+    counts.innerHTML = '';
+    try {
+      const res = await fetch('/api/backup/info');
+      const info = await res.json();
+      if (!res.ok || !info.success) throw new Error(info.error || 'Hata');
+      desc.textContent = info.mode === 'admin'
+        ? 'Tam yedek: tüm veritabanı (kullanıcılar dahil), tüm logolar ve senin maçların okunabilir kopyası.'
+        : 'Tüm maçların (skorlar, set ve sayı geçmişi), takımların ve logo dosyaların tek bir .zip içinde iner.';
+      const box = (n, label) => `<div style="background: var(--bg-card-alt, rgba(255,255,255,.05)); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; text-align: center;"><div style="font-size: 1.4rem; font-weight: 800; color: var(--text-heading);">${n}</div><div style="font-size: 0.75rem; color: var(--text-muted);">${label}</div></div>`;
+      counts.innerHTML = box(info.boards, 'Maç') + box(info.teams, 'Takım') + box(info.logoFiles, 'Logo dosyası');
+    } catch (err) {
+      desc.textContent = 'Yedek bilgisi alınamadı. Yine de indirmeyi deneyebilirsin.';
+    }
+  }
+  document.getElementById('btn-backup').addEventListener('click', openBackupModal);
+  document.getElementById('btn-close-backup').addEventListener('click', () => { modalBackup.style.display = 'none'; });
+  modalBackup.addEventListener('click', (e) => { if (e.target === modalBackup) modalBackup.style.display = 'none'; });
 
   document.getElementById('btn-new-board').addEventListener('click', openCreateModal);
   document.getElementById('btn-hero-new').addEventListener('click', openCreateModal);
