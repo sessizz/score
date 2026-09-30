@@ -2,6 +2,24 @@
 (function () {
   'use strict';
 
+  // iPhone Safari (ana ekran uygulaması değil): sayfa kaydırılabilir, kart alanı sabit.
+  // Yukarı kaydırınca Safari adres/sekme çubuklarını küçültür, kart alanı tüm ekranı kaplar.
+  // Kapatmak için adrese ?bars=0, tekrar açmak için ?bars=1 ekle.
+  (function setupSafariBarTrick() {
+    try {
+      const q = new URLSearchParams(window.location.search).get('bars');
+      if (q === '0') localStorage.setItem('operate:noBarTrick', '1');
+      if (q === '1') localStorage.removeItem('operate:noBarTrick');
+      const disabled = localStorage.getItem('operate:noBarTrick') === '1';
+      const isIphone = /iPhone|iPod/.test(navigator.userAgent);
+      const standalone = navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+      if (isIphone && !standalone && !disabled) {
+        document.documentElement.classList.add('ios-bar-trick');
+        window.addEventListener('load', () => window.scrollTo(0, 0));
+      }
+    } catch (e) {}
+  })();
+
   let currentBoard = null;
   let boardId = null;
   let eventSource = null;

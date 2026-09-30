@@ -29,6 +29,22 @@ body.operate-page {
     overscroll-behavior: none;
   }
 
+  /* iPhone Safari: kaydırılabilir sayfa + sabit kart alanı. Yukarı kaydırınca
+     Safari çubukları küçülür, sabit alan boşalan yeri doldurur. */
+  html.ios-bar-trick,
+  html.ios-bar-trick body.operate-page {
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: auto;
+  }
+  html.ios-bar-trick body.operate-page { min-height: 300vh; }
+  html.ios-bar-trick .operate-page .control-container {
+    position: fixed;
+    inset: 0;
+    height: auto;
+  }
+
   .operate-page .control-container {
     height: 100vh;
     height: 100dvh;
