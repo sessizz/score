@@ -237,10 +237,10 @@
         if (networkFailed) {
           const n = failPendingActions();
           showToast(n > 1 ? `Bağlantı hatası! ${n} işlem gönderilemedi.` : 'Bağlantı hatası! İşlem gönderilemedi.', true);
-          if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+          haptic([60, 40, 60]);
         } else {
           actionQueue.shift();
-          if (!ok && navigator.vibrate) navigator.vibrate([60, 40, 60]);
+          if (!ok) haptic([60, 40, 60]);
         }
 
         try {
@@ -295,7 +295,39 @@
     });
   }
 
-  // Basılınca anında görsel + titreşim geri bildirimi (ağdan bağımsız)
+  // ---- Titreşim (haptic) ----
+  // Android: navigator.vibrate. iOS Safari'de vibrate yok; iOS 17.4+ için gizli "switch" kutusu hilesi.
+  const hasVibrate = typeof navigator.vibrate === 'function';
+  let iosHapticLabel = null;
+
+  function haptic(pattern) {
+    if (hasVibrate) {
+      navigator.vibrate(pattern);
+      return;
+    }
+    // Sadece kullanıcı dokunuşu (click) içinde çalışır
+    try {
+      if (!iosHapticLabel) {
+        iosHapticLabel = document.createElement('label');
+        iosHapticLabel.setAttribute('aria-hidden', 'true');
+        iosHapticLabel.style.cssText = 'position:fixed;left:-100px;top:-100px;opacity:0;pointer-events:none;';
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.setAttribute('switch', '');
+        iosHapticLabel.appendChild(box);
+        document.body.appendChild(iosHapticLabel);
+      }
+      iosHapticLabel.click();
+    } catch (e) {}
+  }
+
+  // Sayı verildiğinde belirgin, diğer butonlarda hafif titreşim
+  function hapticFor(target) {
+    if (target.classList.contains('point-tap-area')) haptic(45);
+    else haptic(15);
+  }
+
+  // Basılınca anında görsel geri bildirim (ağdan bağımsız)
   document.addEventListener('pointerdown', (e) => {
     const target = e.target.closest && e.target.closest('button, .point-tap-area');
     if (!target || target.disabled) return;
@@ -303,8 +335,14 @@
     void target.offsetWidth;
     target.classList.add('is-pressed');
     setTimeout(() => target.classList.remove('is-pressed'), 260);
-    if (navigator.vibrate) navigator.vibrate(target.classList.contains('point-tap-area') ? 25 : 12);
+    if (hasVibrate) hapticFor(target);
   }, { passive: true });
+
+  document.addEventListener('click', (e) => {
+    if (hasVibrate) return;
+    const target = e.target.closest && e.target.closest('button, .point-tap-area');
+    if (target && !target.disabled) hapticFor(target);
+  }, true);
 
   // Server time synchronization (immune to client device clock skew)
   let serverTimeOffset = 0; // serverTime - Date.now()
