@@ -431,15 +431,13 @@
 
   const btnEndSet = document.getElementById('btn-end-set');
   if (btnEndSet) {
-    btnEndSet.addEventListener('click', () => {
+    btnEndSet.addEventListener('click', async () => {
       if (!currentBoard) return;
-      const pA = currentBoard.teamA.points;
-      const pB = currentBoard.teamB.points;
-      const winnerName = pA > pB ? currentBoard.teamA.name : currentBoard.teamB.name;
-      if (confirm(`Mevcut seti bitirmek istiyor musunuz?\nKazanan: ${winnerName} (${pA} - ${pB})`)) {
+      const setNo = currentBoard.currentSet;
+      if (await window.confirmEndSet(currentBoard)) {
         playWhistle();
         sendAction('end_set');
-        showToast(`${currentBoard.currentSet}. Set tamamlandı!`);
+        showToast(`${setNo}. Set tamamlandı!`);
       }
     });
   }

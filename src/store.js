@@ -535,6 +535,7 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
     }
     case 'clock_start': {
       const clock = ensureSetClock(board);
+      delete clock.pausedByMatchEnd;
       if (!clock.running) {
         clock.running = true;
         clock.startedAt = Date.now();
@@ -543,6 +544,7 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
     }
     case 'clock_pause': {
       const clock = ensureSetClock(board);
+      delete clock.pausedByMatchEnd;
       if (clock.running) {
         clock.elapsedMs = getClockElapsed(clock);
         clock.running = false;
@@ -577,6 +579,14 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
       const setsToWin = board.rules.setsToWin || Math.ceil(board.rules.maxSets / 2);
       if (board.teamA.setsWon >= setsToWin || board.teamB.setsWon >= setsToWin) {
         board.status = 'finished';
+        // Maç bitti: sayacı durdur (süre son değerde kalır)
+        const clock = ensureSetClock(board);
+        if (clock.running) {
+          clock.elapsedMs = getClockElapsed(clock);
+          clock.running = false;
+          clock.startedAt = null;
+          clock.pausedByMatchEnd = true;
+        }
       } else {
         board.status = 'set_break';
         board.currentSet += 1;
@@ -657,6 +667,13 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
         const previousState = stack.pop();
         previousState.setClock = board.setClock;
         previousState.historyUntil = board.historyUntil;
+        // Maç bitişiyle durmuş sayaç, bitiş geri alınınca kaldığı yerden devam eder
+        const clock = previousState.setClock;
+        if (board.status === 'finished' && previousState.status !== 'finished' && clock && clock.pausedByMatchEnd) {
+          delete clock.pausedByMatchEnd;
+          clock.running = true;
+          clock.startedAt = Date.now();
+        }
         boards.set(boardId, previousState);
         modified = true;
       } else {
