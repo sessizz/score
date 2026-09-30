@@ -109,7 +109,7 @@
   let queueBusy = false;
   let displayBase = null;      // kuyruk başladığında sunucudaki sayılar { teamA, teamB }
   let slowBarTimer = null;
-  const REQUEST_TIMEOUT_MS = 10000;
+  const REQUEST_TIMEOUT_MS = 6000;
   // Sayıyı öngörülemez şekilde değiştiren eylemler: sonrasındaki iyimser artışlar uygulanmaz
   const POINT_RESET_ACTIONS = ['end_set', 'undo', 'reset_current_set', 'reset_match', 'set_points'];
 
@@ -208,38 +208,77 @@
     }
   }
 
+  // Bağlantı kopukken kuyruktaki her basışın tek tek zaman aşımına girmesini beklemeyiz:
+  // ağ hatasında bekleyen tüm basışlar geri alınır.
+  function failPendingActions() {
+    const dropped = actionQueue.splice(0, actionQueue.length);
+    dropped.forEach((it) => it.resolve(false));
+    return dropped.length;
+  }
+
   async function processQueue() {
     if (queueBusy) return;
     queueBusy = true;
-    while (actionQueue.length > 0) {
-      const item = actionQueue[0];
-      let ok = false;
-      let board = null;
+    try {
+      while (actionQueue.length > 0) {
+        const item = actionQueue[0];
+        let ok = false;
+        let board = null;
+        let networkFailed = false;
+        try {
+          const res = await postAction(item.action, item.payload);
+          ok = res.ok;
+          board = res.data && res.data.board;
+          if (!ok) showToast((res.data && res.data.error) || 'İşlem gerçekleştirilemedi', true);
+        } catch (err) {
+          networkFailed = true;
+        }
+
+        if (networkFailed) {
+          const n = failPendingActions();
+          showToast(n > 1 ? `Bağlantı hatası! ${n} işlem gönderilemedi.` : 'Bağlantı hatası! İşlem gönderilemedi.', true);
+          if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+        } else {
+          actionQueue.shift();
+          if (!ok && navigator.vibrate) navigator.vibrate([60, 40, 60]);
+        }
+
+        try {
+          if (!networkFailed && board && board.teamA && board.teamB) {
+            displayBase = { teamA: board.teamA.points, teamB: board.teamB.points };
+            renderBoard(board);
+          } else if (currentBoard) {
+            renderBoard(currentBoard);
+          }
+          if (ok && item.team) flashConfirmed(item.team);
+        } catch (err) {
+          console.error('Operate render error', err);
+        }
+        updatePendingUi();
+        if (!networkFailed) item.resolve(ok);
+      }
+    } finally {
+      queueBusy = false;
+      displayBase = null;
       try {
-        const res = await postAction(item.action, item.payload);
-        ok = res.ok;
-        board = res.data && res.data.board;
-        if (!ok) showToast((res.data && res.data.error) || 'İşlem gerçekleştirilemedi', true);
+        if (currentBoard) renderBoard(currentBoard);
       } catch (err) {
-        showToast(err && err.name === 'AbortError' ? 'Sunucu yanıt vermedi, işlem doğrulanamadı!' : 'Bağlantı hatası!', true);
+        console.error('Operate render error', err);
       }
-      actionQueue.shift();
-      if (!ok && navigator.vibrate) navigator.vibrate([60, 40, 60]);
-      if (board && board.teamA && board.teamB) {
-        displayBase = { teamA: board.teamA.points, teamB: board.teamB.points };
-        renderBoard(board);
-      } else if (currentBoard) {
-        renderBoard(currentBoard);
-      }
-      if (ok && item.team) flashConfirmed(item.team);
       updatePendingUi();
-      item.resolve(ok);
+      if (actionQueue.length > 0) processQueue();
     }
-    queueBusy = false;
-    displayBase = null;
-    if (currentBoard) renderBoard(currentBoard);
-    updatePendingUi();
   }
+
+  // Emniyet: kuyruk boşken turuncu uyarı veya bekliyor işareti asla kalmasın
+  function refreshPendingUi() {
+    if (actionQueue.length === 0) updatePendingUi();
+  }
+  setInterval(refreshPendingUi, 1500);
+  window.addEventListener('online', refreshPendingUi);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshPendingUi();
+  });
 
   // Action Dispatcher for Operator
   function sendAction(action, payload = {}) {
