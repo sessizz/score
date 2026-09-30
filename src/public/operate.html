@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/css/common.css?v=1.3.1">
   <link rel="stylesheet" href="/css/control.css?v=1.3.1">
-  <link rel="stylesheet" href="/css/operate.css?v=1.4.0">
+  <link rel="stylesheet" href="/css/operate.css?v=1.5.0">
   <link rel="icon" href="/assets/volleyball.svg">
   <script>
   (function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}else{var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',d?'dark':'light')}})();
@@ -37,29 +37,6 @@
 <body class="operate-page">
 
 <div class="control-container">
-  <!-- Header -->
-  <header class="control-header">
-    <div>
-      <div class="match-info-title" id="match-title">Yükleniyor...</div>
-      <div class="match-info-sub" id="match-sub">Canlı Skor Girişi</div>
-    </div>
-    <div class="flex-center" style="gap: 10px;">
-      <span class="op-badge">📱 SKORCU EKRANI</span>
-      <button class="code-switch-btn" id="btn-change-code" title="Maç kodunu değiştir" aria-label="Maç kodunu değiştir">
-        <span aria-hidden="true">🔁</span>
-        <span id="code-label">Kod</span>
-      </button>
-      <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir" aria-label="Tema Değiştir">
-        <span class="icon-moon">🌙</span>
-        <span class="icon-sun">☀️</span>
-      </button>
-      <div class="conn-indicator">
-        <div class="conn-dot" id="conn-dot"></div>
-        <span id="conn-text">Bağlanıyor...</span>
-      </div>
-    </div>
-  </header>
-
   <!-- Status Ribbon & Set History -->
   <div class="status-ribbon">
     <div class="flex-center" style="gap: 12px;">
@@ -80,6 +57,10 @@
     <div class="set-history-pills" id="history-list">
       <!-- Past set scores will appear here -->
     </div>
+    <button class="op-gear" id="btn-op-settings" title="Ayarlar" aria-label="Ayarlar">
+      <span aria-hidden="true">⚙️</span>
+      <span class="gear-dot" id="gear-dot"></span>
+    </button>
   </div>
 
   <!-- Timeout Active Banner -->
@@ -198,10 +179,45 @@
   </div>
 </div>
 
+<!-- Ayarlar paneli: maç bilgisi, bağlantı, maç kodu, tema -->
+<div class="modal-backdrop" id="modal-op-settings">
+  <div class="modal-box op-settings-box">
+    <div class="flex-between" style="margin-bottom: 14px; align-items: flex-start;">
+      <div style="min-width: 0;">
+        <div class="match-info-title" id="match-title">Yükleniyor...</div>
+        <div class="match-info-sub" id="match-sub">Canlı Skor Girişi</div>
+      </div>
+      <button class="btn-modal-close" id="btn-close-op-settings" aria-label="Kapat">&times;</button>
+    </div>
+
+    <div class="op-set-row">
+      <span>Bağlantı</span>
+      <div class="conn-indicator">
+        <div class="conn-dot" id="conn-dot"></div>
+        <span id="conn-text">Bağlanıyor...</span>
+      </div>
+    </div>
+    <div class="op-set-row">
+      <span>Maç kodu</span>
+      <button class="code-switch-btn" id="btn-change-code" title="Maç kodunu değiştir" aria-label="Maç kodunu değiştir">
+        <span aria-hidden="true">🔁</span>
+        <span id="code-label">Kod</span>
+      </button>
+    </div>
+    <div class="op-set-row">
+      <span>Tema</span>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir" aria-label="Tema Değiştir">
+        <span class="icon-moon">🌙</span>
+        <span class="icon-sun">☀️</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast Feedback Container -->
 <div class="toast-container" id="toast-container"></div>
 
-<script src="/js/operate.js?v=1.7.0"></script>
+<script src="/js/operate.js?v=1.8.1"></script>
 <script src="/js/confirm-dialog.js?v=1.1.0"></script>
 <script src="/js/theme.js"></script>
 </body>
