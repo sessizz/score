@@ -46,7 +46,7 @@
   function initOverlayDOM() {
     if (!root) return;
     root.innerHTML = `
-      <div class="dc-board-container">
+      <div class="dc-board-container dc-awaiting">
         <div class="dc-board-scale-wrapper">
 
           <!-- Zaman ve Set Kapsülü (Scoreboard'un Üstünde) -->
@@ -139,6 +139,19 @@
       <div class="dc-result-layer" id="dc-result-layer">
         <div class="dc-result"><div class="dc-res-in" id="dc-result"></div></div>
       </div>
+
+      <!-- Geçersiz kod uyarısı (skorboard bulunamazsa boş scoreboard yerine) -->
+      <div class="dc-invalid" id="dc-invalid" hidden>
+        <div class="dc-invalid-in">
+          <div class="dc-invalid-box">
+            <span class="dc-invalid-icon">!</span>
+            <div>
+              <div class="dc-invalid-title">Geçersiz skorboard kodu: <b id="dc-invalid-code"></b></div>
+              <div class="dc-invalid-sub">Kontrol panelindeki OBS linkini kullanın</div>
+            </div>
+          </div>
+        </div>
+      </div>
     `;
 
     el = {
@@ -173,8 +186,18 @@
       hist: document.getElementById('dc-hist'),
       boardWrap: root.querySelector('.dc-board-container'),
       resultLayer: document.getElementById('dc-result-layer'),
-      result: document.getElementById('dc-result')
+      result: document.getElementById('dc-result'),
+      invalid: document.getElementById('dc-invalid'),
+      invalidCode: document.getElementById('dc-invalid-code')
     };
+  }
+
+  // Kod geçersizse boş scoreboard yerine uyarı göster
+  function setInvalidCode(isInvalid) {
+    if (!el || !el.invalid) return;
+    el.invalid.hidden = !isInvalid;
+    if (el.invalidCode) el.invalidCode.textContent = boardId;
+    if (el.boardWrap) el.boardWrap.classList.toggle('dc-hidden-invalid', isInvalid);
   }
 
   // ---- Sayı Geçmişi ----
@@ -398,13 +421,15 @@
   }
 
   function renderOverlay(board) {
-    if (!board) return;
+    if (!board || !board.teamA || !board.teamB) return;
     latestBoard = board;
     if (board.serverTime) syncServerTime(board.serverTime);
 
     if (!el || !document.getElementById('dc-grid-main')) {
       initOverlayDOM();
     }
+    setInvalidCode(false);
+    if (el.boardWrap) el.boardWrap.classList.remove('dc-awaiting');
 
     const isSwapped = Boolean(board.courtSwapped);
     const leftData = isSwapped ? board.teamB : board.teamA;
@@ -535,13 +560,20 @@
     }
   }
 
+  let invalidRetryTimer = null;
+
   async function loadInitialState() {
+    clearTimeout(invalidRetryTimer);
     try {
       const res = await fetch(`/api/board/${encodeURIComponent(boardId)}`);
       if (res.ok) {
         const board = await res.json();
         if (board && board.serverTime) syncServerTime(board.serverTime);
         renderOverlay(board);
+      } else if (res.status === 404 && !latestBoard) {
+        // Kod yanlış: uyarı göster, skorboard sonradan oluşturulursa diye 15 sn'de bir tekrar dene
+        setInvalidCode(true);
+        invalidRetryTimer = setTimeout(loadInitialState, 15000);
       }
     } catch (e) {
       // Ignored, SSE will push state
