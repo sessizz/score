@@ -779,6 +779,14 @@
     });
   }
 
+  const btnShowResult = document.getElementById('btn-show-result');
+  if (btnShowResult) {
+    btnShowResult.addEventListener('click', () => {
+      sendAction('show_result');
+      showToast('Maç sonucu gösteriliyor (10 sn)');
+    });
+  }
+
   // Keyboard Shortcuts
   window.addEventListener('keydown', (e) => {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;

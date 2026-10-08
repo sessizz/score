@@ -1050,6 +1050,11 @@
     elHistoryLog.innerHTML = html;
   }
 
+  document.getElementById('btn-show-result').addEventListener('click', () => {
+    sendAction('show_result');
+    showToast('Maç sonucu overlay üzerinde gösteriliyor (10 sn)');
+  });
+
   document.getElementById('btn-history').addEventListener('click', () => {
     renderHistoryLog();
     modalHistory.classList.add('active');
