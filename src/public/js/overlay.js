@@ -46,7 +46,7 @@
   function initOverlayDOM() {
     if (!root) return;
     root.innerHTML = `
-      <div class="dc-board-container">
+      <div class="dc-board-container dc-awaiting">
         <div class="dc-board-scale-wrapper">
 
           <!-- Zaman ve Set Kapsülü (Scoreboard'un Üstünde) -->
@@ -139,6 +139,19 @@
       <div class="dc-result-layer" id="dc-result-layer">
         <div class="dc-result"><div class="dc-res-in" id="dc-result"></div></div>
       </div>
+
+      <!-- Geçersiz kod uyarısı (skorboard bulunamazsa boş scoreboard yerine) -->
+      <div class="dc-invalid" id="dc-invalid" hidden>
+        <div class="dc-invalid-in">
+          <div class="dc-invalid-box">
+            <span class="dc-invalid-icon">!</span>
+            <div>
+              <div class="dc-invalid-title">Geçersiz skorboard kodu: <b id="dc-invalid-code"></b></div>
+              <div class="dc-invalid-sub">Kontrol panelindeki OBS linkini kullanın</div>
+            </div>
+          </div>
+        </div>
+      </div>
     `;
 
     el = {
@@ -173,8 +186,18 @@
       hist: document.getElementById('dc-hist'),
       boardWrap: root.querySelector('.dc-board-container'),
       resultLayer: document.getElementById('dc-result-layer'),
-      result: document.getElementById('dc-result')
+      result: document.getElementById('dc-result'),
+      invalid: document.getElementById('dc-invalid'),
+      invalidCode: document.getElementById('dc-invalid-code')
     };
+  }
+
+  // Kod geçersizse boş scoreboard yerine uyarı göster
+  function setInvalidCode(isInvalid) {
+    if (!el || !el.invalid) return;
+    el.invalid.hidden = !isInvalid;
+    if (el.invalidCode) el.invalidCode.textContent = boardId;
+    if (el.boardWrap) el.boardWrap.classList.toggle('dc-hidden-invalid', isInvalid);
   }
 
   // ---- Sayı Geçmişi ----
@@ -277,13 +300,12 @@
     const finished = board.status === 'finished';
     const sl = Number(left.setsWon) || 0;
     const sr = Number(right.setsWon) || 0;
-    const winSide = finished ? (sl > sr ? 'l' : (sr > sl ? 'r' : null)) : null;
 
-    const team = (t, side) => {
+    const team = (t) => {
       const c1 = t.color || t.accentColor || '#ffed00';
       const c2 = t.color2 || t.secondaryColor || '#002d72';
       const logo = t.logo ? `<img src="${escHtml(t.logo)}" alt="" />` : '<div class="dc-res-nologo"></div>';
-      return `<div class="dc-res-team${winSide && winSide !== side ? ' lose' : ''}">
+      return `<div class="dc-res-team">
         ${logo}
         <div class="dc-res-name">${escHtml(t.name || '')}</div>
         <div class="dc-res-stripe"><span style="background:${escHtml(c1)}"></span><span style="background:${escHtml(c2)}"></span></div>
@@ -299,23 +321,23 @@
       chips.push(`<div class="dc-res-set now"><small>${board.currentSet}. SET</small>${Number(left.points) || 0}-${Number(right.points) || 0}</div>`);
     }
 
-    // Unutulup açık kalmış sayaç saçma süre göstermesin: 3 saati aşan set varsa süreyi gizle
+    // Süre: 1 dakikadan kısaysa (sayaç hiç çalışmamış) ya da bir set 3 saati aşıyorsa (açık unutulmuş sayaç) gösterme
     const durations = (board.setHistory || []).map((h) => Number(h.durationMs) || 0);
     const totalMs = durations.reduce((sum, d) => sum + d, 0);
     const plausible = durations.every((d) => d < 3 * 60 * 60 * 1000);
-    const footRight = totalMs > 0 && plausible ? `Toplam süre ${formatDuration(totalMs)}` : '';
+    const footRight = totalMs >= 60 * 1000 && plausible ? `Toplam süre ${formatDuration(totalMs)}` : '';
 
     el.result.innerHTML = `
       <div class="dc-res-cap"><span>${finished ? 'Maç sonucu' : 'Maç durumu'}</span></div>
       <div class="dc-res-card">
         <div class="dc-res-teams">
-          ${team(left, 'l')}
+          ${team(left)}
           <div class="dc-res-score">
-            <div class="dc-res-b${winSide === 'l' ? ' w' : ''}">${sl}</div>
+            <div class="dc-res-b">${sl}</div>
             <span class="dc-res-dash">-</span>
-            <div class="dc-res-b${winSide === 'r' ? ' w' : ''}">${sr}</div>
+            <div class="dc-res-b">${sr}</div>
           </div>
-          ${team(right, 'r')}
+          ${team(right)}
         </div>
         ${chips.length ? `<div class="dc-res-sets">${chips.join('')}</div>` : ''}
         <div class="dc-res-foot"><span>${escHtml(board.title || '')}</span><span>${footRight}</span></div>
@@ -399,13 +421,15 @@
   }
 
   function renderOverlay(board) {
-    if (!board) return;
+    if (!board || !board.teamA || !board.teamB) return;
     latestBoard = board;
     if (board.serverTime) syncServerTime(board.serverTime);
 
     if (!el || !document.getElementById('dc-grid-main')) {
       initOverlayDOM();
     }
+    setInvalidCode(false);
+    if (el.boardWrap) el.boardWrap.classList.remove('dc-awaiting');
 
     const isSwapped = Boolean(board.courtSwapped);
     const leftData = isSwapped ? board.teamB : board.teamA;
@@ -536,13 +560,20 @@
     }
   }
 
+  let invalidRetryTimer = null;
+
   async function loadInitialState() {
+    clearTimeout(invalidRetryTimer);
     try {
       const res = await fetch(`/api/board/${encodeURIComponent(boardId)}`);
       if (res.ok) {
         const board = await res.json();
         if (board && board.serverTime) syncServerTime(board.serverTime);
         renderOverlay(board);
+      } else if (res.status === 404 && !latestBoard) {
+        // Kod yanlış: uyarı göster, skorboard sonradan oluşturulursa diye 15 sn'de bir tekrar dene
+        setInvalidCode(true);
+        invalidRetryTimer = setTimeout(loadInitialState, 15000);
       }
     } catch (e) {
       // Ignored, SSE will push state
