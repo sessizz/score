@@ -134,6 +134,11 @@
           </div>
         </div>
       </div>
+
+      <!-- Maç Sonucu kartı (butonla 10 sn, ekran ortasında) -->
+      <div class="dc-result-layer" id="dc-result-layer">
+        <div class="dc-result"><div class="dc-res-in" id="dc-result"></div></div>
+      </div>
     `;
 
     el = {
@@ -165,7 +170,10 @@
       ballAnchor: document.getElementById('dc-ball-anchor'),
       gridMain: document.getElementById('dc-grid-main'),
       histGrid: document.getElementById('dc-hist-grid'),
-      hist: document.getElementById('dc-hist')
+      hist: document.getElementById('dc-hist'),
+      boardWrap: root.querySelector('.dc-board-container'),
+      resultLayer: document.getElementById('dc-result-layer'),
+      result: document.getElementById('dc-result')
     };
   }
 
@@ -242,9 +250,89 @@
     }
   }
 
+  // ---- Maç Sonucu kartı ----
+  let resultSig = '';
+
+  function isResultActive() {
+    return Boolean(latestBoard && latestBoard.resultUntil && getServerNow() < latestBoard.resultUntil);
+  }
+
+  function formatDuration(ms) {
+    const min = Math.round(ms / 60000);
+    if (min < 60) return `${min}dk`;
+    return `${Math.floor(min / 60)}s ${min % 60}dk`;
+  }
+
+  function renderResult(board) {
+    if (!el || !el.result) return;
+    const isSwapped = Boolean(board.courtSwapped);
+    const L = isSwapped ? 'teamB' : 'teamA';
+    const R = isSwapped ? 'teamA' : 'teamB';
+    const sig = JSON.stringify([L, board.teamA, board.teamB, board.setHistory, board.status, board.title, board.currentSet]);
+    if (sig === resultSig) return;
+    resultSig = sig;
+
+    const left = board[L] || {};
+    const right = board[R] || {};
+    const finished = board.status === 'finished';
+    const sl = Number(left.setsWon) || 0;
+    const sr = Number(right.setsWon) || 0;
+    const winSide = finished ? (sl > sr ? 'l' : (sr > sl ? 'r' : null)) : null;
+
+    const team = (t, side) => {
+      const c1 = t.color || t.accentColor || '#ffed00';
+      const c2 = t.color2 || t.secondaryColor || '#002d72';
+      const logo = t.logo ? `<img src="${escHtml(t.logo)}" alt="" />` : '<div class="dc-res-nologo"></div>';
+      return `<div class="dc-res-team${winSide && winSide !== side ? ' lose' : ''}">
+        ${logo}
+        <div class="dc-res-name">${escHtml(t.name || '')}</div>
+        <div class="dc-res-stripe"><span style="background:${escHtml(c1)}"></span><span style="background:${escHtml(c2)}"></span></div>
+      </div>`;
+    };
+
+    const chips = (board.setHistory || []).map((h) => {
+      const a = L === 'teamA' ? h.scoreA : h.scoreB;
+      const b = L === 'teamA' ? h.scoreB : h.scoreA;
+      return `<div class="dc-res-set"><small>${Number(h.set) || ''}. SET</small>${a}-${b}</div>`;
+    });
+    if (!finished && ((Number(left.points) || 0) + (Number(right.points) || 0)) > 0) {
+      chips.push(`<div class="dc-res-set now"><small>${board.currentSet}. SET</small>${Number(left.points) || 0}-${Number(right.points) || 0}</div>`);
+    }
+
+    // Unutulup açık kalmış sayaç saçma süre göstermesin: 3 saati aşan set varsa süreyi gizle
+    const durations = (board.setHistory || []).map((h) => Number(h.durationMs) || 0);
+    const totalMs = durations.reduce((sum, d) => sum + d, 0);
+    const plausible = durations.every((d) => d < 3 * 60 * 60 * 1000);
+    const footRight = totalMs > 0 && plausible ? `Toplam süre ${formatDuration(totalMs)}` : '';
+
+    el.result.innerHTML = `
+      <div class="dc-res-cap"><span>${finished ? 'Maç sonucu' : 'Maç durumu'}</span></div>
+      <div class="dc-res-card">
+        <div class="dc-res-teams">
+          ${team(left, 'l')}
+          <div class="dc-res-score">
+            <div class="dc-res-b${winSide === 'l' ? ' w' : ''}">${sl}</div>
+            <span class="dc-res-dash">-</span>
+            <div class="dc-res-b${winSide === 'r' ? ' w' : ''}">${sr}</div>
+          </div>
+          ${team(right, 'r')}
+        </div>
+        ${chips.length ? `<div class="dc-res-sets">${chips.join('')}</div>` : ''}
+        <div class="dc-res-foot"><span>${escHtml(board.title || '')}</span><span>${footRight}</span></div>
+      </div>`;
+  }
+
+  function applyResultVisibility() {
+    if (!el || !el.resultLayer) return;
+    const on = isResultActive();
+    el.resultLayer.classList.toggle('is-on', on);
+    if (el.boardWrap) el.boardWrap.classList.toggle('dc-hidden-by-result', on);
+  }
+
   function updateClockDisplay() {
     if (!latestBoard || !el) return;
     applyHistoryVisibility();
+    applyResultVisibility();
 
     // Set match timer
     const clock = latestBoard.setClock || { running: false, startedAt: null, elapsedMs: 0 };
@@ -414,6 +502,7 @@
 
     // 6. Sayı geçmişi
     renderHistory(board);
+    renderResult(board);
 
     // 7. Update Clocks & Timeouts
     updateClockDisplay();

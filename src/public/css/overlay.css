@@ -453,3 +453,126 @@ html, body {
 
 .dc-points-box.dc-pop { animation: dc-box-flash .6s ease-out; }
 .dc-sets-box.dc-pop { animation: dc-box-flash .6s ease-out; }
+
+/* ---- Maç Sonucu kartı (ekran ortası, yarı saydam) ---- */
+.dc-board-container { transition: opacity .3s ease; }
+.dc-board-container.dc-hidden-by-result { opacity: 0; }
+
+.dc-result-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(.96);
+  transition: opacity .35s ease, transform .35s ease;
+  z-index: 5;
+}
+.dc-result-layer.is-on { opacity: 1; transform: none; }
+
+.dc-result { width: 60%; container-type: inline-size; }
+.dc-res-in {
+  font-family: 'Barlow Condensed', Arial Narrow, sans-serif;
+  font-size: 3.4cqw;
+  color: #fff;
+  line-height: 1;
+  filter: drop-shadow(0 .1em .3em rgba(0, 0, 0, .55));
+}
+@supports not (container-type: inline-size) {
+  .dc-res-in { font-size: 2vw; }
+}
+
+.dc-res-cap { display: flex; justify-content: center; margin-bottom: -.35em; position: relative; z-index: 2; }
+.dc-res-cap span {
+  background: linear-gradient(180deg, #ffed00, #e2cf00);
+  color: #1a2846;
+  font-weight: 800;
+  font-size: .62em;
+  letter-spacing: .14em;
+  padding: .3em 1.2em;
+  border-radius: .3em;
+  text-transform: uppercase;
+  box-shadow: 0 .08em .25em rgba(0, 0, 0, .5);
+}
+
+.dc-res-card {
+  position: relative;
+  overflow: hidden;
+  padding: .9em .8em .55em;
+  border-radius: .25em;
+  border: .03em solid rgba(255, 255, 255, .18);
+  background: linear-gradient(180deg, rgba(44, 65, 115, .72) 0%, rgba(34, 52, 92, .72) 50%, rgba(26, 40, 70, .76) 100%);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  box-shadow: inset 0 .04em 0 rgba(255, 255, 255, .22);
+}
+.dc-res-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .03) 0 2px, transparent 2px 1.2em);
+}
+
+.dc-res-teams { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .4em; }
+.dc-res-team { text-align: center; min-width: 0; }
+.dc-res-team img, .dc-res-nologo { width: 2.4em; height: 2.4em; object-fit: contain; display: block; margin: 0 auto .2em; }
+.dc-res-name {
+  font-weight: 800;
+  font-style: italic;
+  font-size: .95em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 .04em .06em rgba(0, 0, 0, .45);
+}
+.dc-res-stripe { height: .16em; width: 3.2em; margin: .22em auto 0; display: flex; }
+.dc-res-stripe span { flex: 1; }
+.dc-res-team.lose { opacity: .6; }
+
+.dc-res-score { display: flex; gap: .15em; align-items: center; }
+.dc-res-b {
+  width: 1.5em;
+  height: 1.75em;
+  border-radius: .1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.5em;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, #d61c35, #a80d23);
+  box-shadow: inset 0 .04em 0 rgba(255, 255, 255, .25);
+}
+.dc-res-b.w { background: linear-gradient(180deg, #ffed00, #e2cf00); color: #1a2846; }
+.dc-res-dash { font-weight: 800; font-size: 1.2em; color: rgba(255, 255, 255, .4); }
+
+.dc-res-sets { position: relative; display: flex; justify-content: center; flex-wrap: wrap; gap: .2em; margin-top: .7em; }
+.dc-res-set {
+  min-width: 3.3em;
+  padding: .15em .4em;
+  border-radius: .1em;
+  text-align: center;
+  font-weight: 800;
+  font-size: .78em;
+  font-variant-numeric: tabular-nums;
+  color: #17244a;
+  background: linear-gradient(180deg, rgba(246, 246, 243, .92), rgba(220, 220, 214, .92));
+}
+.dc-res-set small { display: block; font-size: .5em; letter-spacing: .08em; color: #5a6788; }
+.dc-res-set.now { box-shadow: 0 0 0 .06em #ffed00; }
+
+.dc-res-foot {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  margin-top: .6em;
+  font-weight: 700;
+  font-size: .5em;
+  color: #9fb0d6;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}

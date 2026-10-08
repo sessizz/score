@@ -442,9 +442,10 @@ function checkSetStatus(board) {
   };
 }
 
-const NO_UNDO_ACTIONS = ['undo', 'clock_start', 'clock_pause', 'clock_reset', 'show_history'];
+const NO_UNDO_ACTIONS = ['undo', 'clock_start', 'clock_pause', 'clock_reset', 'show_history', 'show_result'];
 
 const HISTORY_SHOW_MS = 5000;
+const RESULT_SHOW_MS = 10000;
 const POINT_ACTIONS = ['point_a', 'point_b', 'sub_point_a', 'sub_point_b', 'set_points'];
 
 // Sayı geçmişi: mevcut setin log'unu takım puanlarıyla eşitler (fazlayı sondan siler, eksiği sona ekler)
@@ -487,6 +488,7 @@ const OPERATOR_ALLOWED_ACTIONS = [
   'end_set',
   'new_set',
   'show_history',
+  'show_result',
   'undo'
 ];
 
@@ -544,6 +546,10 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
     case 'set_points': {
       if (typeof payload.pointsA === 'number') board.teamA.points = Math.max(0, payload.pointsA);
       if (typeof payload.pointsB === 'number') board.teamB.points = Math.max(0, payload.pointsB);
+      break;
+    }
+    case 'show_result': {
+      board.resultUntil = Date.now() + RESULT_SHOW_MS;
       break;
     }
     case 'show_history': {
@@ -627,7 +633,8 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
         set: board.currentSet,
         scoreA: board.teamA.points,
         scoreB: board.teamB.points,
-        winner
+        winner,
+        durationMs: getClockElapsed(ensureSetClock(board))
       });
 
       if (winner === 'teamA') board.teamA.setsWon += 1;
@@ -677,6 +684,7 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
     case 'reset_match': {
       board.pointLog = [];
       board.historyUntil = 0;
+      board.resultUntil = 0;
       board.currentSet = 1;
       board.setHistory = [];
       board.teamA.setsWon = 0;
@@ -724,6 +732,7 @@ function executeAction(boardId, action, payload = {}, authContext = { isOwner: t
         const previousState = stack.pop();
         previousState.setClock = board.setClock;
         previousState.historyUntil = board.historyUntil;
+        previousState.resultUntil = board.resultUntil;
         // Maç bitişiyle durmuş sayaç, bitiş geri alınınca kaldığı yerden devam eder
         const clock = previousState.setClock;
         if (board.status === 'finished' && previousState.status !== 'finished' && clock && clock.pausedByMatchEnd) {
