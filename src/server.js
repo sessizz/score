@@ -316,6 +316,33 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // Check whether a custom board code is free (owner only)
+  const codeCheckMatch = pathname.match(/^\/api\/boards\/([a-zA-Z0-9_-]+)\/code-check$/);
+  if (codeCheckMatch && method === 'GET') {
+    const user = auth.getUserFromRequest(req);
+    if (!user) return sendJson(res, 401, { success: false, error: 'Giriş yapmalısınız.' });
+    const board = store.getBoard(codeCheckMatch[1]);
+    if (!board || board.userId !== user.id) {
+      return sendJson(res, 403, { success: false, error: 'Yetkiniz yok.' });
+    }
+    const code = new URL(req.url, 'http://x').searchParams.get('code');
+    return sendJson(res, 200, { success: true, ...store.checkBoardCode(board.id, code) });
+  }
+
+  // Change a board's code (owner only)
+  const codeChangeMatch = pathname.match(/^\/api\/boards\/([a-zA-Z0-9_-]+)\/code$/);
+  if (codeChangeMatch && method === 'PUT') {
+    const user = auth.getUserFromRequest(req);
+    if (!user) return sendJson(res, 401, { success: false, error: 'Giriş yapmalısınız.' });
+    try {
+      const body = await parseJsonBody(req);
+      const board = store.renameBoard(codeChangeMatch[1], body.code, user.id);
+      return sendJson(res, 200, { success: true, boardId: board.id });
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
+  }
+
   // Get specific board by ID (Used by OBS Overlays, Spectator Screen, Admin Control)
   const boardMatch = pathname.match(/^\/api\/board\/([a-zA-Z0-9_-]+)$/);
   if (boardMatch && method === 'GET') {

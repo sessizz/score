@@ -316,6 +316,63 @@ function deleteBoard(boardId, userId) {
   return true;
 }
 
+const CUSTOM_CODE_RE = /^[a-z0-9_-]+$/;
+
+function normalizeCode(raw) {
+  return String(raw || '').trim().toLowerCase();
+}
+
+// Checks whether `raw` can be used as the code of board `boardId`.
+function checkBoardCode(boardId, raw) {
+  const code = normalizeCode(raw);
+  if (!code) return { available: false, code, error: 'Kod boş olamaz.' };
+  if (!CUSTOM_CODE_RE.test(code)) {
+    return { available: false, code, error: 'Sadece harf (a-z, Türkçe karakter olmadan), rakam, tire (-) ve alt çizgi (_) kullanılabilir.' };
+  }
+  if (code === String(boardId).toLowerCase()) return { available: true, code, unchanged: true };
+  for (const b of boards.values()) {
+    if (String(b.id).toLowerCase() === String(boardId).toLowerCase()) continue;
+    if (String(b.id).toLowerCase() === code || (b.operatorToken && b.operatorToken.toLowerCase() === code)) {
+      return { available: false, code, error: 'Bu kod başka bir skorboard tarafından kullanılıyor.' };
+    }
+  }
+  if (db.findBoardUsingCode(code, boardId)) {
+    return { available: false, code, error: 'Bu kod başka bir skorboard tarafından kullanılıyor.' };
+  }
+  return { available: true, code };
+}
+
+function renameBoard(boardId, rawCode, userId) {
+  const board = getBoard(boardId);
+  if (!board) throw new Error('Skorboard bulunamadı.');
+  if (!board.userId || board.userId !== userId) {
+    throw new Error('Bu skorboardun kodunu değiştirme yetkiniz yok.');
+  }
+  const check = checkBoardCode(board.id, rawCode);
+  if (!check.available) throw new Error(check.error);
+  const oldId = board.id;
+  if (check.unchanged) return board;
+
+  const newId = check.code;
+  if (!db.renameBoardInDb(oldId, newId, userId)) throw new Error('Skorboard güncellenemedi.');
+
+  boards.delete(oldId);
+  board.id = newId;
+  boards.set(newId, board);
+  if (undoStacks.has(oldId)) {
+    undoStacks.set(newId, undoStacks.get(oldId));
+    undoStacks.delete(oldId);
+  }
+  // Move connected stream clients to the new code and tell them (they reconnect to the new link)
+  const clients = sseClients.get(oldId);
+  sseClients.delete(oldId);
+  if (clients && clients.size) {
+    sseClients.set(newId, clients);
+    broadcastBoard(newId);
+  }
+  return board;
+}
+
 function getAllBoardsSummary(userId = null) {
   if (userId) {
     const list = db.getBoardsByUser(userId);
@@ -825,6 +882,8 @@ module.exports = {
   saveBoard,
   createBoard,
   deleteBoard,
+  renameBoard,
+  checkBoardCode,
   getAllBoardsSummary,
   executeAction,
   addSseClient,

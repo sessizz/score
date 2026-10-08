@@ -258,6 +258,26 @@ function deleteBoardFromDb(id, userId) {
   stmt.run(id, userId);
 }
 
+function renameBoardInDb(oldId, newId, userId) {
+  const row = db.prepare('SELECT state_json FROM boards WHERE id = ? AND user_id = ?').get(oldId, userId);
+  if (!row) return false;
+  let state;
+  try { state = JSON.parse(row.state_json); } catch (e) { state = {}; }
+  state.id = newId;
+  db.prepare('UPDATE boards SET id = ?, state_json = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+    .run(newId, JSON.stringify(state), Date.now(), oldId, userId);
+  return true;
+}
+
+// Returns the id of the board that already uses this code (as id or operator token), or null
+function findBoardUsingCode(code, excludeId = null) {
+  const clean = String(code).trim().toLowerCase();
+  const row = db.prepare(
+    'SELECT id FROM boards WHERE (LOWER(id) = ? OR LOWER(operator_token) = ?) AND LOWER(id) != ?'
+  ).get(clean, clean, String(excludeId || '').toLowerCase());
+  return row ? row.id : null;
+}
+
 function getAllBoardsFromDb() {
   const stmt = db.prepare('SELECT * FROM boards');
   const rows = stmt.all();
@@ -424,6 +444,8 @@ module.exports = {
   getBoardByOperatorToken,
   getBoardsByUser,
   deleteBoardFromDb,
+  renameBoardInDb,
+  findBoardUsingCode,
   getAllBoardsFromDb,
   assignLegacyDataToUser,
   getLogosForUser,
