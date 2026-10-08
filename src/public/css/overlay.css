@@ -530,7 +530,6 @@ html, body {
 }
 .dc-res-stripe { height: .16em; width: 3.2em; margin: .22em auto 0; display: flex; }
 .dc-res-stripe span { flex: 1; }
-.dc-res-team.lose { opacity: .6; }
 
 .dc-res-score { display: flex; gap: .15em; align-items: center; }
 .dc-res-b {
@@ -546,7 +545,6 @@ html, body {
   background: linear-gradient(180deg, #d61c35, #a80d23);
   box-shadow: inset 0 .04em 0 rgba(255, 255, 255, .25);
 }
-.dc-res-b.w { background: linear-gradient(180deg, #ffed00, #e2cf00); color: #1a2846; }
 .dc-res-dash { font-weight: 800; font-size: 1.2em; color: rgba(255, 255, 255, .4); }
 
 .dc-res-sets { position: relative; display: flex; justify-content: center; flex-wrap: wrap; gap: .2em; margin-top: .7em; }
