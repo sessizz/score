@@ -472,7 +472,7 @@ html, body {
 }
 .dc-result-layer.is-on { opacity: 1; transform: none; }
 
-.dc-result { width: 60%; container-type: inline-size; }
+.dc-result { width: 66%; container-type: inline-size; }
 .dc-res-in {
   font-family: 'Barlow Condensed', Arial Narrow, sans-serif;
   font-size: 3.4cqw;
