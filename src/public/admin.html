@@ -458,11 +458,12 @@
     const d = detailCache.get(id);
     if (!d) return '<span class="detail-empty">Yükleniyor...</span>';
     const canTransfer = users.length > 1;
+    const isCopy = (act) => act === 'transfer-team';
     const moveBtn = (act, itemId) => canTransfer
-      ? `<button class="act-btn small" data-act="${act}" data-item="${escapeHtml(itemId)}" title="Başka kullanıcıya aktar">↪ Aktar</button>`
+      ? `<button class="act-btn small" data-act="${act}" data-item="${escapeHtml(itemId)}" title="${isCopy(act) ? 'Başka kullanıcıya kopyala' : 'Başka kullanıcıya aktar'}">${isCopy(act) ? '⧉ Kopyala' : '↪ Aktar'}</button>`
       : '';
     const allBtn = (act, count) => canTransfer && count > 1
-      ? `<button class="act-btn small" data-act="${act}">↪ Tümünü Aktar</button>`
+      ? `<button class="act-btn small" data-act="${act}">${isCopy(act) ? '⧉ Tümünü Kopyala' : '↪ Tümünü Aktar'}</button>`
       : '';
     const boards = d.boards.length
       ? d.boards.map((b) => `<li><span>${boardLabel(b)}${b.teamA || b.teamB ? `<br><span class="detail-empty">${escapeHtml(b.teamA)} – ${escapeHtml(b.teamB)}</span>` : ''}</span>${moveBtn('transfer-board', b.id)}</li>`).join('')
@@ -588,18 +589,20 @@
     let result = null;
     let toId = null;
     const ok = await openFormDialog({
-      icon: '↪',
-      title: isBoard ? 'Skorboard Aktar' : 'Takım Aktar',
-      bodyHtml: `<p><b>${escapeHtml(from.email)}</b> hesabındaki seçili ${noun}lar başka bir kullanıcıya taşınır.${isBoard ? ' Skorboard kodu, yayın ve operatör bağlantıları değişmez.' : ''}</p>`,
+      icon: isBoard ? '↪' : '⧉',
+      title: isBoard ? 'Skorboard Aktar' : 'Takım Kopyala',
+      bodyHtml: isBoard
+        ? `<p><b>${escapeHtml(from.email)}</b> hesabındaki seçili skorboardlar başka bir kullanıcıya taşınır. Skorboard kodu, yayın ve operatör bağlantıları değişmez.</p>`
+        : `<p><b>${escapeHtml(from.email)}</b> hesabındaki seçili takımların bir kopyası (logo ve renklerle) başka bir kullanıcıya eklenir. Takımlar bu hesapta da kalır.</p>`,
       fieldsHtml: `
         <div class="detail-head" style="margin-top: 14px;">
           <span class="cd-label" style="margin: 0;">${isBoard ? 'Skorboardlar' : 'Takımlar'}</span>
           ${items.length > 1 ? '<button type="button" class="fd-select-all">Tümünü seç / kaldır</button>' : ''}
         </div>
         <div class="fd-items">${itemsHtml}</div>
-        <label class="cd-label" for="fd-target">Aktarılacak kullanıcı</label>
+        <label class="cd-label" for="fd-target">${isBoard ? 'Aktarılacak' : 'Kopyalanacak'} kullanıcı</label>
         <select class="cd-input" id="fd-target" name="target">${optionsHtml}</select>`,
-      confirmText: 'Aktar',
+      confirmText: isBoard ? 'Aktar' : 'Kopyala',
       onSubmit: async (form) => {
         const ids = [...form.querySelectorAll('input[name=item]:checked')].map((c) => c.value);
         if (!ids.length) return `En az bir ${noun} seçin.`;
@@ -620,7 +623,9 @@
     const reloads = [fromId, toId].filter((id) => expanded.has(id));
     await Promise.all(reloads.map(async (id) => detailCache.set(id, await api(`/api/admin/users/${id}`))));
     render();
-    toast(`${result.moved} ${noun} ${result.email} hesabına aktarıldı.`);
+    toast(isBoard
+      ? `${result.moved} skorboard ${result.email} hesabına aktarıldı.`
+      : `${result.copied} takım ${result.email} hesabına kopyalandı.`);
   }
 
   function render() {

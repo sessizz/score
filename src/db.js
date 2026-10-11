@@ -223,21 +223,6 @@ function transferBoardsInDb(boardIds, toUserId) {
   return moved;
 }
 
-// Only user-owned teams move; system defaults stay shared
-function transferTeamsInDb(teamIds, toUserId) {
-  const update = db.prepare('UPDATE logos SET user_id = ?, updated_at = ? WHERE id = ? AND user_id IS NOT NULL AND is_default = 0');
-  let moved = 0;
-  db.exec('BEGIN');
-  try {
-    for (const id of teamIds) moved += Number(update.run(toUserId, Date.now(), id).changes);
-    db.exec('COMMIT');
-  } catch (e) {
-    db.exec('ROLLBACK');
-    throw e;
-  }
-  return moved;
-}
-
 // Removes the user with all of their sessions, boards and custom teams
 function deleteUserCascade(id) {
   db.exec('BEGIN');
@@ -531,7 +516,6 @@ module.exports = {
   deleteUserSessions,
   deleteUserCascade,
   transferBoardsInDb,
-  transferTeamsInDb,
   createSession,
   getSessionUser,
   deleteSession,

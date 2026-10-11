@@ -62,6 +62,41 @@ function createUser({ email, password, isVerified = true }) {
   return toPublicUser(row);
 }
 
+// Teams are copied, not moved: the source keeps its team and the target gets an independent copy
+function copyTeams(teamIds, toUserId) {
+  let copied = 0;
+  for (const id of teamIds) {
+    const team = db.getTeamById(id);
+    if (!team || team.isDefault || !team.userId) continue;
+
+    // Uploaded logo gets its own file so deleting one team never removes the other's logo
+    let logo = team.logo;
+    let filename = null;
+    if (team.filename) {
+      const src = path.join(teams.LOGOS_DIR, path.basename(team.filename));
+      if (fs.existsSync(src)) {
+        filename = 'team_' + crypto.randomBytes(8).toString('hex') + path.extname(src);
+        fs.copyFileSync(src, path.join(teams.LOGOS_DIR, filename));
+        logo = `/uploads/logos/${filename}`;
+      }
+    }
+
+    db.saveTeamToDb({
+      id: 'team_' + crypto.randomBytes(8).toString('hex'),
+      userId: toUserId,
+      name: team.name,
+      shortName: team.shortName,
+      logo,
+      color: team.color,
+      color2: team.color2,
+      textColor: team.textColor,
+      filename
+    });
+    copied++;
+  }
+  return copied;
+}
+
 function transfer({ type, ids, toUserId }) {
   if (!Array.isArray(ids) || ids.length === 0) throw new Error('Aktarılacak öğe seçilmedi.');
   const target = db.getUserById(toUserId);
@@ -74,7 +109,7 @@ function transfer({ type, ids, toUserId }) {
     return { moved, email: target.email };
   }
   if (type === 'team') {
-    return { moved: db.transferTeamsInDb(cleanIds, target.id), email: target.email };
+    return { copied: copyTeams(cleanIds, target.id), email: target.email };
   }
   throw new Error('Geçersiz aktarım türü.');
 }
