@@ -326,6 +326,15 @@ function forgetUserBoards(userId) {
   }
 }
 
+// Keep cached boards' owner in line after an admin transfer, otherwise the next save would restore the old owner
+function setBoardsOwner(boardIds, userId) {
+  for (const id of boardIds) {
+    const b = boards.get(id);
+    if (b) b.userId = userId;
+    for (const snapshot of undoStacks.get(id) || []) snapshot.userId = userId;
+  }
+}
+
 const CUSTOM_CODE_RE = /^[a-z0-9_-]+$/;
 
 function normalizeCode(raw) {
@@ -902,6 +911,7 @@ module.exports = {
   createBoard,
   deleteBoard,
   forgetUserBoards,
+  setBoardsOwner,
   renameBoard,
   checkBoardCode,
   getAllBoardsSummary,

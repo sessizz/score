@@ -41,6 +41,44 @@ function getUserDetail(id) {
   return { boards, teams: userTeams };
 }
 
+function createUser({ email, password, isVerified = true }) {
+  const cleanEmail = String(email || '').toLowerCase().trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) throw new Error('Geçerli bir e-posta adresi giriniz.');
+  if (!password || String(password).length < 6) throw new Error('Şifre en az 6 karakter olmalıdır.');
+  if (db.getUserByEmail(cleanEmail)) throw new Error('Bu e-posta adresi zaten kayıtlı.');
+
+  const id = 'usr_' + crypto.randomBytes(8).toString('hex');
+  const salt = crypto.randomBytes(16).toString('hex');
+  db.createUser({
+    id,
+    email: cleanEmail,
+    passwordHash: auth.hashPassword(String(password), salt),
+    salt,
+    verificationCode: null,
+    verificationExpiresAt: null
+  });
+  if (isVerified) db.setUserVerified(id, true);
+  const row = db.listUsersWithStats().find((u) => u.id === id);
+  return toPublicUser(row);
+}
+
+function transfer({ type, ids, toUserId }) {
+  if (!Array.isArray(ids) || ids.length === 0) throw new Error('Aktarılacak öğe seçilmedi.');
+  const target = db.getUserById(toUserId);
+  if (!target) throw new Error('Hedef kullanıcı bulunamadı.');
+  const cleanIds = ids.map(String);
+
+  if (type === 'board') {
+    const moved = db.transferBoardsInDb(cleanIds, target.id);
+    store.setBoardsOwner(cleanIds, target.id);
+    return { moved, email: target.email };
+  }
+  if (type === 'team') {
+    return { moved: db.transferTeamsInDb(cleanIds, target.id), email: target.email };
+  }
+  throw new Error('Geçersiz aktarım türü.');
+}
+
 // Admins cannot be suspended or deleted from the panel, so nobody can lock themselves out
 function requireTarget(id, actor, { allowAdmin = false } = {}) {
   const target = db.getUserById(id);
@@ -93,4 +131,4 @@ function deleteUser(id, actor) {
   return { email: target.email };
 }
 
-module.exports = { listUsers, getUserDetail, updateUser, logoutUser, deleteUser };
+module.exports = { listUsers, createUser, transfer, getUserDetail, updateUser, logoutUser, deleteUser };

@@ -221,7 +221,71 @@
       letter-spacing: 0.5px;
     }
     .detail-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
-    .detail-list li { color: var(--text-main); overflow-wrap: anywhere; }
+    .detail-list li {
+      color: var(--text-main);
+      overflow-wrap: anywhere;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .detail-head .detail-title { margin-bottom: 0; }
+    .act-btn.small { padding: 4px 8px; font-size: 0.72rem; }
+    .btn-create {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.88rem;
+      border: none;
+      background: var(--fb-yellow);
+      color: var(--btn-primary-text);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-create:hover { background: var(--fb-yellow-hover); }
+
+    /* Form dialogs (create user, transfer) */
+    .fd-box { max-width: 460px; }
+    .fd-box .cd-input { font-size: 0.95rem; letter-spacing: 0; padding: 11px 12px; }
+    .fd-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .fd-items {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 6px;
+      background: var(--bg-input);
+    }
+    .fd-items label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 8px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      color: var(--text-main);
+      cursor: pointer;
+      overflow-wrap: anywhere;
+    }
+    .fd-items label:hover { background: var(--overlay-bg); }
+    .fd-items code { color: var(--text-muted); font-size: 0.78rem; }
+    .fd-select-all { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); background: none; border: none; cursor: pointer; padding: 0; }
+    .fd-select-all:hover { color: var(--text-main); }
     .detail-list code { color: var(--text-muted); font-size: 0.78rem; }
     .detail-empty { color: var(--text-muted); }
 
@@ -261,6 +325,7 @@
       .user-row { grid-template-columns: 1fr; }
       .user-actions { justify-content: flex-start; }
       .detail-grid { grid-template-columns: 1fr; }
+      .btn-create { width: 100%; }
     }
   </style>
 </head>
@@ -302,6 +367,7 @@
       <option value="disabled">Askıda</option>
       <option value="admin">Yöneticiler</option>
     </select>
+    <button type="button" class="btn-create" id="btn-create-user">+ Yeni Kullanıcı</button>
   </div>
 
   <div class="user-list" id="user-list">
@@ -381,19 +447,180 @@
     });
   }
 
+  function boardLabel(b) {
+    return `${escapeHtml(b.title || b.id)} <code>${escapeHtml(b.id)}</code>`;
+  }
+  function teamLabel(t) {
+    return `${escapeHtml(t.name)}${t.shortName ? ` <code>${escapeHtml(t.shortName)}</code>` : ''}`;
+  }
+
   function renderDetail(id) {
     const d = detailCache.get(id);
     if (!d) return '<span class="detail-empty">Yükleniyor...</span>';
+    const canTransfer = users.length > 1;
+    const moveBtn = (act, itemId) => canTransfer
+      ? `<button class="act-btn small" data-act="${act}" data-item="${escapeHtml(itemId)}" title="Başka kullanıcıya aktar">↪ Aktar</button>`
+      : '';
+    const allBtn = (act, count) => canTransfer && count > 1
+      ? `<button class="act-btn small" data-act="${act}">↪ Tümünü Aktar</button>`
+      : '';
     const boards = d.boards.length
-      ? d.boards.map((b) => `<li>${escapeHtml(b.title || b.id)} <code>${escapeHtml(b.id)}</code>${b.teamA || b.teamB ? `<br><span class="detail-empty">${escapeHtml(b.teamA)} – ${escapeHtml(b.teamB)}</span>` : ''}</li>`).join('')
+      ? d.boards.map((b) => `<li><span>${boardLabel(b)}${b.teamA || b.teamB ? `<br><span class="detail-empty">${escapeHtml(b.teamA)} – ${escapeHtml(b.teamB)}</span>` : ''}</span>${moveBtn('transfer-board', b.id)}</li>`).join('')
       : '<li class="detail-empty">Skorboard yok</li>';
     const teams = d.teams.length
-      ? d.teams.map((t) => `<li>${escapeHtml(t.name)}${t.shortName ? ` <code>${escapeHtml(t.shortName)}</code>` : ''}</li>`).join('')
+      ? d.teams.map((t) => `<li><span>${teamLabel(t)}</span>${moveBtn('transfer-team', t.id)}</li>`).join('')
       : '<li class="detail-empty">Takım yok</li>';
     return `<div class="detail-grid">
-      <div><div class="detail-title">Skorboardlar</div><ul class="detail-list">${boards}</ul></div>
-      <div><div class="detail-title">Takımlar</div><ul class="detail-list">${teams}</ul></div>
+      <div><div class="detail-head"><div class="detail-title">Skorboardlar</div>${allBtn('transfer-board', d.boards.length)}</div><ul class="detail-list">${boards}</ul></div>
+      <div><div class="detail-head"><div class="detail-title">Takımlar</div>${allBtn('transfer-team', d.teams.length)}</div><ul class="detail-list">${teams}</ul></div>
     </div>`;
+  }
+
+  // Tema uyumlu form penceresi. onSubmit(form) -> Promise<string>: boş = başarılı (pencere kapanır), dolu = hata mesajı
+  function openFormDialog({ icon, title, bodyHtml, fieldsHtml, confirmText, onSubmit }) {
+    return new Promise((resolve) => {
+      const backdrop = document.createElement('div');
+      backdrop.className = 'cd-backdrop';
+      backdrop.innerHTML = `
+        <form class="cd-box fd-box" role="dialog" aria-modal="true" autocomplete="off" novalidate>
+          <div class="cd-head">
+            <span class="cd-icon cd-primary">${icon}</span>
+            <h3 class="cd-title">${escapeHtml(title)}</h3>
+          </div>
+          ${bodyHtml ? `<div class="cd-body">${bodyHtml}</div>` : ''}
+          ${fieldsHtml}
+          <div class="cd-error" aria-live="polite"></div>
+          <div class="cd-actions">
+            <button type="button" class="cd-btn cd-cancel">Vazgeç</button>
+            <button type="submit" class="cd-btn cd-confirm cd-primary">${escapeHtml(confirmText)}</button>
+          </div>
+        </form>`;
+      document.body.appendChild(backdrop);
+      requestAnimationFrame(() => backdrop.classList.add('cd-open'));
+
+      const form = backdrop.querySelector('form');
+      const errEl = backdrop.querySelector('.cd-error');
+      const btnOk = backdrop.querySelector('.cd-confirm');
+      let busy = false;
+      setTimeout(() => { const first = form.querySelector('input:not([type=checkbox]), select'); if (first) first.focus(); }, 60);
+
+      function close(result) {
+        document.removeEventListener('keydown', onKey, true);
+        backdrop.classList.remove('cd-open');
+        setTimeout(() => backdrop.remove(), 160);
+        resolve(result);
+      }
+      function onKey(e) {
+        if (e.key === 'Escape' && !busy) { e.preventDefault(); close(false); }
+      }
+      document.addEventListener('keydown', onKey, true);
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (busy) return;
+        busy = true;
+        btnOk.disabled = true;
+        errEl.textContent = '';
+        let err = '';
+        try { err = await onSubmit(form); } catch (ex) { err = ex.message || 'İşlem başarısız.'; }
+        busy = false;
+        btnOk.disabled = false;
+        if (err) { errEl.textContent = err; return; }
+        close(true);
+      });
+      const selectAll = form.querySelector('.fd-select-all');
+      if (selectAll) {
+        selectAll.addEventListener('click', () => {
+          const boxes = [...form.querySelectorAll('.fd-items input[type=checkbox]')];
+          const allOn = boxes.every((b) => b.checked);
+          boxes.forEach((b) => { b.checked = !allOn; });
+        });
+      }
+      backdrop.querySelector('.cd-cancel').addEventListener('click', () => { if (!busy) close(false); });
+      backdrop.addEventListener('click', (e) => { if (e.target === backdrop && !busy) close(false); });
+    });
+  }
+
+  async function openCreateUser() {
+    const ok = await openFormDialog({
+      icon: '👤',
+      title: 'Yeni Kullanıcı',
+      bodyHtml: '<p>Kullanıcı bu e-posta ve şifre ile hemen giriş yapabilir.</p>',
+      fieldsHtml: `
+        <label class="cd-label" for="fd-email">E-posta</label>
+        <input class="cd-input" id="fd-email" name="email" type="email" placeholder="ornek@eposta.com" autocapitalize="off" spellcheck="false">
+        <label class="cd-label" for="fd-password">Şifre</label>
+        <input class="cd-input" id="fd-password" name="password" type="text" placeholder="En az 6 karakter" autocapitalize="off" spellcheck="false">
+        <label class="fd-check"><input type="checkbox" name="verified" checked> E-postayı doğrulanmış say</label>`,
+      confirmText: 'Kullanıcı Oluştur',
+      onSubmit: async (form) => {
+        const email = form.email.value.trim();
+        const password = form.password.value;
+        if (!email) return 'Bir e-posta girin.';
+        if (password.length < 6) return 'Şifre en az 6 karakter olmalıdır.';
+        const data = await api('/api/admin/users', {
+          method: 'POST',
+          body: JSON.stringify({ email, password, isVerified: form.verified.checked })
+        });
+        users.unshift(data.user);
+        return '';
+      }
+    });
+    if (ok) {
+      render();
+      toast('Kullanıcı oluşturuldu.');
+    }
+  }
+
+  async function openTransfer(fromId, type, onlyItemId) {
+    const from = users.find((u) => u.id === fromId);
+    const d = detailCache.get(fromId);
+    if (!from || !d) return;
+    const isBoard = type === 'board';
+    const items = isBoard ? d.boards : d.teams;
+    const targets = users.filter((u) => u.id !== fromId);
+    const noun = isBoard ? 'skorboard' : 'takım';
+
+    const itemsHtml = items.map((it) => `
+      <label><input type="checkbox" name="item" value="${escapeHtml(it.id)}" ${!onlyItemId || onlyItemId === it.id ? 'checked' : ''}>
+        <span>${isBoard ? boardLabel(it) : teamLabel(it)}</span></label>`).join('');
+    const optionsHtml = targets.map((u) => `<option value="${u.id}">${escapeHtml(u.email)}${u.isDisabled ? ' (askıda)' : ''}</option>`).join('');
+
+    let result = null;
+    let toId = null;
+    const ok = await openFormDialog({
+      icon: '↪',
+      title: isBoard ? 'Skorboard Aktar' : 'Takım Aktar',
+      bodyHtml: `<p><b>${escapeHtml(from.email)}</b> hesabındaki seçili ${noun}lar başka bir kullanıcıya taşınır.${isBoard ? ' Skorboard kodu, yayın ve operatör bağlantıları değişmez.' : ''}</p>`,
+      fieldsHtml: `
+        <div class="detail-head" style="margin-top: 14px;">
+          <span class="cd-label" style="margin: 0;">${isBoard ? 'Skorboardlar' : 'Takımlar'}</span>
+          ${items.length > 1 ? '<button type="button" class="fd-select-all">Tümünü seç / kaldır</button>' : ''}
+        </div>
+        <div class="fd-items">${itemsHtml}</div>
+        <label class="cd-label" for="fd-target">Aktarılacak kullanıcı</label>
+        <select class="cd-input" id="fd-target" name="target">${optionsHtml}</select>`,
+      confirmText: 'Aktar',
+      onSubmit: async (form) => {
+        const ids = [...form.querySelectorAll('input[name=item]:checked')].map((c) => c.value);
+        if (!ids.length) return `En az bir ${noun} seçin.`;
+        toId = form.target.value;
+        result = await api('/api/admin/transfer', {
+          method: 'POST',
+          body: JSON.stringify({ type, ids, toUserId: form.target.value })
+        });
+        return '';
+      }
+    });
+    if (!ok) return;
+
+    // Counts and detail lists for both users are refreshed from the server
+    detailCache.delete(fromId);
+    detailCache.delete(toId);
+    await loadUsers();
+    const reloads = [fromId, toId].filter((id) => expanded.has(id));
+    await Promise.all(reloads.map(async (id) => detailCache.set(id, await api(`/api/admin/users/${id}`))));
+    render();
+    toast(`${result.moved} ${noun} ${result.email} hesabına aktarıldı.`);
   }
 
   function render() {
@@ -446,12 +673,17 @@
     if (i !== -1) users[i] = updated;
   }
 
-  async function handleAction(id, act) {
+  async function handleAction(id, act, itemId) {
     const u = users.find((x) => x.id === id);
     if (!u) return;
     const email = `<b>${escapeHtml(u.email)}</b>`;
 
     try {
+      if (act === 'transfer-board' || act === 'transfer-team') {
+        await openTransfer(id, act === 'transfer-board' ? 'board' : 'team', itemId);
+        return;
+      }
+
       if (act === 'detail') {
         if (expanded.has(id)) { expanded.delete(id); render(); return; }
         expanded.add(id);
@@ -549,8 +781,9 @@
     const btn = e.target.closest('.act-btn');
     if (!btn || btn.disabled) return;
     const item = btn.closest('.user-item');
-    handleAction(item.dataset.id, btn.dataset.act);
+    handleAction(item.dataset.id, btn.dataset.act, btn.dataset.item);
   });
+  document.getElementById('btn-create-user').addEventListener('click', openCreateUser);
   document.getElementById('search').addEventListener('input', render);
   document.getElementById('filter').addEventListener('change', render);
 

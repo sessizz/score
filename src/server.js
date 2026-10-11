@@ -197,6 +197,16 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { success: true, users: admin.listUsers(), currentUserId: user.id });
       }
 
+      if (pathname === '/api/admin/users' && method === 'POST') {
+        const body = await parseJsonBody(req);
+        return sendJson(res, 201, { success: true, user: admin.createUser(body) });
+      }
+
+      if (pathname === '/api/admin/transfer' && method === 'POST') {
+        const body = await parseJsonBody(req);
+        return sendJson(res, 200, { success: true, ...admin.transfer(body) });
+      }
+
       const userMatch = pathname.match(/^\/api\/admin\/users\/([a-zA-Z0-9_-]+)(\/logout)?$/);
       if (userMatch) {
         const targetId = userMatch[1];

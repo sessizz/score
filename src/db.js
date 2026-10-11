@@ -199,6 +199,45 @@ function deleteUserSessions(id) {
   db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);
 }
 
+// Moves boards between owners; the JSON copy keeps userId in sync with the column
+function transferBoardsInDb(boardIds, toUserId) {
+  const select = db.prepare('SELECT state_json FROM boards WHERE id = ?');
+  const update = db.prepare('UPDATE boards SET user_id = ?, state_json = ?, updated_at = ? WHERE id = ?');
+  let moved = 0;
+  db.exec('BEGIN');
+  try {
+    for (const id of boardIds) {
+      const row = select.get(id);
+      if (!row) continue;
+      let state;
+      try { state = JSON.parse(row.state_json); } catch (e) { state = {}; }
+      state.userId = toUserId;
+      update.run(toUserId, JSON.stringify(state), Date.now(), id);
+      moved++;
+    }
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+  return moved;
+}
+
+// Only user-owned teams move; system defaults stay shared
+function transferTeamsInDb(teamIds, toUserId) {
+  const update = db.prepare('UPDATE logos SET user_id = ?, updated_at = ? WHERE id = ? AND user_id IS NOT NULL AND is_default = 0');
+  let moved = 0;
+  db.exec('BEGIN');
+  try {
+    for (const id of teamIds) moved += Number(update.run(toUserId, Date.now(), id).changes);
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+  return moved;
+}
+
 // Removes the user with all of their sessions, boards and custom teams
 function deleteUserCascade(id) {
   db.exec('BEGIN');
@@ -491,6 +530,8 @@ module.exports = {
   setUserPassword,
   deleteUserSessions,
   deleteUserCascade,
+  transferBoardsInDb,
+  transferTeamsInDb,
   createSession,
   getSessionUser,
   deleteSession,
