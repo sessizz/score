@@ -2,6 +2,21 @@ const crypto = require('crypto');
 const db = require('./db');
 const mailer = require('./mailer');
 
+// alperbah@gmail.com her zaman yönetici; ADMIN_EMAILS (virgülle ayrılmış) ile ek yönetici eklenebilir
+const DEFAULT_ADMIN_EMAILS = ['alperbah@gmail.com'];
+
+function getAdminEmails() {
+  const extra = String(process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return [...new Set([...DEFAULT_ADMIN_EMAILS, ...extra])];
+}
+
+function isAdmin(user) {
+  return Boolean(user && user.email && getAdminEmails().includes(String(user.email).toLowerCase()));
+}
+
 /**
  * Hash password with salt using scrypt
  */
@@ -117,6 +132,10 @@ async function verify(email, code) {
     throw new Error('Kullanıcı bulunamadı.');
   }
 
+  if (user.is_disabled) {
+    throw new Error('Hesabınız askıya alınmış. Lütfen yönetici ile iletişime geçin.');
+  }
+
   if (user.is_verified) {
     // Already verified, just log in
     const session = db.createSession(user.id);
@@ -195,6 +214,10 @@ async function login(email, password) {
     throw new Error('E-posta veya şifre hatalı.');
   }
 
+  if (user.is_disabled) {
+    throw new Error('Hesabınız askıya alınmış. Lütfen yönetici ile iletişime geçin.');
+  }
+
   if (!user.is_verified) {
     // Send a fresh code and prompt verification
     const code = generateVerificationCode();
@@ -248,6 +271,8 @@ function getUserFromRequest(req) {
 }
 
 module.exports = {
+  isAdmin,
+  getAdminEmails,
   hashPassword,
   parseCookies,
   createSessionCookie,

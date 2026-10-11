@@ -105,7 +105,7 @@
         e.preventDefault();
         if (busy) return;
         const value = input.value.trim();
-        if (!value) { errEl.textContent = 'Bir kod girin.'; return; }
+        if (!value) { errEl.textContent = opts.emptyText || 'Bir kod girin.'; return; }
         busy = true;
         btnOk.disabled = true;
         btnOk.textContent = 'Kontrol ediliyor...';

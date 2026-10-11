@@ -77,6 +77,7 @@ try { db.exec("ALTER TABLE logos ADD COLUMN short_name TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE logos ADD COLUMN color TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE logos ADD COLUMN color2 TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE logos ADD COLUMN text_color TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE users ADD COLUMN is_disabled INTEGER DEFAULT 0;"); } catch (e) {}
 
 // Ensure all existing boards have an operator_token
 try {
@@ -150,7 +151,7 @@ function getSessionUser(token) {
     SELECT u.id, u.email, u.is_verified, u.created_at
     FROM sessions s
     JOIN users u ON s.user_id = u.id
-    WHERE s.token = ? AND s.expires_at > ?
+    WHERE s.token = ? AND s.expires_at > ? AND COALESCE(u.is_disabled, 0) = 0
   `);
   return stmt.get(token, Date.now()) || null;
 }
@@ -163,6 +164,55 @@ function deleteSession(token) {
 function cleanExpiredSessions() {
   const stmt = db.prepare('DELETE FROM sessions WHERE expires_at <= ?');
   stmt.run(Date.now());
+}
+
+// --- Admin: User Management ---
+function listUsersWithStats() {
+  const now = Date.now();
+  return db.prepare(`
+    SELECT u.id, u.email, u.is_verified, COALESCE(u.is_disabled, 0) AS is_disabled, u.created_at,
+      (SELECT COUNT(*) FROM boards b WHERE b.user_id = u.id) AS board_count,
+      (SELECT COUNT(*) FROM logos l WHERE l.user_id = u.id AND l.is_default = 0) AS team_count,
+      (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id AND s.expires_at > ?) AS session_count,
+      (SELECT MAX(s.created_at) FROM sessions s WHERE s.user_id = u.id) AS last_login_at
+    FROM users u
+    ORDER BY u.created_at DESC
+  `).all(now);
+}
+
+function setUserVerified(id, verified) {
+  db.prepare(`
+    UPDATE users SET is_verified = ?, verification_code = NULL, verification_expires_at = NULL WHERE id = ?
+  `).run(verified ? 1 : 0, id);
+}
+
+function setUserDisabled(id, disabled) {
+  db.prepare('UPDATE users SET is_disabled = ? WHERE id = ?').run(disabled ? 1 : 0, id);
+  if (disabled) deleteUserSessions(id);
+}
+
+function setUserPassword(id, passwordHash, salt) {
+  db.prepare('UPDATE users SET password_hash = ?, salt = ? WHERE id = ?').run(passwordHash, salt, id);
+}
+
+function deleteUserSessions(id) {
+  db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);
+}
+
+// Removes the user with all of their sessions, boards and custom teams
+function deleteUserCascade(id) {
+  db.exec('BEGIN');
+  try {
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM boards WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM logos WHERE user_id = ? AND is_default = 0').run(id);
+    db.prepare('UPDATE logos SET user_id = NULL WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
 }
 
 // --- Boards DB Functions ---
@@ -435,6 +485,12 @@ module.exports = {
   getUserCount,
   verifyUser,
   updateVerificationCode,
+  listUsersWithStats,
+  setUserVerified,
+  setUserDisabled,
+  setUserPassword,
+  deleteUserSessions,
+  deleteUserCascade,
   createSession,
   getSessionUser,
   deleteSession,

@@ -316,6 +316,16 @@ function deleteBoard(boardId, userId) {
   return true;
 }
 
+// Drop a deleted user's boards from the in-memory cache (DB rows are removed separately)
+function forgetUserBoards(userId) {
+  for (const [id, b] of boards.entries()) {
+    if (b.userId === userId) {
+      boards.delete(id);
+      undoStacks.delete(id);
+    }
+  }
+}
+
 const CUSTOM_CODE_RE = /^[a-z0-9_-]+$/;
 
 function normalizeCode(raw) {
@@ -891,6 +901,7 @@ module.exports = {
   saveBoard,
   createBoard,
   deleteBoard,
+  forgetUserBoards,
   renameBoard,
   checkBoardCode,
   getAllBoardsSummary,

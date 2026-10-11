@@ -93,13 +93,7 @@ function createZip(entries, when = new Date()) {
 }
 
 // ---- Yedek içeriği ----
-function isAdmin(user) {
-  const list = String(process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  return Boolean(user && user.email && list.includes(String(user.email).toLowerCase()));
-}
+const { isAdmin } = require('./auth');
 
 function readLogoFile(filename) {
   if (!filename) return null;

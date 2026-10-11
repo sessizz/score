@@ -6,6 +6,7 @@ const logos = require('./logos');
 const teams = require('./teams');
 const auth = require('./auth');
 const backup = require('./backup');
+const admin = require('./admin');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -181,8 +182,43 @@ const server = http.createServer(async (req, res) => {
     }
     return sendJson(res, 200, {
       authenticated: true,
-      user: { id: user.id, email: user.email, isVerified: user.is_verified }
+      user: { id: user.id, email: user.email, isVerified: user.is_verified, isAdmin: auth.isAdmin(user) }
     });
+  }
+
+  // --- Admin: Kullanıcı Yönetimi (yalnızca yöneticiler) ---
+  if (pathname.startsWith('/api/admin/')) {
+    const user = auth.getUserFromRequest(req);
+    if (!user) return sendJson(res, 401, { success: false, error: 'Giriş yapmalısınız.' });
+    if (!auth.isAdmin(user)) return sendJson(res, 403, { success: false, error: 'Bu işlem için yönetici yetkisi gerekir.' });
+
+    try {
+      if (pathname === '/api/admin/users' && method === 'GET') {
+        return sendJson(res, 200, { success: true, users: admin.listUsers(), currentUserId: user.id });
+      }
+
+      const userMatch = pathname.match(/^\/api\/admin\/users\/([a-zA-Z0-9_-]+)(\/logout)?$/);
+      if (userMatch) {
+        const targetId = userMatch[1];
+        if (userMatch[2] && method === 'POST') {
+          admin.logoutUser(targetId, user);
+          return sendJson(res, 200, { success: true });
+        }
+        if (!userMatch[2] && method === 'GET') {
+          return sendJson(res, 200, { success: true, ...admin.getUserDetail(targetId) });
+        }
+        if (!userMatch[2] && method === 'PUT') {
+          const body = await parseJsonBody(req);
+          return sendJson(res, 200, { success: true, user: admin.updateUser(targetId, body, user) });
+        }
+        if (!userMatch[2] && method === 'DELETE') {
+          return sendJson(res, 200, { success: true, ...admin.deleteUser(targetId, user) });
+        }
+      }
+      return sendJson(res, 404, { success: false, error: 'Bulunamadı.' });
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
   }
 
   // --- Yedek (giriş gerekli): /api/backup/info özet, /api/backup zip indirir ---
@@ -450,6 +486,20 @@ const server = http.createServer(async (req, res) => {
       }
     }
     return serveStaticFile(res, path.join(PUBLIC_DIR, 'control.html'));
+  }
+
+  // Admin: Kullanıcı Yönetimi sayfası
+  if (pathname === '/admin' || pathname === '/admin.html') {
+    const user = auth.getUserFromRequest(req);
+    if (!user) {
+      res.writeHead(302, { 'Location': '/login' });
+      return res.end();
+    }
+    if (!auth.isAdmin(user)) {
+      res.writeHead(302, { 'Location': '/' });
+      return res.end();
+    }
+    return serveStaticFile(res, path.join(PUBLIC_DIR, 'admin.html'));
   }
 
   // OBS Overlay

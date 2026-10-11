@@ -14,6 +14,7 @@ services:
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - RESEND_FROM=${RESEND_FROM:-Voleybol Skorboard <onboarding@resend.dev>}
       - APP_URL=${APP_URL:-http://localhost:3000}
+      - ADMIN_EMAILS=${ADMIN_EMAILS:-}
     volumes:
       - scoreboard_data:/app/data
     healthcheck:

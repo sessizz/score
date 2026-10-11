@@ -44,7 +44,10 @@
    APP_URL=https://skor.alanadiniz.com
    RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
    RESEND_FROM=Voleybol Skorboard <onboarding@resend.dev>
+   ADMIN_EMAILS=diger.yonetici@ornek.com
    ```
+   *(Not: `alperbah@gmail.com` her zaman yöneticidir; `ADMIN_EMAILS` ile virgülle ayrılmış ek yöneticiler tanımlanabilir. Yöneticiler `/admin` sayfasından kullanıcıları doğrulayabilir, askıya alabilir, şifrelerini sıfırlayabilir ve silebilir.)*
+
    *(Not: `RESEND_API_KEY` girilmediğinde doğrulama kodları sunucu konsoluna yazdırılır; geliştirme ve test modunda sizi asla kitlemez).*
 5. **Storage / Persistent Volume** bölümüne:
    - Volume Adı: `scoreboard_data`

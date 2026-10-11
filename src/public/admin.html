@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kullanıcı Yönetimi | Voleybol Skorboard</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="icon" href="/assets/volleyball.svg">
+  <script>
+  (function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}else{var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',d?'dark':'light')}})();
+  </script>
+  <style>
+    .admin-container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 1.4rem;
+      color: var(--text-heading);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .nav-brand span span { color: var(--fb-yellow); }
+    .nav-brand img { width: 32px; height: 32px; }
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      text-decoration: none;
+      border: 1px solid var(--border-color);
+      background: var(--overlay-bg);
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-nav:hover {
+      background: var(--overlay-hover);
+      border-color: var(--overlay-border-strong);
+    }
+    .btn-nav.active {
+      background: var(--accent-yellow-bg);
+      border-color: var(--accent-yellow-border);
+    }
+
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--text-heading);
+      margin-bottom: 4px;
+    }
+    .page-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--text-heading);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .search-input, .filter-select {
+      padding: 8px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .search-input { flex: 1; min-width: 200px; }
+    .search-input:focus, .filter-select:focus { border-color: var(--fb-yellow); }
+
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .user-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .user-item.disabled { opacity: 0.7; }
+    .user-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 18px;
+    }
+    .user-email {
+      font-weight: 800;
+      color: var(--text-heading);
+      font-size: 0.98rem;
+      overflow-wrap: anywhere;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .user-meta {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-top: 4px;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      border: 1px solid transparent;
+    }
+    .badge-admin { background: var(--accent-yellow-bg); border-color: var(--accent-yellow-border); color: var(--text-heading); }
+    .badge-ok { background: var(--success-bg); border-color: var(--success-border); color: var(--success-text); }
+    .badge-warn { background: var(--overlay-bg); border-color: var(--overlay-border); color: var(--accent-amber-text); }
+    .badge-off { background: var(--error-bg); border-color: var(--error-border); color: var(--error-text); }
+    .badge-me { background: var(--overlay-bg); border-color: var(--overlay-border); color: var(--text-tertiary); }
+
+    .user-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .act-btn {
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.78rem;
+      border: 1px solid var(--border-color);
+      background: var(--overlay-bg);
+      color: var(--text-main);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .act-btn:hover { background: var(--overlay-hover); border-color: var(--overlay-border-strong); }
+    .act-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .act-btn.danger { background: var(--error-bg); border-color: var(--error-border); color: var(--error-text); }
+    .act-btn.danger:hover { background: var(--error-border); }
+
+    .user-detail {
+      display: none;
+      border-top: 1px solid var(--border-color);
+      padding: 14px 18px;
+      background: var(--bg-surface);
+      font-size: 0.85rem;
+    }
+    .user-item.expanded .user-detail { display: block; }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .detail-title {
+      font-weight: 800;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .detail-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+    .detail-list li { color: var(--text-main); overflow-wrap: anywhere; }
+    .detail-list code { color: var(--text-muted); font-size: 0.78rem; }
+    .detail-empty { color: var(--text-muted); }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px dashed var(--border-color);
+      border-radius: 12px;
+    }
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--modal-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 2000;
+      max-width: calc(100vw - 32px);
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.error { border-color: var(--error-border); color: var(--error-text); }
+
+    @media (max-width: 760px) {
+      .admin-container { padding: 16px 16px 60px; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .user-row { grid-template-columns: 1fr; }
+      .user-actions { justify-content: flex-start; }
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-container">
+  <header class="top-nav">
+    <a href="/" class="nav-brand">
+      <img src="/assets/volleyball.svg" alt="Logo">
+      <span>Voleybol<span>Skor</span></span>
+    </a>
+    <div class="nav-user">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir" aria-label="Tema Değiştir">
+        <span class="icon-moon">🌙</span>
+        <span class="icon-sun">☀️</span>
+      </button>
+      <a href="/" class="btn-nav">🏠 Ana Panel</a>
+      <a href="/teams" class="btn-nav">🏐 Takımlar</a>
+      <a href="/admin" class="btn-nav active">🛡️ Kullanıcılar</a>
+    </div>
+  </header>
+
+  <h1 class="page-title">Kullanıcı Yönetimi</h1>
+  <p class="page-desc">Kayıtlı kullanıcıları görüntüleyin, doğrulayın, askıya alın, şifrelerini sıfırlayın veya silin.</p>
+
+  <div class="stats-row">
+    <div class="stat-tile"><div class="stat-label">Toplam</div><div class="stat-value" id="stat-total">–</div></div>
+    <div class="stat-tile"><div class="stat-label">Doğrulanmış</div><div class="stat-value" id="stat-verified">–</div></div>
+    <div class="stat-tile"><div class="stat-label">Askıda</div><div class="stat-value" id="stat-disabled">–</div></div>
+    <div class="stat-tile"><div class="stat-label">Skorboard</div><div class="stat-value" id="stat-boards">–</div></div>
+  </div>
+
+  <div class="toolbar">
+    <input type="search" id="search" class="search-input" placeholder="🔍 E-posta ara..." autocomplete="off">
+    <select id="filter" class="filter-select" aria-label="Filtre">
+      <option value="all">Tümü</option>
+      <option value="verified">Doğrulanmış</option>
+      <option value="unverified">Doğrulanmamış</option>
+      <option value="disabled">Askıda</option>
+      <option value="admin">Yöneticiler</option>
+    </select>
+  </div>
+
+  <div class="user-list" id="user-list">
+    <div class="empty-state">Yükleniyor...</div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="/js/confirm-dialog.js?v=1.2.0"></script>
+<script>
+  let users = [];
+  let currentUserId = null;
+  const expanded = new Set();
+  const detailCache = new Map();
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function formatDate(ts) {
+    if (!ts) return '—';
+    const d = new Date(Number(ts));
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.toggle('error', Boolean(isError));
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+  }
+
+  async function api(url, options = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+    });
+    if (res.status === 401) { window.location.href = '/login'; throw new Error('Giriş gerekli'); }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.success === false) throw new Error(data.error || 'İşlem başarısız.');
+    return data;
+  }
+
+  async function loadUsers() {
+    try {
+      const data = await api('/api/admin/users');
+      users = data.users;
+      currentUserId = data.currentUserId;
+      render();
+    } catch (err) {
+      document.getElementById('user-list').innerHTML = `<div class="empty-state">${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function renderStats() {
+    document.getElementById('stat-total').textContent = users.length;
+    document.getElementById('stat-verified').textContent = users.filter((u) => u.isVerified).length;
+    document.getElementById('stat-disabled').textContent = users.filter((u) => u.isDisabled).length;
+    document.getElementById('stat-boards').textContent = users.reduce((n, u) => n + u.boardCount, 0);
+  }
+
+  function filteredUsers() {
+    const q = document.getElementById('search').value.trim().toLowerCase();
+    const f = document.getElementById('filter').value;
+    return users.filter((u) => {
+      if (q && !u.email.toLowerCase().includes(q)) return false;
+      if (f === 'verified') return u.isVerified;
+      if (f === 'unverified') return !u.isVerified;
+      if (f === 'disabled') return u.isDisabled;
+      if (f === 'admin') return u.isAdmin;
+      return true;
+    });
+  }
+
+  function renderDetail(id) {
+    const d = detailCache.get(id);
+    if (!d) return '<span class="detail-empty">Yükleniyor...</span>';
+    const boards = d.boards.length
+      ? d.boards.map((b) => `<li>${escapeHtml(b.title || b.id)} <code>${escapeHtml(b.id)}</code>${b.teamA || b.teamB ? `<br><span class="detail-empty">${escapeHtml(b.teamA)} – ${escapeHtml(b.teamB)}</span>` : ''}</li>`).join('')
+      : '<li class="detail-empty">Skorboard yok</li>';
+    const teams = d.teams.length
+      ? d.teams.map((t) => `<li>${escapeHtml(t.name)}${t.shortName ? ` <code>${escapeHtml(t.shortName)}</code>` : ''}</li>`).join('')
+      : '<li class="detail-empty">Takım yok</li>';
+    return `<div class="detail-grid">
+      <div><div class="detail-title">Skorboardlar</div><ul class="detail-list">${boards}</ul></div>
+      <div><div class="detail-title">Takımlar</div><ul class="detail-list">${teams}</ul></div>
+    </div>`;
+  }
+
+  function render() {
+    renderStats();
+    const list = filteredUsers();
+    const el = document.getElementById('user-list');
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-state">Eşleşen kullanıcı yok.</div>';
+      return;
+    }
+    el.innerHTML = list.map((u) => {
+      const isMe = u.id === currentUserId;
+      const protectedUser = isMe || u.isAdmin;
+      const badges = [
+        u.isAdmin ? '<span class="badge badge-admin">Yönetici</span>' : '',
+        isMe ? '<span class="badge badge-me">Sen</span>' : '',
+        u.isDisabled ? '<span class="badge badge-off">Askıda</span>'
+          : (u.isVerified ? '<span class="badge badge-ok">Doğrulandı</span>' : '<span class="badge badge-warn">Doğrulanmadı</span>')
+      ].join('');
+      return `
+        <div class="user-item ${u.isDisabled ? 'disabled' : ''} ${expanded.has(u.id) ? 'expanded' : ''}" data-id="${u.id}">
+          <div class="user-row">
+            <div>
+              <div class="user-email">${escapeHtml(u.email)} ${badges}</div>
+              <div class="user-meta">
+                <span>📅 Kayıt: ${formatDate(u.createdAt)}</span>
+                <span>🔑 Son giriş: ${formatDate(u.lastLoginAt)}</span>
+                <span>🏐 ${u.boardCount} skorboard</span>
+                <span>🎽 ${u.teamCount} takım</span>
+                <span>💻 ${u.sessionCount} oturum</span>
+              </div>
+            </div>
+            <div class="user-actions">
+              <button class="act-btn" data-act="detail">${expanded.has(u.id) ? '▲ Gizle' : '▼ Detay'}</button>
+              ${u.isVerified ? '' : '<button class="act-btn" data-act="verify">✅ Doğrula</button>'}
+              <button class="act-btn" data-act="password">🔒 Şifre</button>
+              <button class="act-btn" data-act="logout" ${u.sessionCount ? '' : 'disabled'}>🚪 Oturumları Kapat</button>
+              <button class="act-btn" data-act="toggle-disable" ${protectedUser ? 'disabled title="Yönetici hesabı"' : ''}>${u.isDisabled ? '▶️ Etkinleştir' : '⏸️ Askıya Al'}</button>
+              <button class="act-btn danger" data-act="delete" ${protectedUser ? 'disabled title="Yönetici hesabı"' : ''}>🗑️ Sil</button>
+            </div>
+          </div>
+          <div class="user-detail">${expanded.has(u.id) ? renderDetail(u.id) : ''}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function replaceUser(updated) {
+    if (!updated) return;
+    const i = users.findIndex((u) => u.id === updated.id);
+    if (i !== -1) users[i] = updated;
+  }
+
+  async function handleAction(id, act) {
+    const u = users.find((x) => x.id === id);
+    if (!u) return;
+    const email = `<b>${escapeHtml(u.email)}</b>`;
+
+    try {
+      if (act === 'detail') {
+        if (expanded.has(id)) { expanded.delete(id); render(); return; }
+        expanded.add(id);
+        render();
+        const data = await api(`/api/admin/users/${id}`);
+        detailCache.set(id, data);
+        render();
+        return;
+      }
+
+      if (act === 'verify') {
+        const data = await api(`/api/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ isVerified: true }) });
+        replaceUser(data.user);
+        render();
+        toast('Hesap doğrulandı.');
+        return;
+      }
+
+      if (act === 'password') {
+        const pwd = await appPrompt({
+          icon: '🔒',
+          title: 'Yeni Şifre Belirle',
+          bodyHtml: `<p>${email} için yeni bir şifre girin. Kullanıcının açık oturumları kapatılır.</p>`,
+          label: 'Yeni şifre',
+          placeholder: 'En az 6 karakter',
+          emptyText: 'Bir şifre girin.',
+          confirmText: 'Şifreyi Kaydet',
+          validate: async (v) => (v.length < 6 ? 'Şifre en az 6 karakter olmalıdır.' : '')
+        });
+        if (pwd == null) return;
+        const data = await api(`/api/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ password: pwd }) });
+        replaceUser(data.user);
+        render();
+        toast('Şifre güncellendi.');
+        return;
+      }
+
+      if (act === 'logout') {
+        const ok = await appConfirm({
+          icon: '🚪',
+          title: 'Oturumları Kapat',
+          bodyHtml: `<p>${email} tüm cihazlardan çıkış yapacak.${id === currentUserId ? ' <b>Bu sizin hesabınız; siz de çıkış yapacaksınız.</b>' : ''}</p>`,
+          confirmText: 'Oturumları Kapat'
+        });
+        if (!ok) return;
+        await api(`/api/admin/users/${id}/logout`, { method: 'POST' });
+        if (id === currentUserId) { window.location.href = '/login'; return; }
+        await loadUsers();
+        toast('Oturumlar kapatıldı.');
+        return;
+      }
+
+      if (act === 'toggle-disable') {
+        const disable = !u.isDisabled;
+        const ok = await appConfirm({
+          icon: disable ? '⏸️' : '▶️',
+          title: disable ? 'Hesabı Askıya Al' : 'Hesabı Etkinleştir',
+          bodyHtml: disable
+            ? `<p>${email} giriş yapamayacak ve açık oturumları kapatılacak. Skorboardları ve yayın bağlantıları silinmez.</p>`
+            : `<p>${email} yeniden giriş yapabilecek.</p>`,
+          confirmText: disable ? 'Askıya Al' : 'Etkinleştir',
+          tone: disable ? 'danger' : 'primary'
+        });
+        if (!ok) return;
+        const data = await api(`/api/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ isDisabled: disable }) });
+        replaceUser(data.user);
+        render();
+        toast(disable ? 'Hesap askıya alındı.' : 'Hesap etkinleştirildi.');
+        return;
+      }
+
+      if (act === 'delete') {
+        const ok = await appConfirm({
+          icon: '🗑️',
+          title: 'Kullanıcıyı Sil',
+          bodyHtml: `<p>${email} kalıcı olarak silinecek.</p>
+            <p>Birlikte silinecekler: <b>${u.boardCount} skorboard</b>, <b>${u.teamCount} takım</b> ve yüklenen logolar. Bu işlem geri alınamaz.</p>`,
+          confirmText: 'Kalıcı Olarak Sil',
+          tone: 'danger'
+        });
+        if (!ok) return;
+        await api(`/api/admin/users/${id}`, { method: 'DELETE' });
+        users = users.filter((x) => x.id !== id);
+        expanded.delete(id);
+        detailCache.delete(id);
+        render();
+        toast('Kullanıcı silindi.');
+      }
+    } catch (err) {
+      toast(err.message, true);
+    }
+  }
+
+  document.getElementById('user-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('.act-btn');
+    if (!btn || btn.disabled) return;
+    const item = btn.closest('.user-item');
+    handleAction(item.dataset.id, btn.dataset.act);
+  });
+  document.getElementById('search').addEventListener('input', render);
+  document.getElementById('filter').addEventListener('change', render);
+
+  loadUsers();
+</script>
+<script src="/js/theme.js"></script>
+</body>
+</html>
