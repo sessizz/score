@@ -661,6 +661,7 @@
             <div class="user-actions">
               <button class="act-btn" data-act="detail">${expanded.has(u.id) ? '▲ Gizle' : '▼ Detay'}</button>
               ${u.isVerified ? '' : '<button class="act-btn" data-act="verify">✅ Doğrula</button>'}
+              <button class="act-btn" data-act="impersonate" ${protectedUser || u.isDisabled ? `disabled title="${u.isDisabled ? 'Askıdaki hesap' : 'Yönetici hesabı'}"` : ''}>👤 Hesabına Gir</button>
               <button class="act-btn" data-act="password">🔒 Şifre</button>
               <button class="act-btn" data-act="logout" ${u.sessionCount ? '' : 'disabled'}>🚪 Oturumları Kapat</button>
               <button class="act-btn" data-act="toggle-disable" ${protectedUser ? 'disabled title="Yönetici hesabı"' : ''}>${u.isDisabled ? '▶️ Etkinleştir' : '⏸️ Askıya Al'}</button>
@@ -686,6 +687,20 @@
     try {
       if (act === 'transfer-board' || act === 'transfer-team') {
         await openTransfer(id, act === 'transfer-board' ? 'board' : 'team', itemId);
+        return;
+      }
+
+      if (act === 'impersonate') {
+        const ok = await appConfirm({
+          icon: '👤',
+          title: 'Kullanıcı Hesabına Gir',
+          bodyHtml: `<p>${email} olarak giriş yapacaksınız; skorboardlarını ve takımlarını onun gördüğü gibi göreceksiniz.</p>
+            <p>Üstteki sarı şeritten istediğiniz an yönetici hesabınıza dönebilirsiniz. Bu oturum en fazla 12 saat açık kalır.</p>`,
+          confirmText: 'Hesabına Gir'
+        });
+        if (!ok) return;
+        await api(`/api/admin/users/${id}/impersonate`, { method: 'POST' });
+        window.location.href = '/';
         return;
       }
 

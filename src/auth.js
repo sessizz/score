@@ -55,6 +55,15 @@ function createSessionCookie(token, maxAgeDays = 30) {
   return `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
 }
 
+// While an admin is signed in as another user, their own session token waits in this cookie
+function createAdminReturnCookie(token) {
+  return `admin_sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${12 * 60 * 60}`;
+}
+
+function createClearAdminReturnCookie() {
+  return `admin_sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+}
+
 /**
  * Serialize clear session cookie
  */
@@ -277,6 +286,8 @@ module.exports = {
   parseCookies,
   createSessionCookie,
   createClearCookie,
+  createAdminReturnCookie,
+  createClearAdminReturnCookie,
   register,
   verify,
   resendCode,

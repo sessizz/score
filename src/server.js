@@ -7,6 +7,7 @@ const teams = require('./teams');
 const auth = require('./auth');
 const backup = require('./backup');
 const admin = require('./admin');
+const db = require('./db');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -84,6 +85,21 @@ function serveStaticFile(res, filePath) {
     const stream = fs.createReadStream(filePath);
     stream.pipe(res);
   });
+}
+
+// Ends an admin's "sign in as user" session; returns the Set-Cookie headers that restore the admin, or null
+function endImpersonation(req) {
+  const cookies = auth.parseCookies(req.headers['cookie']);
+  const current = cookies.sid ? db.getSessionUser(cookies.sid) : null;
+  if (!current || !current.impersonator_id) return null;
+
+  db.deleteSession(cookies.sid);
+  const adminUser = cookies.admin_sid ? db.getSessionUser(cookies.admin_sid) : null;
+  if (adminUser && adminUser.id === current.impersonator_id) {
+    return [auth.createSessionCookie(cookies.admin_sid), auth.createClearAdminReturnCookie()];
+  }
+  // Admin session is gone or does not match: sign out completely
+  return [auth.createClearCookie(), auth.createClearAdminReturnCookie()];
 }
 
 const server = http.createServer(async (req, res) => {
@@ -166,12 +182,21 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // Logout
+  // Logout (an admin signed in as another user goes back to their own account instead)
   if (pathname === '/api/auth/logout' && method === 'POST') {
+    const restored = endImpersonation(req);
+    if (restored) return sendJson(res, 200, { success: true, returnedToAdmin: true }, { 'Set-Cookie': restored });
     const cookies = auth.parseCookies(req.headers['cookie']);
     if (cookies.sid) auth.logout(cookies.sid);
     const clearCookie = auth.createClearCookie();
     return sendJson(res, 200, { success: true }, { 'Set-Cookie': clearCookie });
+  }
+
+  // Return from "sign in as user" to the admin's own account
+  if (pathname === '/api/auth/stop-impersonating' && method === 'POST') {
+    const restored = endImpersonation(req);
+    if (!restored) return sendJson(res, 400, { success: false, error: 'Başka bir kullanıcı adına giriş yapılmamış.' });
+    return sendJson(res, 200, { success: true }, { 'Set-Cookie': restored });
   }
 
   // Current session user
@@ -182,7 +207,8 @@ const server = http.createServer(async (req, res) => {
     }
     return sendJson(res, 200, {
       authenticated: true,
-      user: { id: user.id, email: user.email, isVerified: user.is_verified, isAdmin: auth.isAdmin(user) }
+      user: { id: user.id, email: user.email, isVerified: user.is_verified, isAdmin: auth.isAdmin(user) },
+      impersonator: user.impersonator_id ? { email: user.impersonator_email } : null
     });
   }
 
@@ -205,6 +231,16 @@ const server = http.createServer(async (req, res) => {
       if (pathname === '/api/admin/transfer' && method === 'POST') {
         const body = await parseJsonBody(req);
         return sendJson(res, 200, { success: true, ...admin.transfer(body) });
+      }
+
+      const impersonateMatch = pathname.match(/^\/api\/admin\/users\/([a-zA-Z0-9_-]+)\/impersonate$/);
+      if (impersonateMatch && method === 'POST') {
+        const adminToken = auth.parseCookies(req.headers['cookie']).sid;
+        if (!adminToken) throw new Error('Bu işlem için tarayıcıdan giriş yapmalısınız.');
+        const result = admin.impersonate(impersonateMatch[1], user);
+        return sendJson(res, 200, { success: true, email: result.email }, {
+          'Set-Cookie': [auth.createSessionCookie(result.token, 0.5), auth.createAdminReturnCookie(adminToken)]
+        });
       }
 
       const userMatch = pathname.match(/^\/api\/admin\/users\/([a-zA-Z0-9_-]+)(\/logout)?$/);

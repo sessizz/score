@@ -78,6 +78,7 @@ try { db.exec("ALTER TABLE logos ADD COLUMN color TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE logos ADD COLUMN color2 TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE logos ADD COLUMN text_color TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN is_disabled INTEGER DEFAULT 0;"); } catch (e) {}
+try { db.exec("ALTER TABLE sessions ADD COLUMN impersonator_id TEXT;"); } catch (e) {}
 
 // Ensure all existing boards have an operator_token
 try {
@@ -134,21 +135,23 @@ function updateVerificationCode(id, code, expiresAt) {
 }
 
 // --- Sessions DB Functions ---
-function createSession(userId, daysValid = 30) {
+// impersonatorId: set when an admin opens this session on behalf of the user
+function createSession(userId, daysValid = 30, impersonatorId = null) {
   const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = Date.now() + (daysValid * 24 * 60 * 60 * 1000);
   const stmt = db.prepare(`
-    INSERT INTO sessions (token, user_id, expires_at, created_at)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO sessions (token, user_id, expires_at, created_at, impersonator_id)
+    VALUES (?, ?, ?, ?, ?)
   `);
-  stmt.run(token, userId, expiresAt, Date.now());
+  stmt.run(token, userId, expiresAt, Date.now(), impersonatorId);
   return { token, expiresAt };
 }
 
 function getSessionUser(token) {
   if (!token) return null;
   const stmt = db.prepare(`
-    SELECT u.id, u.email, u.is_verified, u.created_at
+    SELECT u.id, u.email, u.is_verified, u.created_at, s.impersonator_id,
+      (SELECT a.email FROM users a WHERE a.id = s.impersonator_id) AS impersonator_email
     FROM sessions s
     JOIN users u ON s.user_id = u.id
     WHERE s.token = ? AND s.expires_at > ? AND COALESCE(u.is_disabled, 0) = 0
@@ -173,8 +176,8 @@ function listUsersWithStats() {
     SELECT u.id, u.email, u.is_verified, COALESCE(u.is_disabled, 0) AS is_disabled, u.created_at,
       (SELECT COUNT(*) FROM boards b WHERE b.user_id = u.id) AS board_count,
       (SELECT COUNT(*) FROM logos l WHERE l.user_id = u.id AND l.is_default = 0) AS team_count,
-      (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id AND s.expires_at > ?) AS session_count,
-      (SELECT MAX(s.created_at) FROM sessions s WHERE s.user_id = u.id) AS last_login_at
+      (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id AND s.expires_at > ? AND s.impersonator_id IS NULL) AS session_count,
+      (SELECT MAX(s.created_at) FROM sessions s WHERE s.user_id = u.id AND s.impersonator_id IS NULL) AS last_login_at
     FROM users u
     ORDER BY u.created_at DESC
   `).all(now);

@@ -92,8 +92,9 @@
       if (data.authenticated && btnLogout) {
         btnLogout.style.display = 'inline-flex';
         btnLogout.addEventListener('click', async () => {
-          await fetch('/api/auth/logout', { method: 'POST' });
-          window.location.href = '/login';
+          const res = await fetch('/api/auth/logout', { method: 'POST' });
+          const data = await res.json().catch(() => ({}));
+          window.location.href = data.returnedToAdmin ? '/admin' : '/login';
         });
       }
     } catch (e) {}

@@ -145,6 +145,14 @@ function updateUser(id, changes, actor) {
   return row ? toPublicUser(row) : null;
 }
 
+// Opens a short-lived session as the target user; admins and suspended accounts are excluded
+function impersonate(id, actor) {
+  const target = requireTarget(id, actor);
+  if (target.is_disabled) throw new Error('Askıdaki hesaba giriş yapılamaz. Önce hesabı etkinleştirin.');
+  const session = db.createSession(target.id, 0.5, actor.id);
+  return { token: session.token, email: target.email };
+}
+
 function logoutUser(id, actor) {
   requireTarget(id, actor, { allowAdmin: true });
   db.deleteUserSessions(id);
@@ -166,4 +174,4 @@ function deleteUser(id, actor) {
   return { email: target.email };
 }
 
-module.exports = { listUsers, createUser, transfer, getUserDetail, updateUser, logoutUser, deleteUser };
+module.exports = { listUsers, createUser, transfer, impersonate, getUserDetail, updateUser, logoutUser, deleteUser };
