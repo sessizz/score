@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API - Voleybol Skorboard</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="icon" href="/assets/volleyball.svg">
+  <script>
+  (function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}else{var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',d?'dark':'light')}})();
+  </script>
+  <style>
+    body { background: var(--bg-dark); color: var(--text-main); }
+    .docs { max-width: 880px; margin: 0 auto; padding: 40px 16px 80px; line-height: 1.6; }
+    .docs h1 { font-size: 2rem; font-weight: 900; margin-bottom: 4px; color: var(--text-heading); }
+    .docs h2 { font-size: 1.3rem; font-weight: 800; margin: 40px 0 12px; color: var(--text-heading); }
+    .docs h3 { font-size: 1rem; font-weight: 700; margin: 24px 0 8px; color: var(--text-secondary); }
+    .docs p, .docs li { color: var(--text-tertiary); font-size: 0.95rem; }
+    .docs ul { padding-left: 20px; margin: 8px 0; }
+    .docs .lead { color: var(--text-muted); margin-bottom: 24px; }
+    .docs code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; background: var(--overlay-bg); padding: 2px 6px; border-radius: 4px; }
+    .docs pre { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; overflow-x: auto; margin: 10px 0; }
+    .docs pre code { background: none; padding: 0; font-size: 0.82rem; color: var(--text-secondary); }
+    .table-wrap { overflow-x: auto; margin: 10px 0; }
+    .docs table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .docs th, .docs td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+    .docs th { color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .docs td { color: var(--text-tertiary); }
+    .docs td:first-child { white-space: nowrap; }
+    .method { display: inline-block; font-weight: 800; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; margin-right: 6px; }
+    .method.get { background: rgba(59, 130, 246, 0.18); color: #60a5fa; }
+    .method.post { background: rgba(34, 197, 94, 0.18); color: #4ade80; }
+    .note { background: var(--accent-yellow-bg); border: 1px solid var(--accent-yellow-border); border-radius: 8px; padding: 12px 14px; font-size: 0.9rem; margin: 12px 0; }
+    .back { display: inline-block; margin-bottom: 24px; color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+<main class="docs">
+  <a class="back" href="/">← Panele dön</a>
+  <h1>API</h1>
+  <p class="lead">Skorboardu kendi uygulamanızdan, script'lerden veya Stream Deck gibi cihazlardan kontrol edin.</p>
+
+  <p>API adresi <code>/api/v1/{token}/</code> ile başlar. Tüm cevaplar JSON'dur.</p>
+
+  <h2>Erişim</h2>
+  <p><code>{token}</code>, skorboardun kodudur — kontrol panelindeki adreste <code>/control/</code> kısmından sonra gelen değer
+    (örneğin <code>/control/fenerbahce</code> → <code>fenerbahce</code>). Skorcu kumanda linkindeki kod da kullanılabilir.</p>
+  <p>Kontrol panelinde <b>📺 OBS</b> penceresinin en altında API adresi hazır olarak, kopyala butonuyla birlikte yer alır.</p>
+  <div class="note">API, skorcu (operatör) yetkisiyle çalışır: sayı, mola, servis, saat, set geçişi ve geri alma yapılabilir.
+    Takım isimleri, kurallar ve maçı sıfırlama yalnızca kontrol panelinden yapılır.</div>
+
+  <h2>Hızlı başlangıç</h2>
+  <pre><code># Ev sahibine (Takım A) 1 sayı
+curl -X POST https://ALANADI/api/v1/TOKEN/home/score/increment
+
+# Deplasmandan (Takım B) 1 sayı sil
+curl -X POST https://ALANADI/api/v1/TOKEN/away/score/decrement
+
+# Skorboardun tamamını oku
+curl https://ALANADI/api/v1/TOKEN/</code></pre>
+  <p><code>home</code> = Takım A (kontrol panelinde soldaki takım), <code>away</code> = Takım B.
+    POST isteklerinin gövdesi isteğe bağlıdır; gövdesiz istek varsayılan değerle çalışır.</p>
+
+  <h2>Uç noktalar</h2>
+
+  <h3>Okuma</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Uç nokta</th><th>Açıklama</th></tr>
+    <tr><td><span class="method get">GET</span><code>/api/v1/{token}/</code></td><td>Skorboardun tüm verisi: takımlar, sayılar, setler, servis, mola, saat, set geçmişi.</td></tr>
+  </table></div>
+  <p>Anlık güncellemeler için Server-Sent Events akışı: <code>GET /api/board/{token}/stream</code> (her değişiklikte <code>state</code> olayı gelir).</p>
+
+  <h3>Sayı</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Uç nokta</th><th>Gövde</th><th>Açıklama</th></tr>
+    <tr><td><span class="method post">POST</span><code>/home/score/increment</code></td><td><code>{"amount": 1}</code></td><td>Ev sahibine sayı ekler, servis ev sahibine geçer. Negatif <code>amount</code> sayı siler.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/away/score/increment</code></td><td><code>{"amount": 1}</code></td><td>Deplasmana sayı ekler, servis deplasmana geçer.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/home/score/decrement</code></td><td><code>{"amount": 1}</code></td><td>Ev sahibinden sayı siler (0'ın altına inmez).</td></tr>
+    <tr><td><span class="method post">POST</span><code>/away/score/decrement</code></td><td><code>{"amount": 1}</code></td><td>Deplasmandan sayı siler.</td></tr>
+  </table></div>
+
+  <h3>Mola</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Uç nokta</th><th>Gövde</th><th>Açıklama</th></tr>
+    <tr><td><span class="method post">POST</span><code>/home/timeouts/increment</code></td><td><code>{"duration": 30}</code></td><td>Ev sahibi mola alır, geri sayım başlar (set başına en fazla 2).</td></tr>
+    <tr><td><span class="method post">POST</span><code>/away/timeouts/increment</code></td><td><code>{"duration": 30}</code></td><td>Deplasman mola alır.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/home/timeouts/decrement</code></td><td>—</td><td>Ev sahibinin mola sayısını 1 azaltır.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/away/timeouts/decrement</code></td><td>—</td><td>Deplasmanın mola sayısını 1 azaltır.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/timeout/end</code></td><td>—</td><td>Devam eden molayı bitirir.</td></tr>
+  </table></div>
+
+  <h3>Servis</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Uç nokta</th><th>Açıklama</th></tr>
+    <tr><td><span class="method post">POST</span><code>/serve/toggle</code></td><td>Servisi diğer takıma geçirir.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/home/serve</code></td><td>Servisi ev sahibine verir.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/away/serve</code></td><td>Servisi deplasmana verir.</td></tr>
+  </table></div>
+
+  <h3>Set</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Uç nokta</th><th>Gövde</th><th>Açıklama</th></tr>
+    <tr><td><span class="method post">POST</span><code>/set/end</code></td><td><code>{"winner": "home"}</code></td><td>Seti bitirir. <code>winner</code> verilmezse sayısı yüksek olan kazanır. Maç bitmediyse set arasına geçilir, taraflar değişir.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/set/start</code></td><td>—</td><td>Set arasından yeni sete geçer.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/sides/swap</code></td><td>—</td><td>Takımların yerini değiştirir.</td></tr>
+  </table></div>
+
+  <h3>Saat</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Uç nokta</th><th>Açıklama</th></tr>
+    <tr><td><span class="method post">POST</span><code>/timer/toggle</code></td><td>Set saatini başlatır / durdurur.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/timer/start</code></td><td>Set saatini başlatır.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/timer/pause</code></td><td>Set saatini durdurur.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/timer/reset</code></td><td>Set saatini sıfırlar.</td></tr>
+  </table></div>
+
+  <h3>Ekran ve diğer</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Uç nokta</th><th>Açıklama</th></tr>
+    <tr><td><span class="method post">POST</span><code>/history/show</code></td><td>Yayın ekranında sayı geçmişini gösterir.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/result/show</code></td><td>Yayın ekranında maç sonucunu gösterir.</td></tr>
+    <tr><td><span class="method post">POST</span><code>/undo</code></td><td>Son işlemi geri alır.</td></tr>
+  </table></div>
+
+  <h2>Cevaplar</h2>
+  <p>Başarılı yazma işlemleri <code>message</code> ve güncel <code>board</code> verisini döner:</p>
+  <pre><code>{
+  "message": "home score +1",
+  "board": { "teamA": { "points": 12, ... }, "teamB": { ... }, ... }
+}</code></pre>
+  <div class="table-wrap"><table>
+    <tr><th>Kod</th><th>Anlamı</th></tr>
+    <tr><td><code>200</code></td><td>Başarılı</td></tr>
+    <tr><td><code>400</code></td><td>İşlem yapılamadı (<code>message</code> nedenini söyler)</td></tr>
+    <tr><td><code>404</code></td><td>Skorboard veya uç nokta bulunamadı</td></tr>
+    <tr><td><code>405</code></td><td>Yanlış HTTP metodu</td></tr>
+    <tr><td><code>429</code></td><td>Çok fazla istek</td></tr>
+  </table></div>
+
+  <h2>Hız sınırı</h2>
+  <ul>
+    <li>Skorboard başına saniyede en fazla <b>5 istek</b>.</li>
+    <li>Aşılırsa <b>1 dakika</b> boyunca tüm istekler <code>429</code> döner (<code>Retry-After</code> başlığı ile).</li>
+  </ul>
+
+  <h2>CORS</h2>
+  <p>Tüm cevaplar <code>Access-Control-Allow-Origin: *</code> gönderir; API doğrudan tarayıcıdan çağrılabilir.</p>
+</main>
+</body>
+</html>

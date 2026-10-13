@@ -1074,6 +1074,7 @@
     document.getElementById('obs-lowerthird-url').value = `${origin}/overlay/${boardId}?theme=lowerthird`;
     document.getElementById('obs-bug-url').value = `${origin}/overlay/${boardId}?theme=bug`;
     document.getElementById('obs-live-url').value = `${origin}/live/${boardId}`;
+    document.getElementById('obs-api-url').value = `${origin}/api/v1/${boardId}`;
     modalObs.classList.add('active');
   });
 

@@ -7,6 +7,7 @@ const teams = require('./teams');
 const auth = require('./auth');
 const backup = require('./backup');
 const admin = require('./admin');
+const api = require('./api');
 const db = require('./db');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -119,6 +120,11 @@ const server = http.createServer(async (req, res) => {
   }
 
   // --- API Endpoints ---
+
+  // Public REST API v1 (external apps, Stream Deck)
+  if (pathname.startsWith('/api/v1/')) {
+    if (await api.handle(req, res, pathname, method, { sendJson, parseJsonBody })) return;
+  }
 
   // Health check for Coolify & Docker
   if (pathname === '/health' && method === 'GET') {
@@ -494,6 +500,11 @@ const server = http.createServer(async (req, res) => {
   }
 
   // --- Page Routes & Static Files ---
+
+  // API documentation
+  if (pathname === '/docs/api' || pathname === '/docs/api/') {
+    return serveStaticFile(res, path.join(PUBLIC_DIR, 'api-docs.html'));
+  }
 
   // Login Page
   if (pathname === '/login' || pathname === '/login.html') {

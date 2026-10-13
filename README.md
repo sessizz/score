@@ -28,6 +28,11 @@
    - **Salon & Seyirci Ekranı**: `https://alanadiniz.com/live/{id}`
    - Dinamik **"SET SAYISI"** ve **"MAÇ SAYISI"** uyarıları, animasyonlu servis topu ve 30 saniyelik mola geri sayımı.
 
+5. **REST API (`/api/v1/{kod}/...`)**:
+   - Stream Deck, script veya harici uygulamalardan skor girilebilir: `curl -X POST https://alanadiniz.com/api/v1/{id}/home/score/increment`
+   - Sayı, mola, servis, saat, set geçişi ve geri alma desteklenir; skorboard başına saniyede 5 istek sınırı vardır.
+   - Tüm uç noktalar: `https://alanadiniz.com/docs/api`
+
 ---
 
 ## 🛠️ Coolify Üzerinde Kurulum (1 Dakikada Canlıya Alma)
